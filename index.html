@@ -249,6 +249,18 @@
   .linkrow{display:flex;flex-direction:column;gap:4px;margin-top:4px}
   .linkrow a{color:var(--accent);text-decoration:none;font-weight:600;font-size:13px}
   .linkrow a:hover{text-decoration:underline}
+  .attach-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  .attach-empty{font-size:12.5px;color:var(--text-soft);padding:4px 0}
+  .attach-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface-2)}
+  .attach-row .attach-ico{color:var(--text-soft);flex:0 0 auto;display:grid;place-items:center}
+  .attach-name{font-weight:600;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .attach-size{font-size:11.5px;color:var(--text-soft);flex:0 0 auto}
+  .attach-del{appearance:none;border:none;background:none;color:var(--text-soft);cursor:pointer;font-size:14px;line-height:1;padding:3px 5px;border-radius:6px;flex:0 0 auto}
+  .attach-del:hover{color:var(--red-tx);background:var(--red-bg)}
+  .attach-add{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-weight:700;font-size:13px;color:var(--accent);border:1px dashed var(--accent-line);border-radius:9px;padding:9px 12px;transition:.15s}
+  .attach-add:hover{background:var(--accent-soft)}
+  .attach-hint{font-size:11px;color:var(--text-soft);margin-top:7px}
+
   .drawer-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
   .meta-upd{font-size:11.5px;color:var(--text-soft);flex:1}
   .btn-ghost{appearance:none;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);cursor:pointer;font:inherit;font-weight:600;padding:9px 14px;border-radius:9px}
@@ -283,8 +295,13 @@
   .kcol-head .kcol-cnt{font-size:11px;font-weight:800;background:rgba(0,0,0,.08);border-radius:999px;padding:1px 8px;min-width:20px;text-align:center}
   .kcol-body{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1;min-height:64px}
   .kempty{color:var(--text-soft);text-align:center;padding:16px 0;font-size:13px}
-  .kcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:8px}
+  .kcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);cursor:grab;transition:box-shadow .12s,border-color .12s,transform .12s;display:flex;flex-direction:column;gap:8px}
   .kcard:hover{border-color:var(--accent-line);transform:translateY(-1px)}
+  .kcard:active{cursor:grabbing}
+  .kcard.dragging{opacity:.45;box-shadow:var(--shadow-lg);cursor:grabbing}
+  .kcol.drag-over{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft)}
+  .kcol.drag-over .kempty{color:var(--accent);font-weight:600}
+  .kgrip{color:var(--text-soft);font-size:12px;letter-spacing:-2px;line-height:1;cursor:grab;flex:0 0 auto;user-select:none}
   .kcard-top{display:flex;align-items:center;gap:9px}
   .kcard-klant{font-weight:700;font-size:13.5px}
   .avatar.sm{width:26px;height:26px;border-radius:7px;font-size:10.5px}
@@ -375,7 +392,7 @@
     <section id="view-kanban">
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Deals per fase · onderaan elke kolom de totaalwaarde · filter per unit hierboven · klik een kaart voor details.
+        <b>Sleep</b> kaarten tussen de kolommen om de fase te wijzigen · totalen, stats en het per-merk-overzicht bewegen automatisch mee · klik een kaart voor details.
       </p>
       <div class="kanban" id="kanban"></div>
     </section>
@@ -458,12 +475,19 @@
   var TYPES = ["Fysiek","Telefonisch","E-mail","Online meeting"];
 
   var BRANDS = {
-    "ARAG":               {ini:"AR", bg:"#F5B400", fg:"#1A1A1A"},
-    "Univé Centraal":     {ini:"UN", bg:"#4C9F38", fg:"#FFFFFF"},
-    "TOTO":               {ini:"TO", bg:"#E2001A", fg:"#FFFFFF"},
-    "Nederlandse Loterij":{ini:"NL", bg:"#2B6CB0", fg:"#FFFFFF"},
-    "Eurojackpot":        {ini:"EJ", bg:"#1B2A5B", fg:"#F4C445"},
-    "Jumbo":              {ini:"JU", bg:"#FFE500", fg:"#1A1A1A"}
+    "ARAG":                    {ini:"AR", bg:"#F5B400", fg:"#1A1A1A"},
+    "Univé Centraal":          {ini:"UN", bg:"#4C9F38", fg:"#FFFFFF"},
+    "TOTO":                    {ini:"TO", bg:"#E2001A", fg:"#FFFFFF"},
+    "Nederlandse Loterij":     {ini:"NL", bg:"#2B6CB0", fg:"#FFFFFF"},
+    "Eurojackpot":             {ini:"EJ", bg:"#1B2A5B", fg:"#F4C445"},
+    "Jumbo":                   {ini:"JU", bg:"#FFE500", fg:"#1A1A1A"},
+    "Odido":                   {ini:"OD", bg:"#E6007E", fg:"#FFFFFF"},
+    "Upfront":                 {ini:"UP", bg:"#1A1A1A", fg:"#FFFFFF"},
+    "Zaptec":                  {ini:"ZA", bg:"#00B2A9", fg:"#FFFFFF"},
+    "Univé Dichtbij":          {ini:"UD", bg:"#4C9F38", fg:"#FFFFFF"},
+    "Univé Zuid-Nederland":    {ini:"UZ", bg:"#3B8A2C", fg:"#FFFFFF"},
+    "Univé Het Groene Hart":   {ini:"UG", bg:"#5FB247", fg:"#1A1A1A"},
+    "Decathlon":               {ini:"DE", bg:"#0082C3", fg:"#FFFFFF"}
   };
 
   var data = [
@@ -496,7 +520,42 @@
      email:"i.vermeer@jumbo.com", tel:"+31 6 29 65 40 18", owner:"Dille", unit:"Athletes", merk:"Schaatsen · Sven Kramer", waarde:60000,
      fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
      laatste:"2026-07-04", bijgewerkt:"2026-07-04",
-     opm:"Atletenkoppeling rond en contractueel vastgelegd. Activatiekalender opstellen."}
+     opm:"Atletenkoppeling rond en contractueel vastgelegd. Activatiekalender opstellen."},
+    {id:7, klant:"Odido", contact:"Lars Willemsen", functie:"Head of Brand & Sponsoring",
+     email:"lars.willemsen@odido.nl", tel:"+31 6 24 71 09 32", owner:"Bart", unit:"HYROX", merk:"HYROX", waarde:55000,
+     fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
+     laatste:"2026-07-07", bijgewerkt:"2026-07-07",
+     opm:"Introductie via LinkedIn gestuurd. Interesse in HYROX-activatie richting jong publiek. Belafspraak plannen."},
+    {id:8, klant:"Upfront", contact:"Noor El Amrani", functie:"Partnerships Manager",
+     email:"noor@upfront.nl", tel:"+31 6 51 88 22 47", owner:"Michelle", unit:"SPEX", merk:"HYROX", waarde:20000,
+     fase:"Oriënterend gesprek", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-07-03", bijgewerkt:"2026-07-03",
+     opm:"Eerste call gehad. Willen meedenken over content en creators rond de events."},
+    {id:9, klant:"Zaptec", contact:"Erik Nordby", functie:"Marketing Lead Benelux",
+     email:"erik.nordby@zaptec.com", tel:"+31 6 39 44 71 05", owner:"Koen", unit:"HYROX", merk:"HYROX", waarde:35000,
+     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
+     laatste:"2026-06-30", bijgewerkt:"2026-07-01",
+     opm:"Voorstel gedeeld voor zichtbaarheid bij de laadpleinen op events. Wachten op interne go."},
+    {id:10, klant:"Univé Dichtbij", contact:"Marijke de Wit", functie:"Regiomanager Sponsoring",
+     email:"m.dewit@unive.nl", tel:"+31 6 18 55 33 21", owner:"Tom T", unit:"Schaatsen", merk:"Schaatsen", waarde:15000,
+     fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
+     laatste:"2026-06-26", bijgewerkt:"2026-06-26",
+     opm:"Regionale interesse in schaatsactivatie. Budget nog onduidelijk — na de zomer terugkoppelen."},
+    {id:11, klant:"Univé Zuid-Nederland", contact:"Peter Hendriks", functie:"Manager Marketing",
+     email:"p.hendriks@unive.nl", tel:"+31 6 27 90 14 66", owner:"Geoffrey", unit:"Schaatsen", merk:"Schaatsen", waarde:40000,
+     fase:"Voorstel akkoord", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-07-05", bijgewerkt:"2026-07-05",
+     opm:"Akkoord op het voorstel voor regionale schaatsclinics. Contract in voorbereiding."},
+    {id:12, klant:"Univé Het Groene Hart", contact:"Sandra Bosch", functie:"Coördinator Sponsoring",
+     email:"s.bosch@unive.nl", tel:"+31 6 42 11 78 90", owner:"Dille", unit:"Schaatsen", merk:"Schaatsen", waarde:18000,
+     fase:"1e salescontact", type:"E-mail", actie:"Later contact opnemen",
+     laatste:"2026-06-20", bijgewerkt:"2026-06-20",
+     opm:"Eerste mail verstuurd met propositie. Nog geen reactie — over twee weken opvolgen."},
+    {id:13, klant:"Decathlon", contact:"Thomas Aerts", functie:"Sports Marketing Manager",
+     email:"thomas.aerts@decathlon.nl", tel:"+31 6 33 62 08 54", owner:"Bart", unit:"HOS Algemeen", merk:"HYROX · Hardlopen", waarde:90000,
+     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-07-06", bijgewerkt:"2026-07-06",
+     opm:"Samenwerking rond breed sportaanbod contractueel vastgelegd. Uitrol per kwartaal plannen."}
   ];
   var seq = 100;
 
@@ -660,6 +719,17 @@
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
   // ---------- kanban ----------
+  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); }
+
+  // verplaats een deal naar een andere fase (via drag-drop) en sync alles
+  function moveToFase(id, faseV){
+    var r=data.filter(function(x){return x.id===id;})[0];
+    if(!r || r.fase===faseV) return;
+    r.fase=faseV;
+    touch(r);                // "laatst bijgewerkt" -> vandaag
+    refreshAll();            // totalen per kolom, stats, tabel, per-merk, feed bewegen mee
+  }
+
   function renderKanban(){
     var board=$("#kanban"); if(!board) return;
     board.innerHTML="";
@@ -668,13 +738,15 @@
       var colRows=rows.filter(function(r){return r.fase===f.v;});
       var total=colRows.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
       var col=el("div","kcol");
+      col.setAttribute("data-fase", f.v);
       var html="<div class='kcol-head "+f.c+"'><span class='kcol-name'>"+esc(f.v)+"</span><span class='kcol-cnt'>"+colRows.length+"</span></div>";
       html+="<div class='kcol-body'>";
-      if(!colRows.length){ html+="<div class='kempty'>—</div>"; }
+      if(!colRows.length){ html+="<div class='kempty'>Sleep hier een deal naartoe</div>"; }
       colRows.forEach(function(r){
         var b=brand(r.klant);
-        html+="<div class='kcard' data-id='"+r.id+"'>"+
-          "<div class='kcard-top'><span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
+        html+="<div class='kcard' draggable='true' data-id='"+r.id+"'>"+
+          "<div class='kcard-top'><span class='kgrip' aria-hidden='true'>⋮⋮</span>"+
+            "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
             "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
           "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
           "<div class='mcell'>"+merkChips(r.merk)+"</div>"+
@@ -687,11 +759,45 @@
       col.innerHTML=html;
       board.appendChild(col);
     });
+
+    // ----- klik = detail openen -----
     board.querySelectorAll(".kcard").forEach(function(c){
       c.addEventListener("click",function(){
+        if(c.getAttribute("data-dragging")==="1") return; // niet openen na een sleep
         var id=+c.getAttribute("data-id");
         var r=data.filter(function(x){return x.id===id;})[0];
         if(r) openDrawer(r);
+      });
+      // ----- drag bron -----
+      c.addEventListener("dragstart",function(e){
+        c.setAttribute("data-dragging","1");
+        c.classList.add("dragging");
+        e.dataTransfer.effectAllowed="move";
+        e.dataTransfer.setData("text/plain", c.getAttribute("data-id"));
+      });
+      c.addEventListener("dragend",function(){
+        c.classList.remove("dragging");
+        setTimeout(function(){c.removeAttribute("data-dragging");},0);
+        board.querySelectorAll(".kcol.drag-over").forEach(function(k){k.classList.remove("drag-over");});
+      });
+    });
+
+    // ----- drop doelen (hele kolom) -----
+    board.querySelectorAll(".kcol").forEach(function(col){
+      col.addEventListener("dragover",function(e){
+        e.preventDefault();
+        e.dataTransfer.dropEffect="move";
+        col.classList.add("drag-over");
+      });
+      col.addEventListener("dragleave",function(e){
+        if(!col.contains(e.relatedTarget)) col.classList.remove("drag-over");
+      });
+      col.addEventListener("drop",function(e){
+        e.preventDefault();
+        col.classList.remove("drag-over");
+        var id=parseInt(e.dataTransfer.getData("text/plain"),10);
+        var faseV=col.getAttribute("data-fase");
+        if(!isNaN(id) && faseV) moveToFase(id, faseV);
       });
     });
   }
@@ -799,6 +905,13 @@
           "<div class='fld'><label>Datum laatste contact</label><input id='d_laatste' type='date' value='"+r.laatste+"'></div>"+
         "</div>"+
         "<div class='fld'><label>Opmerkingen</label><textarea id='d_opm' placeholder='Wat is er besproken?'>"+esc(r.opm)+"</textarea></div>"+
+        "<div class='fld'><label>Bijlagen</label>"+
+          "<div id='d_bijlagen' class='attach-list'></div>"+
+          "<label class='attach-add'>"+
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49'/></svg>"+
+            "Bijlage toevoegen<input type='file' id='d_file' multiple style='display:none'></label>"+
+          "<div class='attach-hint'>Demo — bestanden worden nog niet echt opgeslagen.</div>"+
+        "</div>"+
       "</div>"+
       "<div class='drawer-foot'>"+
         "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"Laatst bijgewerkt "+fmt(r.bijgewerkt))+"</span>"+
@@ -810,6 +923,31 @@
     scrim.classList.add("open");
 
     $("#dClose").onclick=closeDrawer; $("#dCancel").onclick=closeDrawer;
+
+    // ----- bijlagen (in-memory, demo) -----
+    var dBijlagen=(r.bijlagen||[]).slice();
+    function fmtSize(b){ if(b==null)return ""; if(b<1024)return b+" B"; if(b<1048576)return Math.round(b/1024)+" KB"; return (b/1048576).toFixed(1)+" MB"; }
+    function renderBijlagen(){
+      var box=$("#d_bijlagen"); if(!box) return;
+      if(!dBijlagen.length){ box.innerHTML="<div class='attach-empty'>Nog geen bijlagen</div>"; return; }
+      box.innerHTML=dBijlagen.map(function(f,i){
+        return "<div class='attach-row'>"+
+          "<span class='attach-ico'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49'/></svg></span>"+
+          "<span class='attach-name'>"+esc(f.name)+"</span>"+
+          "<span class='attach-size'>"+fmtSize(f.size)+"</span>"+
+          "<button type='button' class='attach-del' data-i='"+i+"' aria-label='Verwijderen'>✕</button>"+
+        "</div>";
+      }).join("");
+      box.querySelectorAll(".attach-del").forEach(function(btn){
+        btn.addEventListener("click",function(){ dBijlagen.splice(+btn.getAttribute("data-i"),1); renderBijlagen(); });
+      });
+    }
+    renderBijlagen();
+    $("#d_file").addEventListener("change",function(e){
+      Array.prototype.forEach.call(e.target.files,function(f){ dBijlagen.push({name:f.name,size:f.size}); });
+      e.target.value=""; renderBijlagen();
+    });
+
     $("#dSave").onclick=function(){
       if(isNew){ r.klant=$("#d_klant").value.trim()||"Nieuwe klant"; }
       r.contact=$("#d_contact").value.trim();
@@ -821,6 +959,7 @@
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
+      r.bijlagen=dBijlagen;
       r.bijgewerkt=iso(TODAY);
       if(isNew) data.push(r);
       closeDrawer(); renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed();
