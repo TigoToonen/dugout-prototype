@@ -324,6 +324,81 @@
   .pm-total-row td{border-top:2px solid var(--border-strong);font-weight:800;background:var(--surface-2);font-variant-numeric:tabular-nums}
   .waarde-cell{font-weight:700;font-variant-numeric:tabular-nums}
 
+  /* ---------- Archief ---------- */
+  .arch-toggle{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .arch-tab{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:13px;color:var(--text-muted);
+    background:var(--surface-2);border:1px solid var(--border-strong);border-radius:999px;padding:8px 16px;transition:.15s}
+  .arch-tab:hover{color:var(--text)}
+  .arch-tab span{opacity:.75;font-weight:800;margin-left:5px}
+  .arch-tab.active{color:#fff;background:linear-gradient(180deg,var(--accent-2),var(--accent));border-color:transparent}
+  .btn-ghost.del:hover{color:var(--red-tx);border-color:var(--red-bd);background:var(--red-bg)}
+  .stats.two{grid-template-columns:1fr 1fr}
+  /* inklapbare klantgroepen */
+  .arch-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+  .arch-ghead{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;user-select:none}
+  .arch-ghead:hover{background:var(--surface-2)}
+  .arch-chev{color:var(--text-soft);font-size:12px;transition:transform .15s;flex:0 0 auto}
+  .arch-group.open .arch-chev{transform:rotate(90deg)}
+  .arch-gname{font-weight:800;font-size:14px}
+  .arch-gcount{font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:999px;padding:2px 9px}
+  .arch-gval{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+  .arch-glast{font-size:11.5px;color:var(--text-soft);min-width:104px;text-align:right}
+  .arch-gbody{display:none;border-top:1px solid var(--border)}
+  .arch-group.open .arch-gbody{display:block}
+  .arch-grow{display:grid;grid-template-columns:1.5fr .6fr 2fr .8fr;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--border);cursor:pointer}
+  .arch-grow:first-child{border-top:none}
+  .arch-grow:hover{background:var(--surface-2)}
+  .arch-rval{font-variant-numeric:tabular-nums;font-weight:700}
+  .arch-rnote{color:var(--text-muted);font-size:13px;line-height:1.4}
+  .arch-rdate{font-variant-numeric:tabular-nums;color:var(--text-soft);font-size:12.5px;text-align:right}
+  @media (max-width:700px){
+    .arch-glast{display:none}
+    .arch-grow{grid-template-columns:1fr auto}
+    .arch-rnote,.arch-rdate{display:none}
+  }
+
+  /* ---------- Modals ---------- */
+  .modal-scrim{position:fixed;inset:0;background:rgba(20,16,10,.5);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal-scrim.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);width:440px;max-width:100%;padding:22px 22px 20px}
+  .modal h3{margin:0 0 6px;font-size:17px;font-weight:800;letter-spacing:-.01em}
+  .modal p{margin:0 0 14px;color:var(--text-muted);font-size:13.5px;line-height:1.5}
+  .modal textarea{width:100%;min-height:92px;padding:10px 12px;border-radius:10px;border:1px solid var(--border-strong);
+    background:var(--surface-2);color:var(--text);font:inherit;resize:vertical}
+  .modal textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .modal-err{color:var(--red-tx);font-size:12.5px;margin-top:7px;display:none;font-weight:600}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+  .modal-ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:12px;font-size:22px}
+  .modal-ico.win{background:var(--green-bg)}
+  .modal-ico.afas{background:var(--amber-bg)}
+  .modal-ico.del{background:var(--red-bg)}
+  .btn-danger{appearance:none;border:none;cursor:pointer;font:inherit;font-weight:700;color:#fff;
+    background:var(--red-tx);padding:10px 16px;border-radius:10px;transition:.15s}
+  .btn-danger:hover{filter:brightness(1.06)}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;filter:none;transform:none;box-shadow:none}
+
+  /* ---------- Fase-verplaatsing / bundeling ---------- */
+  .move-banner{background:var(--amber-bg);color:var(--amber-tx);border:1px solid var(--amber-bd);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;margin:6px 0 2px}
+  .bundle-banner{background:var(--blue-bg);color:var(--blue-tx);border:1px solid var(--blue-bd);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.45;margin:8px 0 2px}
+  .fld > label .req{color:var(--red-tx);font-weight:700;text-transform:none;letter-spacing:0}
+  textarea.need-note{border-color:var(--red-tx);background:var(--red-bg)}
+  textarea.need-note:focus{border-color:var(--red-tx);box-shadow:0 0 0 3px var(--red-bg)}
+
+  /* ---------- Login ---------- */
+  .auth-scrim{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .auth-scrim.show{display:flex}
+  .auth-card{width:380px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);padding:32px 28px}
+  .auth-mark{width:56px;height:56px;margin:0 auto 14px;display:block}
+  .auth-title{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px;text-align:center}
+  .auth-sub{color:var(--text-muted);font-size:13.5px;margin:0 0 8px;text-align:center}
+  .auth-lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:700;margin:16px 0 6px}
+  .auth-input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font:inherit}
+  .auth-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .auth-err{color:var(--red-tx);font-size:12.5px;font-weight:600;margin-top:12px;display:none}
+  .auth-btn{width:100%;justify-content:center;margin-top:20px;padding:12px}
+
   :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
 
   @media (max-width:820px){
@@ -339,17 +414,20 @@
   }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="appRoot" style="display:none">
   <header class="bar">
     <div class="bar-in">
-      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
-        <defs><linearGradient id="fl" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stop-color="#FF5C01"/><stop offset="1" stop-color="#FFAA00"/>
+      <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><linearGradient id="hosFlame" x1="0" y1="0" x2="1" y2="0.45">
+          <stop offset="0" stop-color="#F9A11B"/><stop offset="1" stop-color="#F05A00"/>
         </linearGradient></defs>
-        <path d="M17.6 2.2c.6 4.3-2.1 6.1-4.2 8.3-2.3 2.4-4.6 4.9-4.6 9 0 5.2 4 9.3 9 9.3s9-3.9 9-9.4c0-3.1-1.4-5.6-3-7.6-.5 1.7-1.6 2.6-2.7 2.9 1-3.6-.4-8.9-3.5-12.5Z" fill="url(#fl)"/>
+        <circle cx="50" cy="50" r="50" fill="#0A0A0A"/>
+        <path d="M29 26 L71 26 L81 34 C83.5 39.5 80 46 72.5 46 L24.5 46 L24.5 30.5 C24.5 28 26.3 26 29 26 Z" fill="url(#hosFlame)"/>
+        <path d="M35 52 L65 52 L50 76 Z" fill="#FFFFFF"/>
       </svg>
       <div class="brand-txt">
         <b>De Commerciële Dugout</b>
@@ -360,6 +438,9 @@
       <button class="icon-btn" id="themeBtn" title="Licht / donker" aria-label="Wissel thema">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       </button>
+      <button class="icon-btn" id="logoutBtn" title="Uitloggen" aria-label="Uitloggen" style="display:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
     </div>
   </header>
 
@@ -369,6 +450,7 @@
       <button class="tab" role="tab" aria-selected="false" data-view="tabel">Tabel</button>
       <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per merk</button>
       <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
     </nav>
 
     <!-- SHARED stats + toolbar (kanban + tabel) -->
@@ -384,7 +466,7 @@
       <div class="selectwrap"><select class="filter" id="fOwner" aria-label="Filter op wie contact had"><option value="">Iedereen (HoS)</option></select></div>
       <button class="btn-primary" id="addBtn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Nieuw contact
+        Nieuwe saleskans
       </button>
     </div>
 
@@ -431,7 +513,7 @@
     <section id="view-permerk" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 8.4 12 3 3.4 8.4v7.2L12 21l8.6-5.4Z" stroke-linejoin="round"/></svg>
-        Totaaloverzicht per merk · dealwaarde per fase incl. Afgevallen · Totaal-kolom is exclusief Afgevallen.
+        Totaaloverzicht per merk · dealwaarde per fase van de actieve pipeline · afgevallen/gewonnen kansen staan in het Archief.
       </p>
       <div class="card" id="permerkCard"></div>
     </section>
@@ -444,16 +526,52 @@
       </p>
       <div class="feed" id="feed"></div>
     </section>
+
+    <!-- ARCHIEF -->
+    <section id="view-archief" hidden>
+      <p class="hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" stroke-linejoin="round"/></svg>
+        Afgeronde en afgevallen kansen · <b>Benutte</b> saleskansen komen hier automatisch een week na de laatste fase · <b>Onbenutte</b> zodra je ze verwijdert. Klik een rij voor details of om terug te zetten.
+      </p>
+      <div class="arch-toggle">
+        <button class="arch-tab active" data-bucket="benut">Benutte saleskansen <span id="cntBenut">0</span></button>
+        <button class="arch-tab" data-bucket="onbenut">Onbenutte saleskansen <span id="cntOnbenut">0</span></button>
+      </div>
+      <div class="stats two" id="archStats"></div>
+      <p class="hint" style="margin-top:2px">Gegroepeerd per klant · klik een groep om de losse saleskansen uit/in te klappen.</p>
+      <div id="archGroups"></div>
+    </section>
   </div>
 </div>
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Contactdetails"></aside>
+<div class="modal-scrim" id="modalScrim"><div class="modal" id="modalBox"></div></div>
+
+<div class="auth-scrim" id="authScrim">
+  <div class="auth-card">
+    <svg class="mark auth-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="hosFlame2" x1="0" y1="0" x2="1" y2="0.45"><stop offset="0" stop-color="#F9A11B"/><stop offset="1" stop-color="#F05A00"/></linearGradient></defs>
+      <circle cx="50" cy="50" r="50" fill="#0A0A0A"/>
+      <path d="M29 26 L71 26 L81 34 C83.5 39.5 80 46 72.5 46 L24.5 46 L24.5 30.5 C24.5 28 26.3 26 29 26 Z" fill="url(#hosFlame2)"/>
+      <path d="M35 52 L65 52 L50 76 Z" fill="#FFFFFF"/>
+    </svg>
+    <h1 class="auth-title">De Commerciële Dugout</h1>
+    <p class="auth-sub">Log in met je House of Sports-account.</p>
+    <label class="auth-lbl" for="authEmail">E-mail</label>
+    <input id="authEmail" class="auth-input" type="email" autocomplete="username" placeholder="jij@houseofsports.nl">
+    <label class="auth-lbl" for="authPw">Wachtwoord</label>
+    <input id="authPw" class="auth-input" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div class="auth-err" id="authErr"></div>
+    <button id="authBtn" class="btn-primary auth-btn">Inloggen</button>
+  </div>
+</div>
 
 <script>
 (function(){
   "use strict";
-  var TODAY = new Date(2026,6,10); // 10 juli 2026
+  var _now = new Date();
+  var TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()); // echte datum van vandaag
 
   var UNITS = ["HYROX","Schaatsen","BAT","TEN","SPEX","HOS Algemeen","Athletes"];
   var OWNERS = ["Tom T","Michelle","Bart","Koen","Geoffrey","Dille"];
@@ -487,77 +605,233 @@
     "Univé Dichtbij":          {ini:"UD", bg:"#4C9F38", fg:"#FFFFFF"},
     "Univé Zuid-Nederland":    {ini:"UZ", bg:"#3B8A2C", fg:"#FFFFFF"},
     "Univé Het Groene Hart":   {ini:"UG", bg:"#5FB247", fg:"#1A1A1A"},
-    "Decathlon":               {ini:"DE", bg:"#0082C3", fg:"#FFFFFF"}
+    "Decathlon":               {ini:"DE", bg:"#0082C3", fg:"#FFFFFF"},
+    "HYROX":                   {ini:"HY", bg:"#0A0A0A", fg:"#D9FB06"},
+    "Atleten":                 {ini:"AT", bg:"#FF5C01", fg:"#FFFFFF"}
   };
 
   var data = [
-    {id:1, klant:"ARAG", contact:"Sanne de Groot", functie:"Hoofd Sponsoring",
-     email:"s.degroot@arag.nl", tel:"+31 6 21 44 88 03", owner:"Tom T", unit:"BAT", merk:"Schaatsen", waarde:45000,
-     fase:"Oriënterend gesprek", type:"Fysiek", actie:"Ongoing",
-     laatste:"2026-07-08", bijgewerkt:"2026-07-08",
-     opm:"Goede klik tijdens kantoorbezoek. Enthousiast over koppeling met het BAT-programma. Vervolgafspraak staat."},
-    {id:2, klant:"Univé Centraal", contact:"Mark Visser", functie:"Manager Merkactivatie",
-     email:"mark.visser@unive.nl", tel:"+31 6 18 22 90 55", owner:"Michelle", unit:"SPEX", merk:"Schaatsen", waarde:25000,
-     fase:"1e salescontact", type:"Telefonisch", actie:"Terugbellen",
-     laatste:"2026-07-01", bijgewerkt:"2026-07-02",
-     opm:"Eerste kennismaking gehad. Wil intern afstemmen over budget — medio juli terugbellen."},
-    {id:3, klant:"TOTO", contact:"Ricardo Molenaar", functie:"Brand Partnerships Lead",
-     email:"r.molenaar@toto.nl", tel:"+31 6 44 12 33 77", owner:"Bart", unit:"HYROX", merk:"HYROX", waarde:80000,
+    // ---- Univé Het Groene Hart (2 kansen) ----
+    {id:1, klant:"Univé Het Groene Hart", contact:"Sandra Bosch", functie:"Coördinator Sponsoring",
+     email:"s.bosch@unive.nl", tel:"+31 6 42 11 78 90", owner:"Geoffrey", unit:"HOS Algemeen", merk:"Feyenoord", waarde:40000,
      fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
-     laatste:"2026-06-24", bijgewerkt:"2026-06-25",
-     opm:"Plan wordt uitgewerkt, voorstel volgt komende week. Sterke interesse in HYROX-activatie."},
-    {id:4, klant:"Nederlandse Loterij", contact:"Petra Jansen", functie:"Sponsoring Manager",
-     email:"p.jansen@nederlandseloterij.nl", tel:"+31 6 55 90 11 22", owner:"Koen", unit:"TEN", merk:"HYROX", waarde:120000,
-     fase:"Voorstel akkoord", type:"Telefonisch", actie:"Ongoing",
-     laatste:"2026-07-09", bijgewerkt:"2026-07-09",
-     opm:"Akkoord op het voorstel! Contract opstellen en kick-off inplannen met het TEN-team."},
-    {id:5, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
-     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Geoffrey", unit:"HYROX", merk:"HYROX · Marathon", waarde:30000,
-     fase:"Afgevallen", type:"E-mail", actie:"Later contact opnemen",
-     laatste:"2026-05-28", bijgewerkt:"2026-05-29",
-     opm:"Momenteel geen budget beschikbaar. In Q4 opnieuw benaderen."},
-    {id:6, klant:"Jumbo", contact:"Iris Vermeer", functie:"Manager Sportsponsoring",
-     email:"i.vermeer@jumbo.com", tel:"+31 6 29 65 40 18", owner:"Dille", unit:"Athletes", merk:"Schaatsen · Sven Kramer", waarde:60000,
-     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
-     laatste:"2026-07-04", bijgewerkt:"2026-07-04",
-     opm:"Atletenkoppeling rond en contractueel vastgelegd. Activatiekalender opstellen."},
-    {id:7, klant:"Odido", contact:"Lars Willemsen", functie:"Head of Brand & Sponsoring",
-     email:"lars.willemsen@odido.nl", tel:"+31 6 24 71 09 32", owner:"Bart", unit:"HYROX", merk:"HYROX", waarde:55000,
-     fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
-     laatste:"2026-07-07", bijgewerkt:"2026-07-07",
-     opm:"Introductie via LinkedIn gestuurd. Interesse in HYROX-activatie richting jong publiek. Belafspraak plannen."},
-    {id:8, klant:"Upfront", contact:"Noor El Amrani", functie:"Partnerships Manager",
-     email:"noor@upfront.nl", tel:"+31 6 51 88 22 47", owner:"Michelle", unit:"SPEX", merk:"HYROX", waarde:20000,
-     fase:"Oriënterend gesprek", type:"Online meeting", actie:"Ongoing",
-     laatste:"2026-07-03", bijgewerkt:"2026-07-03",
-     opm:"Eerste call gehad. Willen meedenken over content en creators rond de events."},
-    {id:9, klant:"Zaptec", contact:"Erik Nordby", functie:"Marketing Lead Benelux",
-     email:"erik.nordby@zaptec.com", tel:"+31 6 39 44 71 05", owner:"Koen", unit:"HYROX", merk:"HYROX", waarde:35000,
-     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
-     laatste:"2026-06-30", bijgewerkt:"2026-07-01",
-     opm:"Voorstel gedeeld voor zichtbaarheid bij de laadpleinen op events. Wachten op interne go."},
-    {id:10, klant:"Univé Dichtbij", contact:"Marijke de Wit", functie:"Regiomanager Sponsoring",
-     email:"m.dewit@unive.nl", tel:"+31 6 18 55 33 21", owner:"Tom T", unit:"Schaatsen", merk:"Schaatsen", waarde:15000,
+     laatste:"2026-07-05", bijgewerkt:"2026-07-05", status:"actief",
+     opm:"Voorstel gedeeld voor regionale zichtbaarheid rond Feyenoord. Wacht op interne akkoord."},
+    {id:2, klant:"Univé Het Groene Hart", contact:"Sandra Bosch", functie:"Coördinator Sponsoring",
+     email:"s.bosch@unive.nl", tel:"+31 6 42 11 78 90", owner:"Dille", unit:"SPEX", merk:"Premier Padel", waarde:18000,
      fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
-     laatste:"2026-06-26", bijgewerkt:"2026-06-26",
-     opm:"Regionale interesse in schaatsactivatie. Budget nog onduidelijk — na de zomer terugkoppelen."},
-    {id:11, klant:"Univé Zuid-Nederland", contact:"Peter Hendriks", functie:"Manager Marketing",
-     email:"p.hendriks@unive.nl", tel:"+31 6 27 90 14 66", owner:"Geoffrey", unit:"Schaatsen", merk:"Schaatsen", waarde:40000,
+     laatste:"2026-06-24", bijgewerkt:"2026-06-24", status:"actief",
+     opm:"Interesse in padel-activatie via Premier Padel. Budget na de zomer duidelijk."},
+    // ---- Univé Centraal ----
+    {id:3, klant:"Univé Centraal", contact:"Mark Visser", functie:"Manager Merkactivatie",
+     email:"mark.visser@unive.nl", tel:"+31 6 18 22 90 55", owner:"Michelle", unit:"HOS Algemeen", merk:"Supporter van Sport", waarde:55000,
      fase:"Voorstel akkoord", type:"Fysiek", actie:"Ongoing",
-     laatste:"2026-07-05", bijgewerkt:"2026-07-05",
-     opm:"Akkoord op het voorstel voor regionale schaatsclinics. Contract in voorbereiding."},
-    {id:12, klant:"Univé Het Groene Hart", contact:"Sandra Bosch", functie:"Coördinator Sponsoring",
-     email:"s.bosch@unive.nl", tel:"+31 6 42 11 78 90", owner:"Dille", unit:"Schaatsen", merk:"Schaatsen", waarde:18000,
-     fase:"1e salescontact", type:"E-mail", actie:"Later contact opnemen",
-     laatste:"2026-06-20", bijgewerkt:"2026-06-20",
-     opm:"Eerste mail verstuurd met propositie. Nog geen reactie — over twee weken opvolgen."},
-    {id:13, klant:"Decathlon", contact:"Thomas Aerts", functie:"Sports Marketing Manager",
-     email:"thomas.aerts@decathlon.nl", tel:"+31 6 33 62 08 54", owner:"Bart", unit:"HOS Algemeen", merk:"HYROX · Hardlopen", waarde:90000,
+     laatste:"2026-07-08", bijgewerkt:"2026-07-08", status:"actief",
+     opm:"Akkoord op hoofdlijnen voor het 'Supporter van Sport'-programma. Contract in de maak."},
+    // ---- ARAG (2 kansen) ----
+    {id:4, klant:"ARAG", contact:"Sanne de Groot", functie:"Hoofd Sponsoring",
+     email:"s.degroot@arag.nl", tel:"+31 6 21 44 88 03", owner:"Bart", unit:"HYROX", merk:"HYROX", waarde:70000,
+     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
+     laatste:"2026-07-09", bijgewerkt:"2026-07-09", status:"actief",
+     opm:"Interesse als titelsponsor van een HYROX-event. Voorstel gedeeld, wacht op reactie."},
+    {id:5, klant:"ARAG", contact:"Ruben Smit", functie:"Inkoop & Partnerships",
+     email:"r.smit@arag.nl", tel:"+31 6 21 55 90 12", owner:"Koen", unit:"HOS Algemeen", merk:"KNVB", waarde:90000,
+     fase:"Oriënterend gesprek", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-06-30", bijgewerkt:"2026-06-30", status:"actief",
+     opm:"Verkennend gesprek over een KNVB-koppeling. Enthousiast; vervolg inplannen."},
+    // ---- Univé Dichtbij ----
+    {id:6, klant:"Univé Dichtbij", contact:"Marijke de Wit", functie:"Regiomanager Sponsoring",
+     email:"m.dewit@unive.nl", tel:"+31 6 18 55 33 21", owner:"Tom T", unit:"HOS Algemeen", merk:"sc Heerenveen", waarde:35000,
+     fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
+     laatste:"2026-07-07", bijgewerkt:"2026-07-07", status:"actief",
+     opm:"Introductie gestuurd voor een samenwerking rond sc Heerenveen."},
+    // ---- Upfront ----
+    {id:7, klant:"Upfront", contact:"Noor El Amrani", functie:"Partnerships Manager",
+     email:"noor@upfront.nl", tel:"+31 6 51 88 22 47", owner:"Michelle", unit:"BAT", merk:"BAT · Strategie", waarde:25000,
+     fase:"Oriënterend gesprek", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-07-03", bijgewerkt:"2026-07-03", status:"actief",
+     opm:"Meedenken over de BAT-strategie en inzet van creators."},
+    // ---- Eurojackpot · afgerond in archief (5) ----
+    {id:8, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Bart", unit:"HOS Algemeen", merk:"PSV", waarde:120000,
      fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
-     laatste:"2026-07-06", bijgewerkt:"2026-07-06",
-     opm:"Samenwerking rond breed sportaanbod contractueel vastgelegd. Uitrol per kwartaal plannen."}
+     laatste:"2026-06-10", bijgewerkt:"2026-06-19", status:"benut", won_at:"2026-06-12", archived_at:"2026-06-19",
+     afsluit_notitie:"Meerjarige clubdeal met PSV rond; getekend en geactiveerd.",
+     opm:"Meerjarige clubdeal met PSV rond; getekend en geactiveerd."},
+    {id:9, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Koen", unit:"HOS Algemeen", merk:"AZ", waarde:85000,
+     fase:"Contractueel/formeel vastgelegd", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-06-05", bijgewerkt:"2026-06-15", status:"benut", won_at:"2026-06-08", archived_at:"2026-06-15",
+     afsluit_notitie:"AZ-partnership getekend voor het komende seizoen.",
+     opm:"AZ-partnership getekend voor het komende seizoen."},
+    {id:10, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Geoffrey", unit:"HOS Algemeen", merk:"FC Twente", waarde:60000,
+     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-05-28", bijgewerkt:"2026-06-06", status:"benut", won_at:"2026-05-30", archived_at:"2026-06-06",
+     afsluit_notitie:"FC Twente-deal afgerond, activatie loopt.",
+     opm:"FC Twente-deal afgerond, activatie loopt."},
+    {id:11, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Dille", unit:"HOS Algemeen", merk:"Roda JC", waarde:30000,
+     fase:"Contractueel/formeel vastgelegd", type:"Telefonisch", actie:"Ongoing",
+     laatste:"2026-06-18", bijgewerkt:"2026-06-27", status:"benut", won_at:"2026-06-20", archived_at:"2026-06-27",
+     afsluit_notitie:"Roda JC contractueel vastgelegd.",
+     opm:"Roda JC contractueel vastgelegd."},
+    {id:12, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Michelle", unit:"HOS Algemeen", merk:"NEC", waarde:40000,
+     fase:"Contractueel/formeel vastgelegd", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-06-22", bijgewerkt:"2026-07-01", status:"benut", won_at:"2026-06-24", archived_at:"2026-07-01",
+     afsluit_notitie:"NEC-samenwerking rond en getekend.",
+     opm:"NEC-samenwerking rond en getekend."},
+    // ---- Eurojackpot · nog open (3) ----
+    {id:13, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Bart", unit:"HOS Algemeen", merk:"De Graafschap", waarde:28000,
+     fase:"Propositie/voorstel gedeeld", type:"Telefonisch", actie:"Saleskans",
+     laatste:"2026-07-04", bijgewerkt:"2026-07-04", status:"actief",
+     opm:"Voorstel gedeeld voor De Graafschap. Wacht op akkoord."},
+    {id:14, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Koen", unit:"HOS Algemeen", merk:"Heracles", waarde:32000,
+     fase:"Oriënterend gesprek", type:"E-mail", actie:"Terugbellen",
+     laatste:"2026-06-26", bijgewerkt:"2026-06-26", status:"actief",
+     opm:"Eerste interesse van Heracles. Half juli opvolgen."},
+    {id:15, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Geoffrey", unit:"HOS Algemeen", merk:"Volendam", waarde:26000,
+     fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
+     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief",
+     opm:"Introductie gestuurd voor een samenwerking met FC Volendam."},
+    // ---- HYROX (3 kansen) ----
+    {id:16, klant:"HYROX", contact:"Mark de Vries", functie:"Brand Manager",
+     email:"m.devries@rexona.com", tel:"+31 6 22 41 88 09", owner:"Bart", unit:"HYROX", merk:"Rexona", waarde:65000,
+     fase:"Voorstel akkoord", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-07-08", bijgewerkt:"2026-07-08", status:"actief",
+     opm:"Rexona akkoord op activatie bij de events. Contract opstellen."},
+    {id:17, klant:"HYROX", contact:"Jeroen Willems", functie:"Wervingscampagnes",
+     email:"partnerships@defensie.nl", tel:"+31 6 15 70 33 21", owner:"Koen", unit:"HYROX", merk:"Defensie", waarde:50000,
+     fase:"Oriënterend gesprek", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-06-28", bijgewerkt:"2026-06-28", status:"actief",
+     opm:"Defensie geïnteresseerd in recruitment-activatie bij HYROX-events."},
+    {id:18, klant:"HYROX", contact:"Noor El Amrani", functie:"Partnerships Manager",
+     email:"noor@upfront.nl", tel:"+31 6 51 88 22 47", owner:"Michelle", unit:"HYROX", merk:"Upfront", waarde:20000,
+     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
+     laatste:"2026-07-02", bijgewerkt:"2026-07-02", status:"actief",
+     opm:"Upfront wil content en creators leveren rond HYROX."},
+    // ---- Atleten (4 kansen) ----
+    {id:19, klant:"Atleten", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Athletes", merk:"Suzanne Schulting · Upfront", waarde:30000,
+     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
+     laatste:"2026-07-05", bijgewerkt:"2026-07-05", status:"actief",
+     opm:"Upfront als sponsor voor Suzanne Schulting; voorstel gedeeld."},
+    {id:20, klant:"Atleten", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Athletes", merk:"Suzanne Schulting · Team Essent", waarde:45000,
+     fase:"Voorstel akkoord", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-07-09", bijgewerkt:"2026-07-09", status:"actief",
+     opm:"Essent akkoord op teamsponsoring rond Schulting. Contract in de maak."},
+    {id:21, klant:"Atleten", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Athletes", merk:"Jenning de Boo · Upfront", waarde:22000,
+     fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
+     laatste:"2026-06-27", bijgewerkt:"2026-06-27", status:"actief",
+     opm:"Upfront interesse in Jenning de Boo. Half juli terugbellen."},
+    {id:22, klant:"Atleten", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Athletes", merk:"Botic van de Zandschulp · Indian Maharaja", waarde:38000,
+     fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
+     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief",
+     opm:"Indian Maharaja (tennis) interesse in Botic van de Zandschulp. Intro gestuurd."},
+
+    // ---- Onbenutte saleskansen (afgevallen) ----
+    {id:23, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
+     email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Bart", unit:"HOS Algemeen", merk:"Fortuna Sittard", waarde:24000,
+     fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Later contact opnemen",
+     laatste:"2026-06-12", bijgewerkt:"2026-06-19", status:"onbenut", archived_at:"2026-06-19",
+     verwijder_reden:"Club koos voor een andere partner.",
+     opm:"Voorstel gedeeld, maar de club koos voor een andere partner."},
+    {id:24, klant:"Univé Zuid-Nederland", contact:"Peter Hendriks", functie:"Manager Marketing",
+     email:"p.hendriks@unive.nl", tel:"+31 6 27 90 14 66", owner:"Geoffrey", unit:"Schaatsen", merk:"Schaatsclinics", waarde:20000,
+     fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Later contact opnemen",
+     laatste:"2026-05-30", bijgewerkt:"2026-06-05", status:"onbenut", archived_at:"2026-06-05",
+     verwijder_reden:"Budget dit seizoen niet rondgekomen.",
+     opm:"Interesse was er wel, maar het budget kwam dit seizoen niet rond."},
+
+    // ---- Benutte saleskansen · andere klanten (voor bundeling-demo in archief) ----
+    {id:25, klant:"ARAG", contact:"Sanne de Groot", functie:"Hoofd Sponsoring",
+     email:"s.degroot@arag.nl", tel:"+31 6 21 44 88 03", owner:"Tom T", unit:"Schaatsen", merk:"Schaatsclinics 2025", waarde:28000,
+     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-05-20", bijgewerkt:"2026-05-27", status:"benut", won_at:"2026-05-22", archived_at:"2026-05-27",
+     afsluit_notitie:"Schaatsclinics-seizoen 2025 volledig uitverkocht en geactiveerd.",
+     opm:"Schaatsclinics-seizoen 2025 volledig uitverkocht en geactiveerd."},
+    {id:26, klant:"ARAG", contact:"Ruben Smit", functie:"Inkoop & Partnerships",
+     email:"r.smit@arag.nl", tel:"+31 6 21 55 90 12", owner:"Bart", unit:"HOS Algemeen", merk:"Dam tot Damloop", waarde:42000,
+     fase:"Contractueel/formeel vastgelegd", type:"Online meeting", actie:"Ongoing",
+     laatste:"2026-06-08", bijgewerkt:"2026-06-16", status:"benut", won_at:"2026-06-10", archived_at:"2026-06-16",
+     afsluit_notitie:"Titelpartner Dam tot Damloop rond; contract getekend.",
+     opm:"Titelpartner Dam tot Damloop rond; contract getekend."},
+    {id:27, klant:"Univé Dichtbij", contact:"Marijke de Wit", functie:"Regiomanager Sponsoring",
+     email:"m.dewit@unive.nl", tel:"+31 6 18 55 33 21", owner:"Geoffrey", unit:"HOS Algemeen", merk:"sc Cambuur", waarde:30000,
+     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     laatste:"2026-06-14", bijgewerkt:"2026-06-21", status:"benut", won_at:"2026-06-16", archived_at:"2026-06-21",
+     afsluit_notitie:"Regionale sc Cambuur-samenwerking getekend.",
+     opm:"Regionale sc Cambuur-samenwerking getekend."}
   ];
   var seq = 100;
+
+  // ========================================================
+  //  SUPABASE DATALAAG
+  //  Plak hieronder je Project URL + anon public key
+  //  (Supabase -> Project Settings -> API). Zolang deze leeg
+  //  staan draait de app op de testdata hierboven, zonder op
+  //  te slaan. Zodra ze ingevuld zijn: alles gaat naar Supabase.
+  // ========================================================
+  var SUPA = {
+    url:  "https://qjiyznttmxlmctaqleay.supabase.co",        // Project URL (Commerciële dug-out)
+    anon: "sb_publishable_a7RD4-HRWQiMoYF_pAPisg_caxVvSKz"   // publishable key (veilig in de frontend)
+  };
+  var sb = null, USING_SUPABASE = false;
+
+  var DEAL_COLS = ["klant","contact","functie","email","tel","owner","unit","merk",
+    "waarde","fase","type","actie","laatste","bijgewerkt","opm","bijlagen",
+    "status","won_at","archived_at","afsluit_notitie","verwijder_reden"];
+
+  function toRow(r){
+    var o={}; DEAL_COLS.forEach(function(k){ if(r[k]!==undefined) o[k]=r[k]; });
+    return o;
+  }
+  function initSupabase(){
+    try{
+      if(SUPA.url.indexOf("http")===0 && SUPA.anon.length>20 && window.supabase){
+        sb = window.supabase.createClient(SUPA.url, SUPA.anon);
+        USING_SUPABASE = true;
+      }
+    }catch(e){ console.error("Supabase init faalde:",e); }
+  }
+  function loadDeals(cb){
+    if(!USING_SUPABASE){ cb(null); return; }
+    sb.from("deals").select("*").order("id").then(function(res){
+      if(res.error){ console.error("Laden faalde:",res.error); cb(null); return; }
+      cb(res.data||[]);
+    });
+  }
+  function saveDeal(r){
+    if(!USING_SUPABASE || !r) return;
+    var row=toRow(r);
+    if(r._new){
+      delete r._new;
+      sb.from("deals").insert(row).select().single().then(function(res){
+        if(res.error){ console.error("Insert faalde:",res.error); return; }
+        if(res.data) r.id=res.data.id;
+      });
+    } else {
+      sb.from("deals").update(row).eq("id",r.id).then(function(res){
+        if(res.error) console.error("Update faalde:",res.error);
+      });
+    }
+  }
+
+  // ---------- status / archief helpers ----------
+  var WON_FASE = "Contractueel/formeel vastgelegd"; // laatste pipeline-fase = gewonnen
+  function activeData(){ return data.filter(function(r){return (r.status||"actief")==="actief";}); }
+  function archived(kind){ return data.filter(function(r){return r.status===kind;}); }
+  function faseIndex(v){ for(var i=0;i<FASES.length;i++) if(FASES[i].v===v) return i; return 0; }
+  function isFiltered(){
+    return !!($("#q").value.trim() || $("#fUnit").value || $("#fFase").value || $("#fOwner").value);
+  }
 
   // ---------- helpers ----------
   function $(s,r){return (r||document).querySelector(s);}
@@ -592,22 +866,26 @@
   // ---------- populate filters ----------
   (function(){
     var u=$("#fUnit"); UNITS.forEach(function(x){u.appendChild(new Option(x,x));});
-    var f=$("#fFase"); FASES.forEach(function(x){f.appendChild(new Option(x.v,x.v));});
+    var f=$("#fFase"); PIPELINE_FASES.forEach(function(x){f.appendChild(new Option(x.v,x.v));});
     var o=$("#fOwner"); OWNERS.forEach(function(x){o.appendChild(new Option(x,x));});
   })();
 
   // ---------- render stats ----------
   function renderStats(){
-    var actief=0,aandacht=0,waarde=0;
-    data.forEach(function(r){
-      if(r.fase!=="Afgevallen"){ actief++; waarde+=(Number(r.waarde)||0); }
-      if(r.fase!=="Afgevallen" && (daysAgo(r.laatste)>30 || r.actie==="Terugbellen")) aandacht++;
+    var rows=currentRows();                 // gefilterde, actieve kansen
+    var totActief=activeData().length;
+    var aandacht=0,waarde=0;
+    rows.forEach(function(r){
+      waarde+=(Number(r.waarde)||0);
+      if(daysAgo(r.laatste)>30 || r.actie==="Terugbellen") aandacht++;
     });
+    var filtered=isFiltered();
     var cfg=[
-      {lbl:"Actieve trajecten",num:actief,sub:"van "+data.length+" contacten",cls:""},
-      {lbl:"Pipelinewaarde",num:euro(waarde),sub:"excl. afgevallen",cls:"",dot:"var(--green-tx)"},
+      {lbl:"Actieve trajecten",num:rows.length,sub:filtered?"binnen filter":"in de pipeline",cls:""},
+      {lbl:"Pipelinewaarde",num:euro(waarde),sub:filtered?"binnen filter":"excl. archief",cls:"",dot:"var(--green-tx)"},
       {lbl:"Aandacht nodig",num:aandacht,sub:">30 dgn stil of terugbellen",cls:"alert"},
-      {lbl:"Totaal contacten",num:data.length,sub:UNITS.length+" units",cls:""}
+      {lbl:filtered?"Getoond (gefilterd)":"Totaal actief",num:rows.length,
+       sub:filtered?("van "+totActief+" actieve kansen"):(UNITS.length+" units"),cls:""}
     ];
     var s=$("#stats"); s.innerHTML="";
     cfg.forEach(function(c){
@@ -616,14 +894,14 @@
                   "<div class='num'>"+c.num+"</div><div class='sub'>"+c.sub+"</div>";
       s.appendChild(d);
     });
-    $("#tabCount").textContent="("+data.length+")";
+    $("#tabCount").textContent="("+totActief+")";
   }
 
   // ---------- render table ----------
   function currentRows(){
     var q=$("#q").value.trim().toLowerCase();
     var fu=$("#fUnit").value, ff=$("#fFase").value, fo=$("#fOwner").value;
-    var rows=data.filter(function(r){
+    var rows=activeData().filter(function(r){
       if(fu&&r.unit!==fu)return false;
       if(ff&&r.fase!==ff)return false;
       if(fo&&r.owner!==fo)return false;
@@ -685,9 +963,15 @@
         sel.addEventListener("change",function(e){
           e.stopPropagation();
           var kind=sel.getAttribute("data-kind");
+          if(kind==="fase"){
+            // zelfde flow als in de kanban: kaart opent, datum -> vandaag, opmerking verplicht
+            requestFaseChange(r, sel.value);
+            renderTable();   // reset dropdown; echte wijziging volgt na opslaan in de kaart
+            return;
+          }
           r[kind]=sel.value;
-          sel.className="pill "+(kind==="fase"?faseColor(sel.value):actieColor(sel.value));
-          touch(r);
+          sel.className="pill "+actieColor(sel.value);
+          touch(r); saveDeal(r);
           // update bijgewerkt cell with flash
           var updCell=tr.children[8];
           updCell.innerHTML="<div class='upd flash'><span class='cdate'>"+fmt(r.bijgewerkt)+"</span><span class='rel'>"+rel(r.bijgewerkt)+"</span></div>";
@@ -719,15 +1003,23 @@
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
   // ---------- kanban ----------
-  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); }
+  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive(); }
 
-  // verplaats een deal naar een andere fase (via drag-drop) en sync alles
+  // centrale fase-wijziging (vanuit kanban-drag én tabel-dropdown)
+  function requestFaseChange(r, faseV){
+    if(!r || r.fase===faseV) return;
+    if(faseV===WON_FASE){
+      // laatste fase bereikt -> vastleggen + winst-flow
+      r.fase=faseV; r.laatste=iso(TODAY); touch(r); saveDeal(r); refreshAll();
+      openWinFlow(r);
+      return;
+    }
+    // andere fase -> open de kaart met verplichte opmerking; wijziging pas bij Opslaan
+    openDrawer(r, {pendingFase:faseV, requireNote:true});
+  }
   function moveToFase(id, faseV){
     var r=data.filter(function(x){return x.id===id;})[0];
-    if(!r || r.fase===faseV) return;
-    r.fase=faseV;
-    touch(r);                // "laatst bijgewerkt" -> vandaag
-    refreshAll();            // totalen per kolom, stats, tabel, per-merk, feed bewegen mee
+    requestFaseChange(r, faseV);
   }
 
   function renderKanban(){
@@ -806,30 +1098,30 @@
   function renderPerMerk(){
     var card=$("#permerkCard"); if(!card) return;
     var groups={};
-    data.forEach(function(r){
+    activeData().forEach(function(r){
       var m=primaryMerk(r.merk);
       if(!groups[m]) groups[m]={};
       groups[m][r.fase]=(groups[m][r.fase]||0)+(Number(r.waarde)||0);
     });
     var names=Object.keys(groups).sort();
     var html="<div class='tscroll'><table class='pm'><thead><tr><th>Merk</th>";
-    FASES.forEach(function(f){ html+="<th>"+esc(f.v)+"</th>"; });
+    PIPELINE_FASES.forEach(function(f){ html+="<th>"+esc(f.v)+"</th>"; });
     html+="<th>Totaal</th></tr></thead><tbody>";
     var colTot={}, grand=0;
     names.forEach(function(m){
       html+="<tr><td class='pm-merk'>"+esc(m)+"</td>";
       var rowTot=0;
-      FASES.forEach(function(f){
+      PIPELINE_FASES.forEach(function(f){
         var v=groups[m][f.v]||0;
         colTot[f.v]=(colTot[f.v]||0)+v;
-        if(f.v!=="Afgevallen") rowTot+=v;
+        rowTot+=v;
         html+="<td class='pm-val"+(v?"":" pm-zero")+"'>"+(v?euro(v):"–")+"</td>";
       });
       grand+=rowTot;
       html+="<td class='pm-tot'>"+euro(rowTot)+"</td></tr>";
     });
     html+="<tr class='pm-total-row'><td>Totaal</td>";
-    FASES.forEach(function(f){ html+="<td class='pm-val'>"+euro(colTot[f.v]||0)+"</td>"; });
+    PIPELINE_FASES.forEach(function(f){ html+="<td class='pm-val'>"+euro(colTot[f.v]||0)+"</td>"; });
     html+="<td class='pm-tot'>"+euro(grand)+"</td></tr>";
     html+="</tbody></table></div>";
     card.innerHTML=html;
@@ -838,7 +1130,7 @@
   // ---------- feed ----------
   function renderFeed(){
     var f=$("#feed"); f.innerHTML="";
-    var rows=data.slice().sort(function(a,b){return a.laatste<b.laatste?1:-1;});
+    var rows=activeData().slice().sort(function(a,b){return a.laatste<b.laatste?1:-1;});
     rows.forEach(function(r){
       var b=brand(r.klant);
       var n=el("div","note");
@@ -853,7 +1145,7 @@
           "</div>"+
           "<div class='note-txt'>"+esc(r.opm||"—")+"</div>"+
         "</div>";
-      n.addEventListener("click",function(){switchView("pipeline");openDrawer(r);});
+      n.addEventListener("click",function(){switchView("kanban");openDrawer(r);});
       n.style.cursor="pointer";
       f.appendChild(n);
     });
@@ -862,22 +1154,66 @@
   // ---------- drawer ----------
   var drawer=$("#drawer"), scrim=$("#scrim");
   function optionsHtml(list,val){return list.map(function(o){var v=o.v||o;return "<option"+(v===val?" selected":"")+">"+esc(v)+"</option>";}).join("");}
+  function faseOptions(val){
+    var list=PIPELINE_FASES.slice();
+    if(val && !list.some(function(f){return f.v===val;})) list=list.concat([{v:val}]); // bewaar bv. 'Afgevallen' van gearchiveerde kaart
+    return optionsHtml(list,val);
+  }
 
-  function openDrawer(r){
+  // ---- keuzelijsten met "Nieuw" (voorkomt dubbele/verkeerd gespelde invoer) ----
+  function distinctVals(field, base){
+    var set={};
+    (base||[]).forEach(function(v){ if(v) set[v]=1; });
+    data.forEach(function(r){ if(r[field]&&String(r[field]).trim()) set[r[field]]=1; });
+    return Object.keys(set).sort(function(a,b){return a.localeCompare(b,"nl");});
+  }
+  function klantList(){ return distinctVals("klant", Object.keys(BRANDS)); }
+  function unitList(){ return distinctVals("unit", UNITS); }
+  function merkList(){ return distinctVals("merk", []); }
+  function newSelectOptions(list, val){
+    var html="<option value='__new__'>➕ Nieuw toevoegen…</option>";
+    var found=false;
+    list.forEach(function(v){ if(v===val) found=true; html+="<option"+(v===val?" selected":"")+">"+esc(v)+"</option>"; });
+    if(val && !found) html+="<option selected>"+esc(val)+"</option>"; // bestaande, niet-standaard waarde behouden
+    return html;
+  }
+  function wireNewSelect(selId, inputId){
+    var sel=$(selId), inp=$(inputId); if(!sel||!inp) return;
+    function upd(){ var isNew=sel.value==="__new__"; inp.style.display=isNew?"":"none"; if(isNew) inp.focus(); }
+    sel.addEventListener("change",upd); upd();
+  }
+  function readNewSelect(selId, inputId){
+    var sel=$(selId), inp=$(inputId); if(!sel) return "";
+    if(sel.value==="__new__") return (inp&&inp.value||"").trim();
+    return sel.value;
+  }
+
+  function openDrawer(r, opts){
+    opts=opts||{};
     var isNew=!r;
     if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:UNITS[0],merk:"",waarde:0,
-      fase:FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:""}; }
+      fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"}; }
+    var isArchived=!isNew && (r.status==="benut"||r.status==="onbenut");
+    var requireNote=!!opts.requireNote;
+    var showFase=opts.pendingFase||r.fase;                 // fase-veld toont (nieuwe) fase
+    var showLaatste=requireNote?iso(TODAY):r.laatste;      // datum laatste contact -> vandaag bij verplaatsen
+    var initialOpm=(r.opm||"");
+    var bundle=(!isNew && r.klant) ? activeData().filter(function(d){return d.klant===r.klant;}) : [];
     var b=brand(r.klant);
     drawer.innerHTML=
       "<div class='drawer-head'>"+
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+(isNew?"+":b.ini)+"</span>"+
-        "<div><div class='drawer-title'>"+(isNew?"Nieuw contact":esc(r.klant))+"</div>"+
-        "<div class='drawer-sub'>"+(isNew?"Voeg een klant of contact toe":esc(r.contact)+" · "+esc(r.functie))+"</div></div>"+
+        "<div><div class='drawer-title'>"+(isNew?"Nieuwe saleskans":esc(r.klant))+"</div>"+
+        "<div class='drawer-sub'>"+(isNew?"Voeg een nieuwe saleskans toe":esc(r.contact)+" · "+esc(r.functie))+"</div></div>"+
         "<button class='closex' id='dClose' aria-label='Sluiten'><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M18 6 6 18M6 6l12 12'/></svg></button>"+
       "</div>"+
       "<div class='drawer-body'>"+
+        (requireNote?"<div class='move-banner'>Je verplaatst deze kans naar <b>"+esc(showFase)+"</b>. Datum laatste contact is op vandaag gezet — <b>werk de opmerking bij</b> om op te slaan.</div>":"")+
+        (bundle.length>1?"<div class='bundle-banner'>📎 "+esc(r.klant)+" heeft <b>"+bundle.length+" open saleskansen</b> — dit is er één van.</div>":"")+
         (isNew?
-          "<div class='fld'><label>Bedrijfsnaam</label><input id='d_klant' placeholder='Bijv. ARAG'></div>":"")+
+          "<div class='fld'><label>Bedrijfsnaam of label</label>"+
+            "<select id='d_klant' class='newsel'>"+newSelectOptions(klantList(), r.klant)+"</select>"+
+            "<input id='d_klant_new' class='newinput' placeholder='Nieuwe bedrijfsnaam of label…' style='display:none;margin-top:8px'></div>":"")+
         "<div class='fld'><label>Contactpersoon</label><input id='d_contact' value='"+esc(r.contact)+"' placeholder='Naam'></div>"+
         "<div class='fld'><label>Functie</label><input id='d_functie' value='"+esc(r.functie)+"' placeholder='Functie'></div>"+
         "<div class='row2'>"+
@@ -890,21 +1226,26 @@
           "</div>":"")+
         "<div class='row2'>"+
           "<div class='fld'><label>Laatst contact gehad door</label><select id='d_owner'>"+optionsHtml(OWNERS,r.owner)+"</select></div>"+
-          "<div class='fld'><label>Unit</label><select id='d_unit'>"+optionsHtml(UNITS,r.unit)+"</select></div>"+
+          "<div class='fld'><label>Unit</label>"+
+            "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
+            "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>"+
         "</div>"+
         "<div class='row2'>"+
-          "<div class='fld'><label>Sport / merk / atleet</label><input id='d_merk' value='"+esc(r.merk)+"' placeholder='Bijv. Schaatsen · Sven Kramer'></div>"+
+          "<div class='fld'><label>Sport / merk / atleet</label>"+
+            "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk)+"</select>"+
+            "<input id='d_merk_new' class='newinput' placeholder='Nieuwe saleskans…' style='display:none;margin-top:8px'></div>"+
           "<div class='fld'><label>Dealwaarde (€)</label><input id='d_waarde' type='number' min='0' step='500' value='"+(Number(r.waarde)||0)+"' placeholder='0'></div>"+
         "</div>"+
         "<div class='row2'>"+
-          "<div class='fld'><label>Fase</label><select id='d_fase'>"+optionsHtml(FASES,r.fase)+"</select></div>"+
+          "<div class='fld'><label>Fase</label><select id='d_fase'>"+faseOptions(showFase)+"</select></div>"+
           "<div class='fld'><label>Actie</label><select id='d_actie'>"+optionsHtml(ACTIES,r.actie)+"</select></div>"+
         "</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Type contact</label><select id='d_type'>"+optionsHtml(TYPES,r.type)+"</select></div>"+
-          "<div class='fld'><label>Datum laatste contact</label><input id='d_laatste' type='date' value='"+r.laatste+"'></div>"+
+          "<div class='fld'><label>Datum laatste contact</label><input id='d_laatste' type='date' value='"+showLaatste+"'></div>"+
         "</div>"+
-        "<div class='fld'><label>Opmerkingen</label><textarea id='d_opm' placeholder='Wat is er besproken?'>"+esc(r.opm)+"</textarea></div>"+
+        "<div class='fld'><label>Opmerkingen"+(requireNote?" <span class='req'>· verplicht bijwerken</span>":"")+"</label>"+
+          "<textarea id='d_opm' class='"+(requireNote?"need-note":"")+"' placeholder='Wat is er besproken? Werk dit bij nu de fase verandert…'>"+esc(r.opm)+"</textarea></div>"+
         "<div class='fld'><label>Bijlagen</label>"+
           "<div id='d_bijlagen' class='attach-list'></div>"+
           "<label class='attach-add'>"+
@@ -914,15 +1255,35 @@
         "</div>"+
       "</div>"+
       "<div class='drawer-foot'>"+
+        (isNew?"":(isArchived
+          ? "<button class='btn-ghost' id='dRestore' title='Terug naar de pipeline'>↩ Terugzetten</button>"
+          : "<button class='btn-ghost del' id='dDelete' title='Uit de pipeline halen'>🗑 Verwijderen</button>"))+
         "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"Laatst bijgewerkt "+fmt(r.bijgewerkt))+"</span>"+
         "<button class='btn-ghost' id='dCancel'>Annuleren</button>"+
-        "<button class='btn-primary' id='dSave'>"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
+        "<button class='btn-primary' id='dSave'"+(requireNote?" disabled":"")+">"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
       "</div>";
 
     drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false");
     scrim.classList.add("open");
 
     $("#dClose").onclick=closeDrawer; $("#dCancel").onclick=closeDrawer;
+    if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
+    if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
+    wireNewSelect("#d_klant","#d_klant_new");
+    wireNewSelect("#d_unit","#d_unit_new");
+    wireNewSelect("#d_merk","#d_merk_new");
+
+    // verplichte opmerking bij fase-verplaatsing: pas opslaan als 'ie is aangepast
+    if(requireNote){
+      var opmEl=$("#d_opm"), saveBtn=$("#dSave");
+      var checkNote=function(){
+        var changed = opmEl.value.trim().length>0 && opmEl.value.trim()!==initialOpm.trim();
+        saveBtn.disabled = !changed;
+        opmEl.classList.toggle("need-note", !changed);
+      };
+      opmEl.addEventListener("input",checkNote);
+      checkNote(); opmEl.focus();
+    }
 
     // ----- bijlagen (in-memory, demo) -----
     var dBijlagen=(r.bijlagen||[]).slice();
@@ -949,20 +1310,21 @@
     });
 
     $("#dSave").onclick=function(){
-      if(isNew){ r.klant=$("#d_klant").value.trim()||"Nieuwe klant"; }
+      if(isNew){ r.klant=readNewSelect("#d_klant","#d_klant_new")||"Nieuwe klant"; }
       r.contact=$("#d_contact").value.trim();
       r.functie=$("#d_functie").value.trim();
       r.email=$("#d_email").value.trim();
       r.tel=$("#d_tel").value.trim();
-      r.owner=$("#d_owner").value; r.unit=$("#d_unit").value; r.merk=$("#d_merk").value.trim();
+      r.owner=$("#d_owner").value; r.unit=readNewSelect("#d_unit","#d_unit_new"); r.merk=readNewSelect("#d_merk","#d_merk_new");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
       r.bijlagen=dBijlagen;
       r.bijgewerkt=iso(TODAY);
-      if(isNew) data.push(r);
-      closeDrawer(); renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed();
+      if(isNew){ r.status="actief"; r._new=true; data.push(r); }
+      saveDeal(r);
+      closeDrawer(); refreshAll();
     };
   }
   function closeDrawer(){ drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open"); }
@@ -976,6 +1338,7 @@
     $("#view-tabel").hidden = v!=="tabel";
     $("#view-permerk").hidden = v!=="permerk";
     $("#view-opmerkingen").hidden = v!=="opmerkingen";
+    $("#view-archief").hidden = v!=="archief";
     var pipe = (v==="kanban"||v==="tabel");
     $("#stats").style.display = pipe ? "" : "none";
     $("#pipeToolbar").style.display = pipe ? "" : "none";
@@ -983,6 +1346,7 @@
     if(v==="kanban") renderKanban();
     if(v==="tabel") renderTable();
     if(v==="permerk") renderPerMerk();
+    if(v==="archief") renderArchive();
   }
   document.querySelectorAll(".tab").forEach(function(t){t.addEventListener("click",function(){switchView(t.dataset.view);});});
 
@@ -1002,9 +1366,227 @@
     root.setAttribute("data-theme", cur==="dark"?"light":"dark");
   });
 
+  // ========================================================
+  //  MODALS (winst-flow, AFAS-reminder, verwijderen)
+  // ========================================================
+  var modalScrim=$("#modalScrim"), modalBox=$("#modalBox");
+  function closeModal(){ modalScrim.classList.remove("open"); modalBox.innerHTML=""; }
+  function showModal(html){ modalBox.innerHTML=html; modalScrim.classList.add("open"); }
+  modalScrim.addEventListener("click",function(e){ if(e.target===modalScrim) closeModal(); });
+
+  // Stap 1 bij winst: verplichte notitie "hoe is de kans benut?"
+  function openWinFlow(r){
+    r.won_at = r.won_at || iso(TODAY);
+    saveDeal(r);
+    showModal(
+      "<div class='modal-ico win'>🏆</div>"+
+      "<h3>Saleskans gewonnen 🎉</h3>"+
+      "<p><b>"+esc(r.klant)+"</b> staat nu in de laatste fase. Leg kort vast <b>hoe deze kans is benut</b> — dit is verplicht.</p>"+
+      "<textarea id='m_note' placeholder='Bijv. deal, aanpak, contractwaarde, vervolgstappen…'>"+esc(r.afsluit_notitie||"")+"</textarea>"+
+      "<div class='modal-err' id='m_err'>Vul eerst even in hoe de kans benut is.</div>"+
+      "<div class='modal-foot'><button class='btn-primary' id='m_ok'>Opslaan</button></div>");
+    $("#m_ok").onclick=function(){
+      var v=$("#m_note").value.trim();
+      if(!v){ $("#m_err").style.display="block"; return; }
+      r.afsluit_notitie=v; touch(r); saveDeal(r);
+      openAfasReminder(r);
+    };
+  }
+  // Stap 2 bij winst: herinnering AFAS
+  function openAfasReminder(r){
+    showModal(
+      "<div class='modal-ico afas'>📌</div>"+
+      "<h3>Niet vergeten: zet dit in AFAS</h3>"+
+      "<p>Voeg <b>"+esc(r.klant)+"</b> ook toe als project in <b>AFAS</b>.<br>"+
+      "Klik je op ‘Ja, staat in AFAS’, dan gaat de kaart meteen naar <b>Benutte saleskansen</b>. "+
+      "Anders blijft 'ie nog een week in de pipeline en verhuist 'ie daarna vanzelf.</p>"+
+      "<div class='modal-foot'>"+
+        "<button class='btn-ghost' id='m_later'>Later</button>"+
+        "<button class='btn-primary' id='m_yes'>Ja, staat in AFAS</button>"+
+      "</div>");
+    $("#m_later").onclick=function(){ closeModal(); refreshAll(); };
+    $("#m_yes").onclick=function(){
+      r.status="benut"; r.archived_at=iso(TODAY); touch(r); saveDeal(r);
+      closeModal(); refreshAll();
+    };
+  }
+  // Verwijderen: vanaf fase 2 verplichte reden -> Onbenutte saleskansen
+  function openDeleteFlow(r){
+    var needReason = faseIndex(r.fase) >= 1; // vanaf 'Oriënterend gesprek' (fase 2) verplicht
+    showModal(
+      "<div class='modal-ico del'>🗑️</div>"+
+      "<h3>Kans uit de pipeline halen</h3>"+
+      "<p><b>"+esc(r.klant)+"</b> verhuist naar <b>Onbenutte saleskansen</b>."+
+        (needReason?" Geef verplicht aan <b>waarom deze niet is afgesloten</b>.":" Je mag eventueel een reden meegeven.")+"</p>"+
+      "<textarea id='m_note' placeholder='Waarom is dit niet afgesloten?'>"+esc(r.verwijder_reden||"")+"</textarea>"+
+      "<div class='modal-err' id='m_err'>Vul eerst een reden in.</div>"+
+      "<div class='modal-foot'>"+
+        "<button class='btn-ghost' id='m_cancel'>Annuleren</button>"+
+        "<button class='btn-danger' id='m_ok'>Verwijderen</button>"+
+      "</div>");
+    $("#m_cancel").onclick=closeModal;
+    $("#m_ok").onclick=function(){
+      var v=$("#m_note").value.trim();
+      if(needReason && !v){ $("#m_err").style.display="block"; return; }
+      r.verwijder_reden=v; r.status="onbenut"; r.archived_at=iso(TODAY); touch(r); saveDeal(r);
+      closeModal(); closeDrawer(); refreshAll();
+    };
+  }
+  function restoreDeal(r){
+    r.status="actief"; r.archived_at=null; touch(r); saveDeal(r);
+    closeDrawer(); refreshAll();
+  }
+
+  // ========================================================
+  //  ARCHIEF
+  // ========================================================
+  var archBucket="benut";
+  var archOpen={};   // welke klantgroepen open staan (key = bucket|klant)
+  function renderArchive(){
+    var nBenut=archived("benut").length, nOnbenut=archived("onbenut").length;
+    if($("#cntBenut")) $("#cntBenut").textContent=nBenut;
+    if($("#cntOnbenut")) $("#cntOnbenut").textContent=nOnbenut;
+    if($("#archCount")) $("#archCount").textContent="("+(nBenut+nOnbenut)+")";
+    var host=$("#archGroups"); if(!host) return;
+    var isBenut=archBucket==="benut";
+    var rows=archived(archBucket);
+
+    // ----- samenvatting boven het archief -----
+    var totVal=rows.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
+    var klantSet={}; rows.forEach(function(r){klantSet[r.klant]=1;});
+    var nKlant=Object.keys(klantSet).length;
+    var st=$("#archStats");
+    if(st){ st.innerHTML=
+      "<div class='stat'><div class='lbl'>Aantal "+(isBenut?"benut":"onbenut")+"</div><div class='num'>"+rows.length+
+        "</div><div class='sub'>saleskansen · "+nKlant+" klant"+(nKlant===1?"":"en")+"</div></div>"+
+      "<div class='stat'><div class='lbl'>Waarde "+(isBenut?"benut":"onbenut")+"</div><div class='num'>"+euro(totVal)+
+        "</div><div class='sub'>totaal gearchiveerd</div></div>"; }
+
+    // ----- groeperen per klant -----
+    var groups={};
+    rows.forEach(function(r){ (groups[r.klant]=groups[r.klant]||[]).push(r); });
+    var names=Object.keys(groups).sort(function(a,b){
+      return groups[b].length-groups[a].length || a.localeCompare(b,"nl");
+    });
+    host.innerHTML="";
+    if(!names.length){
+      host.innerHTML="<div class='card'><div class='empty'>Nog geen "+(isBenut?"benutte":"onbenutte")+" saleskansen.</div></div>";
+      return;
+    }
+    names.forEach(function(k){
+      var list=groups[k].slice().sort(function(a,b){
+        var x=String(a.archived_at||""),y=String(b.archived_at||""); return x<y?1:(x>y?-1:0);
+      });
+      var val=list.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
+      var last=list[0]&&list[0].archived_at;
+      var b=brand(k);
+      var key=archBucket+"|"+k, open=!!archOpen[key];
+      var grp=el("div","arch-group"+(open?" open":""));
+      var head=el("div","arch-ghead");
+      head.innerHTML=
+        "<span class='arch-chev'>▸</span>"+
+        "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
+        "<span class='arch-gname'>"+esc(k)+"</span>"+
+        "<span class='arch-gcount'>"+list.length+" "+(list.length===1?"kans":"kansen")+"</span>"+
+        "<span class='arch-gval'>"+euro(val)+"</span>"+
+        "<span class='arch-glast'>"+(last?"laatst: "+fmt(String(last).slice(0,10)):"")+"</span>";
+      head.addEventListener("click",function(){ archOpen[key]=!archOpen[key]; renderArchive(); });
+      grp.appendChild(head);
+      var body=el("div","arch-gbody");
+      list.forEach(function(r){
+        var note=isBenut?(r.afsluit_notitie||r.opm||"—"):(r.verwijder_reden||"—");
+        var row=el("div","arch-grow");
+        row.innerHTML=
+          "<span class='arch-merk'><div class='mcell'>"+merkChips(r.merk)+"</div></span>"+
+          "<span class='arch-rval'>"+euro(r.waarde)+"</span>"+
+          "<span class='arch-rnote'>"+esc(note)+"</span>"+
+          "<span class='arch-rdate'>"+(r.archived_at?fmt(String(r.archived_at).slice(0,10)):"—")+"</span>";
+        row.addEventListener("click",function(){ openDrawer(r); });
+        body.appendChild(row);
+      });
+      grp.appendChild(body);
+      host.appendChild(grp);
+    });
+  }
+  document.querySelectorAll(".arch-tab").forEach(function(t){
+    t.addEventListener("click",function(){
+      document.querySelectorAll(".arch-tab").forEach(function(x){x.classList.remove("active");});
+      t.classList.add("active");
+      archBucket=t.getAttribute("data-bucket");
+      renderArchive();
+    });
+  });
+
+  // Automatisch: >7 dagen in de laatste fase -> naar Benutte saleskansen
+  function autoArchive(){
+    data.forEach(function(r){
+      if((r.status||"actief")==="actief" && r.fase===WON_FASE && r.won_at && daysAgo(String(r.won_at).slice(0,10))>=7){
+        r.status="benut"; r.archived_at=iso(TODAY); saveDeal(r);
+      }
+    });
+  }
+
   // ---------- init ----------
-  renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed();
-  switchView("kanban");
+  function boot(){
+    renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive();
+    switchView("kanban");
+  }
+  function bootApp(){
+    loadDeals(function(rows){
+      if(rows && rows.length){
+        data.length=0;
+        rows.forEach(function(r){ r.bijlagen=r.bijlagen||[]; data.push(r); });
+      }
+      autoArchive();
+      boot();
+    });
+  }
+
+  // ---------- login (Supabase Auth) ----------
+  var appRoot=$("#appRoot"), authScrim=$("#authScrim");
+  function showApp(){
+    if(authScrim) authScrim.classList.remove("show");
+    if(appRoot) appRoot.style.display="";
+    if($("#logoutBtn")) $("#logoutBtn").style.display="";
+  }
+  function showLogin(){
+    if(authScrim) authScrim.classList.add("show");
+    if(appRoot) appRoot.style.display="none";
+    if($("#logoutBtn")) $("#logoutBtn").style.display="none";
+    var e=$("#authEmail"); if(e) e.focus();
+  }
+  function doLogin(){
+    var email=($("#authEmail").value||"").trim(), pw=$("#authPw").value||"";
+    var err=$("#authErr"); err.style.display="none";
+    if(!email||!pw){ err.textContent="Vul je e-mail en wachtwoord in."; err.style.display="block"; return; }
+    var btn=$("#authBtn"); btn.disabled=true; btn.textContent="Bezig met inloggen…";
+    sb.auth.signInWithPassword({email:email,password:pw}).then(function(res){
+      btn.disabled=false; btn.textContent="Inloggen";
+      if(res.error){ err.textContent="Inloggen mislukt: "+(res.error.message||"controleer je gegevens"); err.style.display="block"; return; }
+      showApp(); bootApp();
+    });
+  }
+  function doLogout(){ if(USING_SUPABASE && sb) sb.auth.signOut().then(function(){ location.reload(); }); }
+
+  function start(){
+    initSupabase();
+    if(!USING_SUPABASE){ showApp(); bootApp(); return; }   // offline/testmodus zonder login
+    if($("#authBtn")) $("#authBtn").onclick=doLogin;
+    if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
+    if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
+    if($("#logoutBtn")) $("#logoutBtn").onclick=doLogout;
+    sb.auth.getSession().then(function(res){
+      if(res.data && res.data.session){ showApp(); bootApp(); }
+      else { showLogin(); }
+    });
+  }
+  // wacht kort tot de Supabase-bibliotheek geladen is (CDN), val anders terug op testdata
+  if(window.supabase){ start(); }
+  else {
+    var _t=0, _iv=setInterval(function(){
+      if(window.supabase || ++_t>50){ clearInterval(_iv); start(); }
+    },100);
+  }
 })();
 </script>
 </body>
