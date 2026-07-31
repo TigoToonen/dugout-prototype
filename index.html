@@ -91,7 +91,7 @@
     backdrop-filter:saturate(1.4) blur(10px); border-bottom:1px solid var(--border);
   }
   .bar-in{max-width:1220px; margin:0 auto; padding:14px 24px; display:flex; align-items:center; gap:14px}
-  .mark{width:30px;height:30px;flex:0 0 auto;display:block}
+  .mark{width:30px;height:30px;flex:0 0 auto;display:block;object-fit:contain;border-radius:50%}
   .brand-txt{display:flex; flex-direction:column; line-height:1.05}
   .brand-txt b{font-size:16px; font-weight:800; letter-spacing:-.01em}
   .brand-txt span{font-size:10.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--text-soft); font-weight:600}
@@ -424,14 +424,7 @@
 <div class="app" id="appRoot" style="display:none">
   <header class="bar">
     <div class="bar-in">
-      <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
-        <defs><linearGradient id="hosFlame" x1="0" y1="0" x2="1" y2="0.45">
-          <stop offset="0" stop-color="#F9A11B"/><stop offset="1" stop-color="#F05A00"/>
-        </linearGradient></defs>
-        <circle cx="50" cy="50" r="50" fill="#0A0A0A"/>
-        <path d="M29 27 L72 27 C79 27 84 31 84 36 C84 41 79 45 72 45 L26 45 L26 30 C26 28.3 27.3 27 29 27 Z" fill="url(#hosFlame)"/>
-        <path d="M35 52 L65 52 L50 76 Z" fill="#FFFFFF"/>
-      </svg>
+      <img class="mark" src="HOS_Profielfoto-LINKEDIN_400x400.png" alt="House of Sports">
       <div class="brand-txt">
         <b>De Commerciële Dugout</b>
         <span>Sportfabriek · Sales</span>
@@ -552,12 +545,7 @@
 
 <div class="auth-scrim" id="authScrim">
   <div class="auth-card">
-    <svg class="mark auth-mark" viewBox="0 0 100 100" aria-hidden="true">
-      <defs><linearGradient id="hosFlame2" x1="0" y1="0" x2="1" y2="0.45"><stop offset="0" stop-color="#F9A11B"/><stop offset="1" stop-color="#F05A00"/></linearGradient></defs>
-      <circle cx="50" cy="50" r="50" fill="#0A0A0A"/>
-      <path d="M29 27 L72 27 C79 27 84 31 84 36 C84 41 79 45 72 45 L26 45 L26 30 C26 28.3 27.3 27 29 27 Z" fill="url(#hosFlame2)"/>
-      <path d="M35 52 L65 52 L50 76 Z" fill="#FFFFFF"/>
-    </svg>
+    <img class="mark auth-mark" src="HOS_Profielfoto-LINKEDIN_400x400.png" alt="House of Sports">
     <h1 class="auth-title">De Commerciële Dugout</h1>
     <p class="auth-sub">Log in met je House of Sports-account.</p>
     <label class="auth-lbl" for="authEmail">E-mail</label>
