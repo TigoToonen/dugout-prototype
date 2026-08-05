@@ -315,15 +315,21 @@
   .kcard-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--text-muted);border-top:1px dashed var(--border);padding-top:8px}
   .kcard-foot .owner{gap:6px}
   .kcard-foot .oav{width:20px;height:20px;font-size:9px}
-  .kcard-top .kcard-klant{flex:1;line-height:1.15}
-  .kcard-unit{margin-left:auto;flex:0 0 auto;font-size:10.5px;padding:2px 8px}
-  .kcard-part{display:flex;align-items:center;gap:6px;font-size:12px}
-  .kcard-part-lbl{color:var(--text-soft)}
-  .chip-part{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 9px;font-weight:600}
+  .kcard-top{align-items:flex-start}
+  .kcard-top .avatar.sm{flex:0 0 auto;margin-top:1px}
+  .kcard-top .kcard-klant{flex:1 1 auto;min-width:0;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .kcard-unit{margin-left:auto;flex:0 0 auto;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;padding:2px 8px}
+  .kcard-part{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px}
+  .kcard-part-lbl{color:var(--text-soft);flex:0 0 auto}
+  .chip-part{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 9px;font-weight:600}
   .chip-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 auto}
-  .kcard-contact{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .chip-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard-contact{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
   .kcard-cp{font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard-foot .kcard-date{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard-foot .oav{width:24px;height:24px;font-size:10px;flex:0 0 auto}
   .dsec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-soft);margin:18px 0 2px;padding-top:14px;border-top:1px solid var(--border)}
+  .row2 > .fld > label{min-height:2.4em}
   .kcol-foot{padding:11px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center}
   .kcol-foot b{color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}
 
@@ -1085,11 +1091,11 @@
             "<span class='kcard-klant'>"+esc(r.klant)+"</span>"+
             "<span class='unit-pill kcard-unit'>"+esc(r.unit)+"</span></div>"+
           "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
-          (r.merk?"<div class='kcard-part'><span class='kcard-part-lbl'>Partnership</span><span class='chip-part'><span class='chip-dot'></span>"+esc(primaryMerk(r.merk))+"</span></div>":"")+
-          "<div class='kcard-foot' style='align-items:flex-end'>"+
+          (r.merk?"<div class='kcard-part'><span class='kcard-part-lbl'>Partnership</span><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(primaryMerk(r.merk))+"</span></span></div>":"")+
+          "<div class='kcard-foot'>"+
             "<div class='kcard-contact'><span class='kcard-cp'>"+esc(r.contact||"—")+"</span>"+
               "<span class='kcard-date'>Laatst contact "+fmt(r.laatste)+"</span></div>"+
-            "<span class='oav' title='Laatst contact gehad door'>"+ownerIni(r.owner)+"</span></div>"+
+            "<span class='oav' title='Accounthouder'>"+ownerIni(r.owner)+"</span></div>"+
           "</div>";
       });
       html+="</div>";
@@ -1256,7 +1262,7 @@
   function openDrawer(r, opts){
     opts=opts||{};
     var isNew=!r;
-    if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:UNITS[0],merk:"",waarde:0,
+    if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:"",merk:"",waarde:0,
       fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"}; }
     var isArchived=!isNew && (r.status==="benut"||r.status==="onbenut");
     var requireNote=!!opts.requireNote;
@@ -1265,6 +1271,20 @@
     var initialOpm=(r.opm||"");
     var bundle=(!isNew && r.klant) ? activeData().filter(function(d){return d.klant===r.klant;}) : [];
     var b=brand(r.klant);
+    var fWieHtml="<div class='fld'><label id='d_klant_lbl'>"+wieLabel(r.unit)+"</label>"+
+        "<select id='d_klant' class='newsel'>"+newSelectOptions(wieList(r.unit), r.klant)+"</select>"+
+        "<input id='d_klant_new' class='newinput' placeholder='Nieuw toevoegen…' style='display:none;margin-top:8px'></div>";
+    var fPartHtml="<div class='fld'><label>Partnership</label>"+
+        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk)+"</select>"+
+        "<input id='d_merk_new' class='newinput' placeholder='Nieuw partnership…' style='display:none;margin-top:8px'></div>";
+    var fUnitField="<div class='fld'><label>Unit</label>"+
+        "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
+        "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
+    var fUnitPicker="<div class='fld'><label>Unit <span class='req'>· kies dit eerst</span></label>"+
+        "<select id='d_unit' class='newsel'><option value='' selected>Kies unit…</option>"+
+        UNITS.map(function(u){return "<option>"+esc(u)+"</option>";}).join("")+
+        "<option value='__new__'>➕ Nieuw toevoegen…</option></select>"+
+        "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
     drawer.innerHTML=
       "<div class='drawer-head'>"+
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+(isNew?"+":b.ini)+"</span>"+
@@ -1275,15 +1295,9 @@
       "<div class='drawer-body'>"+
         (requireNote?"<div class='move-banner'>Je verplaatst deze kans naar <b>"+esc(showFase)+"</b>. Datum laatste contact is op vandaag gezet — <b>werk de opmerking bij</b> om op te slaan.</div>":"")+
         (bundle.length>1?"<div class='bundle-banner'>📎 "+esc(r.klant)+" heeft <b>"+bundle.length+" open saleskansen</b> — dit is er één van.</div>":"")+
-        "<div class='fld'><label id='d_klant_lbl'>"+wieLabel(r.unit)+"</label>"+
-          "<select id='d_klant' class='newsel'>"+newSelectOptions(wieList(r.unit), r.klant)+"</select>"+
-          "<input id='d_klant_new' class='newinput' placeholder='Nieuw toevoegen…' style='display:none;margin-top:8px'></div>"+
-        "<div class='fld'><label>Partnership</label>"+
-          "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk)+"</select>"+
-          "<input id='d_merk_new' class='newinput' placeholder='Nieuw partnership…' style='display:none;margin-top:8px'></div>"+
-        "<div class='fld'><label>Unit</label>"+
-          "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
-          "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>"+
+        (isNew
+          ? fUnitPicker+"<div id='d_rest' style='display:none'>"+fWieHtml+fPartHtml
+          : fWieHtml+fPartHtml+fUnitField)+
 
         "<div class='dsec'>Contactgegevens</div>"+
         "<div class='row2'>"+
@@ -1345,6 +1359,7 @@
             "Bijlage toevoegen<input type='file' id='d_file' multiple style='display:none'></label>"+
           "<div class='attach-hint'>Demo — bestanden worden nog niet echt opgeslagen.</div>"+
         "</div>"+
+        (isNew?"</div>":"")+
       "</div>"+
       "<div class='drawer-foot'>"+
         (isNew?"":(isArchived
@@ -1374,11 +1389,13 @@
         var u=curUnit();
         if(blk) blk.style.display=(u===ATLEET_UNIT)?"":"none";
         if(lbl) lbl.textContent=wieLabel(u);
+        var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
         var ks=$("#d_klant"); if(ks){ var cur=readNewSelect("#d_klant","#d_klant_new");
           ks.innerHTML=newSelectOptions(wieList(u), cur); wireNewSelect("#d_klant","#d_klant_new"); }
       }
       var us=$("#d_unit"); if(us) us.addEventListener("change",apply);
       var un=$("#d_unit_new"); if(un) un.addEventListener("input",apply);
+      apply();
     })();
 
     // ---- reminderstatus (maanden tot einddatum) ----
@@ -1431,6 +1448,7 @@
     });
 
     $("#dSave").onclick=function(){
+      if(isNew && !readNewSelect("#d_unit","#d_unit_new")){ var uEl=$("#d_unit"); if(uEl) uEl.focus(); return; }
       r.klant=readNewSelect("#d_klant","#d_klant_new")||(isNew?"":r.klant);
       var vn=($("#d_vn")&&$("#d_vn").value||"").trim(), an=($("#d_an")&&$("#d_an").value||"").trim();
       r.contact=(vn+" "+an).trim();
