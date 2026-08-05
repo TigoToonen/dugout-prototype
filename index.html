@@ -320,7 +320,13 @@
   .kcard-top .kcard-klant{flex:1 1 auto;min-width:0;line-height:1.2;overflow-wrap:anywhere}
   .kcard-part{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px}
   .kcard-part-lbl{color:var(--text-soft);flex:0 0 auto}
-  .kcard-unit-sub{flex:0 0 auto;align-self:flex-end;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;color:var(--text-soft);font-weight:600}
+  .kcard-unit-sub{font-size:11px;color:var(--text-soft);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard-foot{align-items:flex-start}
+  .kcard-col{min-width:0}
+  .kcard-col.r{flex:0 0 auto;text-align:right}
+  .kcard-cap{font-size:10.5px;color:var(--text-soft)}
+  .kcard-v{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard-v.date{font-weight:600;font-variant-numeric:tabular-nums}
   .kcard-red{border-color:var(--red-bd);background:var(--red-bg)}
   .kcard-red:hover{border-color:var(--red-tx)}
   tr.row-red td{background:var(--red-bg)}
@@ -482,7 +488,7 @@
       </div>
       <div class="selectwrap"><select class="filter" id="fUnit" aria-label="Filter unit"><option value="">Alle units</option></select></div>
       <div class="selectwrap"><select class="filter" id="fOwner" aria-label="Filter contactpersoon HoS"><option value="">Contactpersoon (HoS)</option></select></div>
-      <div class="selectwrap"><select class="filter" id="fWie" aria-label="Filter merk/atleet/spreker"><option value="">Merk / atleet / spreker</option></select></div>
+      <div class="selectwrap"><select class="filter" id="fWie" aria-label="Filter merk/atleet/spreker"><option value="">Merk / Partner</option></select></div>
       <div class="selectwrap"><select class="filter" id="fPartner" aria-label="Filter partnership"><option value="">Partnership</option></select></div>
       <button class="btn-primary" id="addBtn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -582,7 +588,7 @@
         </div>
         <div class="selectwrap"><select class="filter" id="afUnit"><option value="">Alle units</option></select></div>
         <div class="selectwrap"><select class="filter" id="afOwner"><option value="">Contactpersoon (HoS)</option></select></div>
-        <div class="selectwrap"><select class="filter" id="afWie"><option value="">Merk / atleet / spreker</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afWie"><option value="">Merk / Partner</option></select></div>
         <div class="selectwrap"><select class="filter" id="afPartner"><option value="">Partnership</option></select></div>
       </div>
       <div class="stats two" id="archStats"></div>
@@ -946,7 +952,7 @@
   var FILTERS=[
     {id:"fUnit",   field:"unit",  ph:"Alle units"},
     {id:"fOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
-    {id:"fWie",    field:"klant", ph:"Merk / atleet / spreker"},
+    {id:"fWie",    field:"klant", ph:"Merk / Partner"},
     {id:"fPartner",field:"merk",  ph:"Partnership"}
   ];
   function filterVals(){ var o={}; FILTERS.forEach(function(f){ var el=$("#"+f.id); o[f.id]=el?el.value:""; }); return o; }
@@ -1159,10 +1165,11 @@
             "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
           "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
           (r.merk?"<div class='kcard-part'><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(primaryMerk(r.merk))+"</span></span></div>":"")+
+          "<div class='kcard-unit-sub'>"+esc(r.unit)+"</div>"+
           "<div class='kcard-foot'>"+
-            "<div class='kcard-contact'><span class='kcard-cp'>"+esc(r.owner||"—")+"</span>"+
-              "<span class='kcard-date'>Laatst contact "+fmt(r.laatste)+"</span></div>"+
-            "<span class='kcard-unit-sub'>"+esc(r.unit)+"</span></div>"+
+            "<div class='kcard-col'><div class='kcard-cap'>Contact gehad</div><div class='kcard-v'>"+esc(r.owner||"—")+"</div></div>"+
+            "<div class='kcard-col r'><div class='kcard-cap'>Laatst contact</div><div class='kcard-v date'>"+fmt(r.laatste)+"</div></div>"+
+          "</div>"+
           "</div>";
       });
       html+="</div>";
@@ -1671,7 +1678,7 @@
   var ARCH_FILTERS=[
     {id:"afUnit",   field:"unit",  ph:"Alle units"},
     {id:"afOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
-    {id:"afWie",    field:"klant", ph:"Merk / atleet / spreker"},
+    {id:"afWie",    field:"klant", ph:"Merk / Partner"},
     {id:"afPartner",field:"merk",  ph:"Partnership"}
   ];
   function archPool(){ return archBucket==="alle" ? archived("benut").concat(archived("onbenut")) : archived(archBucket); }
