@@ -317,10 +317,14 @@
   .kcard-foot .oav{width:20px;height:20px;font-size:9px}
   .kcard-top{align-items:flex-start}
   .kcard-top .avatar.sm{flex:0 0 auto;margin-top:1px}
-  .kcard-top .kcard-klant{flex:1 1 auto;min-width:0;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .kcard-unit{margin-left:auto;flex:0 0 auto;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;padding:2px 8px}
+  .kcard-top .kcard-klant{flex:1 1 auto;min-width:0;line-height:1.2;overflow-wrap:anywhere}
   .kcard-part{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px}
   .kcard-part-lbl{color:var(--text-soft);flex:0 0 auto}
+  .kcard-unit-sub{flex:0 0 auto;align-self:flex-end;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;color:var(--text-soft);font-weight:600}
+  .kcard-red{border-color:var(--red-bd);background:var(--red-bg)}
+  .kcard-red:hover{border-color:var(--red-tx)}
+  tr.row-red td{background:var(--red-bg)}
+  tr.row-red:hover td{background:var(--red-bg)}
   .chip-part{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 9px;font-weight:600}
   .chip-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 auto}
   .chip-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -330,6 +334,8 @@
   .kcard-foot .oav{width:24px;height:24px;font-size:10px;flex:0 0 auto}
   .dsec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-soft);margin:18px 0 2px;padding-top:14px;border-top:1px solid var(--border)}
   .row2 > .fld > label{min-height:2.4em}
+  .save-err{color:var(--red-tx);font-size:12.5px;font-weight:700;margin-top:14px;padding:9px 11px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:9px}
+  .fld .need, select.need, input.need{border-color:var(--red-tx)!important;background:var(--red-bg)}
   .kcol-foot{padding:11px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center}
   .kcol-foot b{color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}
 
@@ -460,6 +466,7 @@
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="kanban">Pipeline<span class="cnt" id="tabCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="tabel">Tabel</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="aandacht">Aandacht nodig<span class="cnt" id="aandachtCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per unit</button>
       <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
       <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
@@ -508,7 +515,7 @@
                 <th>Contactpersoon</th>
                 <th>Laatst contact gehad door</th>
                 <th>Unit</th>
-                <th>Sport / merk / atleet</th>
+                <th>Merk / Atleet</th>
                 <th>Fase</th>
                 <th class="sortable" id="sortContact">Laatste contact <span class="arrow" id="arrContact"></span></th>
                 <th>Actie</th>
@@ -523,6 +530,23 @@
     </section>
 
     <!-- PER MERK -->
+    <!-- AANDACHT NODIG -->
+    <section id="view-aandacht" hidden>
+      <p class="hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+        Saleskansen die <b>meer dan 14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een rij voor details.
+      </p>
+      <div class="card tscroll">
+        <table>
+          <thead><tr>
+            <th>Merk / Atleet</th><th>Unit</th><th>Partnership</th>
+            <th>Accounthouder</th><th>Laatste contact</th><th>Waarde</th>
+          </tr></thead>
+          <tbody id="aandachtBody"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section id="view-permerk" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 8.4 12 3 3.4 8.4v7.2L12 21l8.6-5.4Z" stroke-linejoin="round"/></svg>
@@ -544,11 +568,22 @@
     <section id="view-archief" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" stroke-linejoin="round"/></svg>
-        Afgeronde en afgevallen kansen · <b>Benutte</b> saleskansen komen hier automatisch een week na de laatste fase · <b>Onbenutte</b> zodra je ze verwijdert. Klik een rij voor details of om terug te zetten.
+        Afgeronde en afgevallen kansen · <b>Benutte</b> saleskansen komen hier automatisch een week na de laatste fase · <b>Onbenutte</b> zodra je ze archiveert. Klik een rij voor details of om terug te zetten.
       </p>
       <div class="arch-toggle">
         <button class="arch-tab active" data-bucket="benut">Benutte saleskansen <span id="cntBenut">0</span></button>
         <button class="arch-tab" data-bucket="onbenut">Onbenutte saleskansen <span id="cntOnbenut">0</span></button>
+        <button class="arch-tab" data-bucket="alle">Alle gearchiveerd <span id="cntAlle">0</span></button>
+      </div>
+      <div class="toolbar" id="archToolbar">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="aq" type="search" placeholder="Zoek in archief…" aria-label="Zoeken in archief">
+        </div>
+        <div class="selectwrap"><select class="filter" id="afUnit"><option value="">Alle units</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afOwner"><option value="">Contactpersoon (HoS)</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afWie"><option value="">Merk / atleet / spreker</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afPartner"><option value="">Partnership</option></select></div>
       </div>
       <div class="stats two" id="archStats"></div>
       <p class="hint" style="margin-top:2px">Gegroepeerd per klant · klik een groep om de losse saleskansen uit/in te klappen.</p>
@@ -606,7 +641,7 @@
     {v:"Terugbellen",           c:"c-amber"},
     {v:"Later contact opnemen", c:"c-grey"}
   ];
-  var TYPES = ["Fysiek","Telefonisch","E-mail","Online meeting"];
+  var TYPES = ["Live","Telefonisch","E-mail","WhatsApp","Online meeting"];
 
   var BRANDS = {
     "ARAG":                    {ini:"AR", bg:"#F5B400", fg:"#1A1A1A"},
@@ -641,7 +676,7 @@
     // ---- Univé Centraal ----
     {id:3, klant:"Univé Centraal", contact:"Mark Visser", functie:"Manager Merkactivatie",
      email:"mark.visser@unive.nl", tel:"+31 6 18 22 90 55", owner:"Michelle", unit:"HoS Algemeen", merk:"Supporter van Sport", waarde:55000,
-     fase:"Voorstel akkoord", type:"Fysiek", actie:"Ongoing",
+     fase:"Voorstel akkoord", type:"Live", actie:"Ongoing",
      laatste:"2026-07-08", bijgewerkt:"2026-07-08", status:"actief",
      opm:"Akkoord op hoofdlijnen voor het 'Supporter van Sport'-programma. Contract in de maak."},
     // ---- ARAG (2 kansen) ----
@@ -652,7 +687,7 @@
      opm:"Interesse als titelsponsor van een HYROX-event. Voorstel gedeeld, wacht op reactie."},
     {id:5, klant:"ARAG", contact:"Ruben Smit", functie:"Inkoop & Partnerships",
      email:"r.smit@arag.nl", tel:"+31 6 21 55 90 12", owner:"Koen", unit:"HoS Algemeen", merk:"KNVB", waarde:90000,
-     fase:"Oriënterend gesprek", type:"Fysiek", actie:"Ongoing",
+     fase:"Oriënterend gesprek", type:"Live", actie:"Ongoing",
      laatste:"2026-06-30", bijgewerkt:"2026-06-30", status:"actief",
      opm:"Verkennend gesprek over een KNVB-koppeling. Enthousiast; vervolg inplannen."},
     // ---- Univé Dichtbij ----
@@ -670,7 +705,7 @@
     // ---- Eurojackpot · afgerond in archief (5) ----
     {id:8, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
      email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Bart", unit:"HoS Algemeen", merk:"PSV", waarde:120000,
-     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     fase:"Contractueel/formeel vastgelegd", type:"Live", actie:"Ongoing",
      laatste:"2026-06-10", bijgewerkt:"2026-06-19", status:"benut", won_at:"2026-06-12", archived_at:"2026-06-19",
      afsluit_notitie:"Meerjarige clubdeal met PSV rond; getekend en geactiveerd.",
      opm:"Meerjarige clubdeal met PSV rond; getekend en geactiveerd."},
@@ -682,7 +717,7 @@
      opm:"AZ-partnership getekend voor het komende seizoen."},
     {id:10, klant:"Eurojackpot", contact:"Daniël Bakker", functie:"Media & Partnerships",
      email:"d.bakker@eurojackpot.eu", tel:"+31 6 33 47 82 10", owner:"Geoffrey", unit:"HoS Algemeen", merk:"FC Twente", waarde:60000,
-     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     fase:"Contractueel/formeel vastgelegd", type:"Live", actie:"Ongoing",
      laatste:"2026-05-28", bijgewerkt:"2026-06-06", status:"benut", won_at:"2026-05-30", archived_at:"2026-06-06",
      afsluit_notitie:"FC Twente-deal afgerond, activatie loopt.",
      opm:"FC Twente-deal afgerond, activatie loopt."},
@@ -722,7 +757,7 @@
      opm:"Rexona akkoord op activatie bij de events. Contract opstellen."},
     {id:17, klant:"HYROX", contact:"Jeroen Willems", functie:"Wervingscampagnes",
      email:"partnerships@defensie.nl", tel:"+31 6 15 70 33 21", owner:"Koen", unit:"HYROX", merk:"Defensie", waarde:50000,
-     fase:"Oriënterend gesprek", type:"Fysiek", actie:"Ongoing",
+     fase:"Oriënterend gesprek", type:"Live", actie:"Ongoing",
      laatste:"2026-06-28", bijgewerkt:"2026-06-28", status:"actief",
      opm:"Defensie geïnteresseerd in recruitment-activatie bij HYROX-events."},
     {id:18, klant:"HYROX", contact:"Noor El Amrani", functie:"Partnerships Manager",
@@ -740,7 +775,7 @@
     {id:20, klant:"Suzanne Schulting", contact:"Wouter Jansen", functie:"Athlete Management",
      email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Atleten", merk:"Team Essent", waarde:45000,
      atleet:"Suzanne Schulting", sport:"Schaatsen", soort_deal:"Arbeidsovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2024-07-01", einddatum:"2027-06-30", reminder_maanden:3,
-     fase:"Voorstel akkoord", type:"Fysiek", actie:"Ongoing",
+     fase:"Voorstel akkoord", type:"Live", actie:"Ongoing",
      laatste:"2026-07-09", bijgewerkt:"2026-07-09", status:"actief",
      opm:"Essent akkoord op teamsponsoring rond Schulting. Contract in de maak."},
     {id:21, klant:"Jenning de Boo", contact:"Wouter Jansen", functie:"Athlete Management",
@@ -773,7 +808,7 @@
     // ---- Benutte saleskansen · andere klanten (voor bundeling-demo in archief) ----
     {id:25, klant:"ARAG", contact:"Sanne de Groot", functie:"Hoofd Sponsoring",
      email:"s.degroot@arag.nl", tel:"+31 6 21 44 88 03", owner:"Tom T", unit:"Schaatsen", merk:"Schaatsclinics 2025", waarde:28000,
-     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     fase:"Contractueel/formeel vastgelegd", type:"Live", actie:"Ongoing",
      laatste:"2026-05-20", bijgewerkt:"2026-05-27", status:"benut", won_at:"2026-05-22", archived_at:"2026-05-27",
      afsluit_notitie:"Schaatsclinics-seizoen 2025 volledig uitverkocht en geactiveerd.",
      opm:"Schaatsclinics-seizoen 2025 volledig uitverkocht en geactiveerd."},
@@ -785,7 +820,7 @@
      opm:"Titelpartner Dam tot Damloop rond; contract getekend."},
     {id:27, klant:"Univé Dichtbij", contact:"Marijke de Wit", functie:"Regiomanager Sponsoring",
      email:"m.dewit@unive.nl", tel:"+31 6 18 55 33 21", owner:"Geoffrey", unit:"HoS Algemeen", merk:"sc Cambuur", waarde:30000,
-     fase:"Contractueel/formeel vastgelegd", type:"Fysiek", actie:"Ongoing",
+     fase:"Contractueel/formeel vastgelegd", type:"Live", actie:"Ongoing",
      laatste:"2026-06-14", bijgewerkt:"2026-06-21", status:"benut", won_at:"2026-06-16", archived_at:"2026-06-21",
      afsluit_notitie:"Regionale sc Cambuur-samenwerking getekend.",
      opm:"Regionale sc Cambuur-samenwerking getekend."}
@@ -848,6 +883,13 @@
 
   // ---------- status / archief helpers ----------
   var WON_FASE = "Contractueel/formeel vastgelegd"; // laatste pipeline-fase = gewonnen
+  var ATTENTIE_DAGEN = 14; // stiller dan dit -> rood / aandacht nodig
+  function needsAttention(r){
+    if((r.status||"actief")!=="actief") return false;   // niet voor gearchiveerde
+    if(r.won_at) return false;                            // niet voor gewonnen kansen
+    if(r.fase==="Afgevallen") return false;
+    return daysAgo(r.laatste)>ATTENTIE_DAGEN || r.actie==="Terugbellen";
+  }
   function activeData(){ return data.filter(function(r){return (r.status||"actief")==="actief";}); }
   function archived(kind){ return data.filter(function(r){return r.status===kind;}); }
   function faseIndex(v){ for(var i=0;i<FASES.length;i++) if(FASES[i].v===v) return i; return 0; }
@@ -888,9 +930,11 @@
   }
   function ownerIni(o){var p=o.split(" ");return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase();}
   function typeIcon(t){
-    var p={"Fysiek":"<path d='M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0'/><path d='M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.7'/>",
+    var person="<path d='M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0'/><path d='M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.7'/>";
+    var p={"Live":person, "Fysiek":person,
            "Telefonisch":"<path d='M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z'/>",
            "E-mail":"<rect x='3' y='5' width='18' height='14' rx='2'/><path d='m3 7 9 6 9-6'/>",
+           "WhatsApp":"<path d='M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20l1.1-5.2A8.5 8.5 0 1 1 21 11.5Z'/><path d='M8.5 8.5c0 3 2 5 5 5'/>",
            "Online meeting":"<rect x='2' y='6' width='14' height='12' rx='2'/><path d='m22 8-6 4 6 4V8Z'/>"}[t]||"";
     return "<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>"+p+"</svg>";
   }
@@ -936,7 +980,7 @@
     var aandacht=0,waarde=0;
     rows.forEach(function(r){
       waarde+=(Number(r.waarde)||0);
-      if(daysAgo(r.laatste)>30 || r.actie==="Terugbellen") aandacht++;
+      if(needsAttention(r)) aandacht++;
     });
     var won=archived("benut").filter(matchesFilters);
     var wonWaarde=won.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
@@ -944,7 +988,7 @@
     var cfg=[
       {lbl:"Actieve trajecten",num:rows.length,sub:filtered?"binnen filter":"in de pipeline",cls:""},
       {lbl:"Pipelinewaarde",num:euro(waarde),sub:filtered?"binnen filter":"excl. archief",cls:"",dot:"var(--green-tx)"},
-      {lbl:"Aandacht nodig",num:aandacht,sub:">30 dgn stil of terugbellen",cls:"alert"},
+      {lbl:"Aandacht nodig",num:aandacht,sub:">14 dgn stil of terugbellen",cls:aandacht?"alert":"",view:"aandacht"},
       {lbl:"Geslaagde sales",num:won.length,sub:euro(wonWaarde)+" afgerond",cls:"",dot:"var(--green-tx)"}
     ];
     var s=$("#stats"); s.innerHTML="";
@@ -952,6 +996,7 @@
       var d=el("div","stat "+c.cls);
       d.innerHTML="<div class='lbl'>"+(c.dot?"<span class='dot' style='background:"+c.dot+"'></span>":"")+c.lbl+"</div>"+
                   "<div class='num'>"+c.num+"</div><div class='sub'>"+c.sub+"</div>";
+      if(c.view){ d.style.cursor="pointer"; d.title="Bekijk alle aandacht-kansen"; d.addEventListener("click",function(){ switchView(c.view); }); }
       s.appendChild(d);
     });
     $("#tabCount").textContent="("+totActief+")";
@@ -986,8 +1031,8 @@
     }
     rows.forEach(function(r){
       var b=brand(r.klant);
-      var warn=daysAgo(r.laatste)>30 && r.fase!=="Afgevallen";
-      var tr=el("tr"); tr.setAttribute("data-id",r.id);
+      var warn=needsAttention(r);
+      var tr=el("tr",warn?"row-red":""); tr.setAttribute("data-id",r.id);
       tr.innerHTML=
         "<td><div class='klant-cell'><span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
           "<span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
@@ -1052,7 +1097,7 @@
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
   // ---------- kanban ----------
-  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive(); }
+  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderPerMerk(); renderFeed(); renderArchive(); }
 
   // centrale fase-wijziging (vanuit kanban-drag én tabel-dropdown)
   function requestFaseChange(r, faseV){
@@ -1071,6 +1116,29 @@
     requestFaseChange(r, faseV);
   }
 
+  // ---------- aandacht nodig ----------
+  function renderAandacht(){
+    var rows=currentRows().filter(needsAttention);
+    if($("#aandachtCount")) $("#aandachtCount").textContent = rows.length ? (" ("+rows.length+")") : "";
+    var tb=$("#aandachtBody"); if(!tb) return;
+    if(!rows.length){ tb.innerHTML="<tr><td colspan='6'><div class='empty'>Niets dat aandacht nodig heeft — goed bezig!</div></td></tr>"; return; }
+    rows.sort(function(a,b){ return String(a.laatste)<String(b.laatste)?-1:1; }); // langst stil bovenaan
+    tb.innerHTML="";
+    rows.forEach(function(r){
+      var b=brand(r.klant);
+      var tr=el("tr","row-red"); tr.setAttribute("data-id",r.id);
+      tr.innerHTML=
+        "<td><div class='klant-cell'><span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span><span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
+        "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
+        "<td><div class='mcell'>"+merkChips(r.merk)+"</div></td>"+
+        "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner)+"</span></td>"+
+        "<td><div class='stack'><span class='cdate'>"+fmt(r.laatste)+"</span><span class='rel warn'>"+rel(r.laatste)+"</span></div></td>"+
+        "<td class='waarde-cell'>"+euro(r.waarde)+"</td>";
+      tr.addEventListener("click",function(){ openDrawer(r); });
+      tb.appendChild(tr);
+    });
+  }
+
   function renderKanban(){
     var board=$("#kanban"); if(!board) return;
     board.innerHTML="";
@@ -1085,17 +1153,16 @@
       if(!colRows.length){ html+="<div class='kempty'>Sleep hier een deal naartoe</div>"; }
       colRows.forEach(function(r){
         var b=brand(r.klant);
-        html+="<div class='kcard' draggable='true' data-id='"+r.id+"'>"+
+        html+="<div class='kcard"+(needsAttention(r)?" kcard-red":"")+"' draggable='true' data-id='"+r.id+"'>"+
           "<div class='kcard-top'>"+
             "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
-            "<span class='kcard-klant'>"+esc(r.klant)+"</span>"+
-            "<span class='unit-pill kcard-unit'>"+esc(r.unit)+"</span></div>"+
+            "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
           "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
-          (r.merk?"<div class='kcard-part'><span class='kcard-part-lbl'>Partnership</span><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(primaryMerk(r.merk))+"</span></span></div>":"")+
+          (r.merk?"<div class='kcard-part'><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(primaryMerk(r.merk))+"</span></span></div>":"")+
           "<div class='kcard-foot'>"+
-            "<div class='kcard-contact'><span class='kcard-cp'>"+esc(r.contact||"—")+"</span>"+
+            "<div class='kcard-contact'><span class='kcard-cp'>"+esc(r.owner||"—")+"</span>"+
               "<span class='kcard-date'>Laatst contact "+fmt(r.laatste)+"</span></div>"+
-            "<span class='oav' title='Accounthouder'>"+ownerIni(r.owner)+"</span></div>"+
+            "<span class='kcard-unit-sub'>"+esc(r.unit)+"</span></div>"+
           "</div>";
       });
       html+="</div>";
@@ -1172,9 +1239,6 @@
       grand+=rowTot;
       html+="<td class='pm-tot'>"+euro(rowTot)+"</td></tr>";
     });
-    html+="<tr class='pm-total-row'><td>Totaal</td>";
-    PIPELINE_FASES.forEach(function(f){ html+="<td class='pm-val'>"+euro(colTot[f.v]||0)+"</td>"; });
-    html+="<td class='pm-tot'>"+euro(grand)+"</td></tr>";
     html+="</tbody></table></div>";
     card.innerHTML=html;
   }
@@ -1360,11 +1424,12 @@
           "<div class='attach-hint'>Demo — bestanden worden nog niet echt opgeslagen.</div>"+
         "</div>"+
         (isNew?"</div>":"")+
+        "<div id='dSaveErr' class='save-err' style='display:none'></div>"+
       "</div>"+
       "<div class='drawer-foot'>"+
         (isNew?"":(isArchived
           ? "<button class='btn-ghost' id='dRestore' title='Terug naar de pipeline'>↩ Terugzetten</button>"
-          : "<button class='btn-ghost del' id='dDelete' title='Uit de pipeline halen'>🗑 Verwijderen</button>"))+
+          : "<button class='btn-ghost del' id='dDelete' title='Naar archief'>🗑 Archiveren</button>"))+
         "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"Laatst bijgewerkt "+fmt(r.bijgewerkt))+"</span>"+
         "<button class='btn-ghost' id='dCancel'>Annuleren</button>"+
         "<button class='btn-primary' id='dSave'"+(requireNote?" disabled":"")+">"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
@@ -1448,14 +1513,32 @@
     });
 
     $("#dSave").onclick=function(){
-      if(isNew && !readNewSelect("#d_unit","#d_unit_new")){ var uEl=$("#d_unit"); if(uEl) uEl.focus(); return; }
-      r.klant=readNewSelect("#d_klant","#d_klant_new")||(isNew?"":r.klant);
+      var origLaatste=r.laatste, origOpm=(initialOpm||"").trim();
+      var unitVal=readNewSelect("#d_unit","#d_unit_new");
+      var klantVal=readNewSelect("#d_klant","#d_klant_new");
       var vn=($("#d_vn")&&$("#d_vn").value||"").trim(), an=($("#d_an")&&$("#d_an").value||"").trim();
-      r.contact=(vn+" "+an).trim();
+      var emailVal=$("#d_email").value.trim(), telVal=$("#d_tel").value.trim();
+      var ownerVal=$("#d_owner").value;
+      // ---- verplichte velden (e-mail óf telefoon volstaat) ----
+      ["d_unit","d_klant","d_vn","d_owner","d_email","d_tel"].forEach(function(id){ var e=$("#"+id); if(e) e.classList.remove("need"); });
+      var miss=[];
+      if(!unitVal) miss.push("d_unit");
+      if(!klantVal) miss.push("d_klant");
+      if(!vn) miss.push("d_vn");
+      if(!ownerVal) miss.push("d_owner");
+      if(!emailVal && !telVal){ miss.push("d_email"); miss.push("d_tel"); }
+      if(miss.length){
+        miss.forEach(function(id){ var e=$("#"+id); if(e) e.classList.add("need"); });
+        var errEl=$("#dSaveErr"); if(errEl){ errEl.textContent="Vul de gemarkeerde velden in — e-mail óf telefoon volstaat."; errEl.style.display="block"; }
+        var f=$("#"+miss[0]); if(f) f.focus();
+        return;
+      }
+      var okEl=$("#dSaveErr"); if(okEl) okEl.style.display="none";
+      // ---- opslaan ----
+      r.klant=klantVal; r.contact=(vn+" "+an).trim();
       r.functie=$("#d_functie").value.trim();
-      r.email=$("#d_email").value.trim();
-      r.tel=$("#d_tel").value.trim();
-      r.owner=$("#d_owner").value; r.unit=readNewSelect("#d_unit","#d_unit_new"); r.merk=readNewSelect("#d_merk","#d_merk_new");
+      r.email=emailVal; r.tel=telVal;
+      r.owner=ownerVal; r.unit=unitVal; r.merk=readNewSelect("#d_merk","#d_merk_new");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
       // ---- Extra velden · Atleten ----
       r.sport=readNewSelect("#d_sport","#d_sport_new");
@@ -1466,6 +1549,8 @@
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
+      // opmerking gewijzigd + datum niet handmatig aangepast -> teller reset (contact gehad vandaag)
+      if(r.opm!==origOpm && r.laatste===origLaatste){ r.laatste=iso(TODAY); }
       r.bijlagen=dBijlagen;
       r.bijgewerkt=iso(TODAY);
       if(isNew){ r.status="actief"; r._new=true; data.push(r); }
@@ -1482,21 +1567,23 @@
     document.querySelectorAll(".tab").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===v);});
     $("#view-kanban").hidden = v!=="kanban";
     $("#view-tabel").hidden = v!=="tabel";
+    $("#view-aandacht").hidden = v!=="aandacht";
     $("#view-permerk").hidden = v!=="permerk";
     $("#view-opmerkingen").hidden = v!=="opmerkingen";
     $("#view-archief").hidden = v!=="archief";
-    var pipe = (v==="kanban"||v==="tabel");
+    var pipe = (v==="kanban"||v==="tabel"||v==="aandacht");
     $("#stats").style.display = pipe ? "" : "none";
     $("#pipeToolbar").style.display = pipe ? "" : "none";
     if(v==="kanban") renderKanban();
     if(v==="tabel") renderTable();
+    if(v==="aandacht") renderAandacht();
     if(v==="permerk") renderPerMerk();
     if(v==="archief") renderArchive();
   }
   document.querySelectorAll(".tab").forEach(function(t){t.addEventListener("click",function(){switchView(t.dataset.view);});});
 
   // ---------- toolbar events ----------
-  function renderPipe(){ rebuildFilters(); renderStats(); renderKanban(); renderTable(); }
+  function renderPipe(){ rebuildFilters(); renderStats(); renderKanban(); renderTable(); renderAandacht(); }
   $("#q").addEventListener("input",renderPipe);
   FILTERS.forEach(function(f){ $("#"+f.id).addEventListener("change",renderPipe); });
   $("#addBtn").addEventListener("click",function(){openDrawer(null);});
@@ -1541,31 +1628,25 @@
       "<div class='modal-ico afas'>📌</div>"+
       "<h3>Niet vergeten: zet dit in AFAS</h3>"+
       "<p>Voeg <b>"+esc(r.klant)+"</b> ook toe als project in <b>AFAS</b>.<br>"+
-      "Klik je op ‘Ja, staat in AFAS’, dan gaat de kaart meteen naar <b>Benutte saleskansen</b>. "+
-      "Anders blijft 'ie nog een week in de pipeline en verhuist 'ie daarna vanzelf.</p>"+
+      "De kaart blijft nog <b>een week in ‘Contractueel/formeel vastgelegd’</b> staan — handig voor de wekelijkse overleggen — en verhuist daarna vanzelf naar <b>Benutte saleskansen</b>.</p>"+
       "<div class='modal-foot'>"+
-        "<button class='btn-ghost' id='m_later'>Later</button>"+
-        "<button class='btn-primary' id='m_yes'>Ja, staat in AFAS</button>"+
+        "<button class='btn-primary' id='m_yes'>Begrepen</button>"+
       "</div>");
-    $("#m_later").onclick=function(){ closeModal(); refreshAll(); };
-    $("#m_yes").onclick=function(){
-      r.status="benut"; r.archived_at=iso(TODAY); touch(r); saveDeal(r);
-      closeModal(); refreshAll();
-    };
+    $("#m_yes").onclick=function(){ touch(r); saveDeal(r); closeModal(); refreshAll(); };
   }
   // Verwijderen: vanaf fase 2 verplichte reden -> Onbenutte saleskansen
   function openDeleteFlow(r){
     var needReason = faseIndex(r.fase) >= 1; // vanaf 'Oriënterend gesprek' (fase 2) verplicht
     showModal(
       "<div class='modal-ico del'>🗑️</div>"+
-      "<h3>Kans uit de pipeline halen</h3>"+
-      "<p><b>"+esc(r.klant)+"</b> verhuist naar <b>Onbenutte saleskansen</b>."+
+      "<h3>Saleskans archiveren</h3>"+
+      "<p><b>"+esc(r.klant)+"</b> verhuist naar <b>Onbenutte saleskansen</b> in het archief."+
         (needReason?" Geef verplicht aan <b>waarom deze niet is afgesloten</b>.":" Je mag eventueel een reden meegeven.")+"</p>"+
       "<textarea id='m_note' placeholder='Waarom is dit niet afgesloten?'>"+esc(r.verwijder_reden||"")+"</textarea>"+
       "<div class='modal-err' id='m_err'>Vul eerst een reden in.</div>"+
       "<div class='modal-foot'>"+
         "<button class='btn-ghost' id='m_cancel'>Annuleren</button>"+
-        "<button class='btn-danger' id='m_ok'>Verwijderen</button>"+
+        "<button class='btn-danger' id='m_ok'>Archiveren</button>"+
       "</div>");
     $("#m_cancel").onclick=closeModal;
     $("#m_ok").onclick=function(){
@@ -1585,41 +1666,71 @@
   // ========================================================
   var archBucket="benut";
   var archOpen={};   // welke klantgroepen open staan (key = bucket|klant)
+
+  // ----- archief-filters (eigen set, over gearchiveerde data) -----
+  var ARCH_FILTERS=[
+    {id:"afUnit",   field:"unit",  ph:"Alle units"},
+    {id:"afOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
+    {id:"afWie",    field:"klant", ph:"Merk / atleet / spreker"},
+    {id:"afPartner",field:"merk",  ph:"Partnership"}
+  ];
+  function archPool(){ return archBucket==="alle" ? archived("benut").concat(archived("onbenut")) : archived(archBucket); }
+  function matchesArchFilters(r){
+    var q=($("#aq")?$("#aq").value:"").trim().toLowerCase();
+    for(var i=0;i<ARCH_FILTERS.length;i++){ var f=ARCH_FILTERS[i], sel=$("#"+f.id); if(sel && sel.value && r[f.field]!==sel.value) return false; }
+    if(q){ var hay=(r.klant+" "+r.merk+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    return true;
+  }
+  function isFilteredArch(){ if($("#aq")&&$("#aq").value.trim())return true; return ARCH_FILTERS.some(function(f){var e=$("#"+f.id);return e&&e.value;}); }
+  function rebuildArchFilters(){
+    var pool=archPool();
+    ARCH_FILTERS.forEach(function(f){
+      var sel=$("#"+f.id); if(!sel) return; var cur=sel.value, vals={};
+      pool.forEach(function(r){
+        var ok=true;
+        ARCH_FILTERS.forEach(function(g){ if(g.id!==f.id){ var s2=$("#"+g.id); if(s2&&s2.value&&r[g.field]!==s2.value) ok=false; } });
+        if(ok && r[f.field]) vals[r[f.field]]=1;
+      });
+      var list=Object.keys(vals).sort(function(a,b){return String(a).localeCompare(String(b),"nl");});
+      sel.innerHTML="<option value=''>"+f.ph+"</option>"+list.map(function(v){return "<option"+(v===cur?" selected":"")+">"+esc(v)+"</option>";}).join("");
+      if(cur && list.indexOf(cur)<0) sel.value="";
+    });
+  }
+
   function renderArchive(){
     var nBenut=archived("benut").length, nOnbenut=archived("onbenut").length;
     if($("#cntBenut")) $("#cntBenut").textContent=nBenut;
     if($("#cntOnbenut")) $("#cntOnbenut").textContent=nOnbenut;
+    if($("#cntAlle")) $("#cntAlle").textContent=(nBenut+nOnbenut);
     if($("#archCount")) $("#archCount").textContent="("+(nBenut+nOnbenut)+")";
     var host=$("#archGroups"); if(!host) return;
-    var isBenut=archBucket==="benut";
-    var rows=archived(archBucket);
+    rebuildArchFilters();
+    var isAlle=archBucket==="alle";
+    var rows=archPool().filter(matchesArchFilters);
 
-    // ----- samenvatting boven het archief -----
+    // ----- samenvatting -----
     var totVal=rows.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
     var klantSet={}; rows.forEach(function(r){klantSet[r.klant]=1;});
     var nKlant=Object.keys(klantSet).length;
+    var lbl=isAlle?"gearchiveerd":(archBucket==="benut"?"benut":"onbenut");
     var st=$("#archStats");
     if(st){ st.innerHTML=
-      "<div class='stat'><div class='lbl'>Aantal "+(isBenut?"benut":"onbenut")+"</div><div class='num'>"+rows.length+
+      "<div class='stat'><div class='lbl'>Aantal "+lbl+"</div><div class='num'>"+rows.length+
         "</div><div class='sub'>saleskansen · "+nKlant+" klant"+(nKlant===1?"":"en")+"</div></div>"+
-      "<div class='stat'><div class='lbl'>Waarde "+(isBenut?"benut":"onbenut")+"</div><div class='num'>"+euro(totVal)+
-        "</div><div class='sub'>totaal gearchiveerd</div></div>"; }
+      "<div class='stat'><div class='lbl'>Waarde "+lbl+"</div><div class='num'>"+euro(totVal)+
+        "</div><div class='sub'>totaal</div></div>"; }
 
     // ----- groeperen per klant -----
     var groups={};
     rows.forEach(function(r){ (groups[r.klant]=groups[r.klant]||[]).push(r); });
-    var names=Object.keys(groups).sort(function(a,b){
-      return groups[b].length-groups[a].length || a.localeCompare(b,"nl");
-    });
+    var names=Object.keys(groups).sort(function(a,b){ return groups[b].length-groups[a].length || a.localeCompare(b,"nl"); });
     host.innerHTML="";
     if(!names.length){
-      host.innerHTML="<div class='card'><div class='empty'>Nog geen "+(isBenut?"benutte":"onbenutte")+" saleskansen.</div></div>";
+      host.innerHTML="<div class='card'><div class='empty'>Geen gearchiveerde saleskansen"+(isFilteredArch()?" met deze filters":"")+".</div></div>";
       return;
     }
     names.forEach(function(k){
-      var list=groups[k].slice().sort(function(a,b){
-        var x=String(a.archived_at||""),y=String(b.archived_at||""); return x<y?1:(x>y?-1:0);
-      });
+      var list=groups[k].slice().sort(function(a,b){ var x=String(a.archived_at||""),y=String(b.archived_at||""); return x<y?1:(x>y?-1:0); });
       var val=list.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
       var last=list[0]&&list[0].archived_at;
       var b=brand(k);
@@ -1637,10 +1748,11 @@
       grp.appendChild(head);
       var body=el("div","arch-gbody");
       list.forEach(function(r){
-        var note=isBenut?(r.afsluit_notitie||r.opm||"—"):(r.verwijder_reden||"—");
+        var benut=r.status==="benut";
+        var note=benut?(r.afsluit_notitie||r.opm||"—"):(r.verwijder_reden||"—");
         var row=el("div","arch-grow");
         row.innerHTML=
-          "<span class='arch-merk'><div class='mcell'>"+merkChips(r.merk)+"</div></span>"+
+          "<span class='arch-merk'>"+(isAlle?"<span class='badge "+(benut?"c-green":"c-red")+"' style='margin-right:6px'>"+(benut?"Benut":"Onbenut")+"</span>":"")+"<div class='mcell'>"+merkChips(r.merk)+"</div></span>"+
           "<span class='arch-rval'>"+euro(r.waarde)+"</span>"+
           "<span class='arch-rnote'>"+esc(note)+"</span>"+
           "<span class='arch-rdate'>"+(r.archived_at?fmt(String(r.archived_at).slice(0,10)):"—")+"</span>";
@@ -1651,6 +1763,9 @@
       host.appendChild(grp);
     });
   }
+  ["aq","afUnit","afOwner","afWie","afPartner"].forEach(function(id){
+    var e=$("#"+id); if(e) e.addEventListener(id==="aq"?"input":"change",renderArchive);
+  });
   document.querySelectorAll(".arch-tab").forEach(function(t){
     t.addEventListener("click",function(){
       document.querySelectorAll(".arch-tab").forEach(function(x){x.classList.remove("active");});
