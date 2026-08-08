@@ -883,21 +883,133 @@
     setTimeout(function(){ t.classList.remove("show"); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },250); }, kind==="err"?6000:2000);
   }
   var SAVE_ERR="⚠ Opslaan mislukt — NIET bewaard. Controleer je internet en probeer opnieuw.";
+
+  // ---------- realtime: gedeelde staat & helpers ----------
+  var openDealId=null, isDragging=false, deferredRerender=false, rerenderTimer=null;
+  var pendingRemote={};                 // id -> binnengekomen wijziging, geparkeerd zolang die kaart openstaat
+  var rtChannel=null, rtStarted=false, _ccToast=0;
+  // genormaliseerde weergave van een rij over exact DEAL_COLS (undefined -> null), voor vergelijken/diffen
+  function normRow(r){ var o={}; for(var i=0;i<DEAL_COLS.length;i++){ var k=DEAL_COLS[i], v=r[k]; o[k]=(v===undefined?null:v); } return o; }
+  function rowEq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+
   function saveDeal(r){
     if(!USING_SUPABASE || !r) return;
-    var row=toRow(r);
     if(r._new){
+      // nieuwe kaart -> insert (volledige rij). _pendingInsert laat de realtime-echo z'n eigen kaart herkennen.
       delete r._new;
-      sb.from("deals").insert(row).select().single().then(function(res){
-        if(res.error){ console.error("Insert faalde:",res.error); toast(SAVE_ERR,"err"); return; }
+      r._pendingInsert=true;
+      sb.from("deals").insert(toRow(r)).select().single().then(function(res){
+        if(res.error){ delete r._pendingInsert; console.error("Insert faalde:",res.error); toast(SAVE_ERR,"err"); return; }
         if(res.data) r.id=res.data.id;
+        r._saved=normRow(r); delete r._pendingInsert;
         toast("Opgeslagen ✓","ok");
       });
     } else {
-      sb.from("deals").update(row).eq("id",r.id).then(function(res){
-        if(res.error){ console.error("Update faalde:",res.error); toast(SAVE_ERR,"err"); }
+      // bestaande kaart -> schrijf ALLEEN de daadwerkelijk gewijzigde velden weg (voorkomt overschrijven van
+      // andermans wijziging op een ander veld). r._saved = wat er als laatst in de database stond.
+      var cur=normRow(r), prev=r._saved||{}, patch={};
+      for(var i=0;i<DEAL_COLS.length;i++){ var k=DEAL_COLS[i];
+        var pv=(prev[k]===undefined?null:prev[k]);
+        if(JSON.stringify(cur[k])!==JSON.stringify(pv)) patch[k]=r[k];
+      }
+      if(!Object.keys(patch).length) return;         // niets veranderd -> niets schrijven
+      var before=r._saved; r._saved=cur;              // optimistisch: zo herkent de realtime-echo m'n eigen wijziging
+      sb.from("deals").update(patch).eq("id",r.id).then(function(res){
+        if(res.error){ r._saved=before; console.error("Update faalde:",res.error); toast(SAVE_ERR,"err"); }
         else { toast("Opgeslagen ✓","ok"); }
       });
+    }
+  }
+
+  // ---------- realtime: binnenkomende wijzigingen toepassen ----------
+  function notifyCardChanged(){ var now=+new Date(); if(now-_ccToast<4000) return; _ccToast=now;
+    toast("Deze kaart is zojuist door iemand anders gewijzigd — jouw opslaan overschrijft dat.","err"); }
+
+  // past één binnengekomen rij toe op de lokale lijst; geeft true terug als er echt iets veranderde
+  function applyRemoteRow(row){
+    if(!row || row.id==null) return false;
+    var id=row.id, inc=normRow(row), idx=-1;
+    for(var i=0;i<data.length;i++){ if(data[i].id===id){ idx=i; break; } }
+    if(idx>=0){
+      var r=data[idx];
+      if(rowEq(r._saved||{},inc)) return false;                 // niks nieuws of m'n eigen echo -> negeren
+      if(openDealId===id){ pendingRemote[id]=row; notifyCardChanged(); return false; } // kaart staat open -> parkeren
+      for(var j=0;j<DEAL_COLS.length;j++){ var k=DEAL_COLS[j]; r[k]=row[k]; }
+      r.bijlagen=r.bijlagen||[]; r._saved=inc;
+      return true;
+    }
+    // geen id-match: misschien de echo van m'n eigen zojuist toegevoegde kaart (had nog een tijdelijk id)
+    for(var m=0;m<data.length;m++){ var lr=data[m];
+      if(lr._pendingInsert && rowEq(normRow(lr),inc)){ lr.id=id; lr._saved=inc; delete lr._pendingInsert; return false; }
+    }
+    var nr={}; for(var n=0;n<DEAL_COLS.length;n++){ nr[DEAL_COLS[n]]=row[DEAL_COLS[n]]; }
+    nr.id=id; nr.bijlagen=row.bijlagen||[]; nr._saved=inc; data.push(nr);
+    return true;
+  }
+
+  function handleRemote(payload){
+    var changed=false;
+    if(payload.eventType==="DELETE"){
+      var oid=payload.old && payload.old.id;
+      if(oid!=null){ for(var i=0;i<data.length;i++){ if(data[i].id===oid){
+        if(openDealId===oid){ pendingRemote[oid]={__deleted:true}; }
+        else { data.splice(i,1); changed=true; } break; } } }
+    } else if(payload.new){ changed=applyRemoteRow(payload.new); }
+    if(changed) scheduleRerender();
+  }
+
+  // ---------- realtime: hertekenen (rustig, gedebounced, niet tijdens slepen) ----------
+  function liveRefresh(){ refreshAll(); showLivePulse(); }
+  function scheduleRerender(){
+    if(isDragging){ deferredRerender=true; return; }             // niet hertekenen midden in een sleep
+    clearTimeout(rerenderTimer);
+    rerenderTimer=setTimeout(function(){ rerenderTimer=null; liveRefresh(); }, 150);
+  }
+
+  // ---------- realtime: verse lijst ophalen (bij herverbinden / terug op tabblad / veiligheidsverversing) ----------
+  function resyncDeals(){
+    if(!USING_SUPABASE || !sb) return;
+    sb.from("deals").select("*").order("id").then(function(res){
+      if(res.error){ return; }
+      var rows=res.data||[], seen={}, changed=false;
+      rows.forEach(function(row){ seen[row.id]=true; if(applyRemoteRow(row)) changed=true; });
+      for(var i=data.length-1;i>=0;i--){ var r=data[i];
+        if(!seen[r.id] && !r._new && !r._pendingInsert && openDealId!==r.id){ data.splice(i,1); changed=true; }
+      }
+      if(changed) scheduleRerender();
+    });
+  }
+
+  // ---------- realtime: live-indicator (rustig bolletje links-onder) ----------
+  function ensureLiveDot(){
+    if(document.getElementById("liveDot")) return;
+    var d=document.createElement("div"); d.id="liveDot";
+    d.style.cssText="position:fixed;left:14px;bottom:12px;z-index:60;display:flex;align-items:center;gap:7px;"+
+      "font:600 11px/1 system-ui,-apple-system,sans-serif;color:var(--text-soft,#7b8494);background:var(--surface,#fff);"+
+      "border:1px solid var(--border,#e5e7eb);border-radius:999px;padding:6px 10px;box-shadow:0 2px 8px rgba(0,0,0,.06);opacity:.7";
+    d.innerHTML="<span id='liveDotPip' style='width:8px;height:8px;border-radius:50%;background:#9aa3af;transition:background .3s,box-shadow .35s'></span><span id='liveDotTxt'>verbinden…</span>";
+    document.body.appendChild(d);
+  }
+  function setLive(on){ ensureLiveDot(); var p=document.getElementById("liveDotPip"), t=document.getElementById("liveDotTxt");
+    if(p) p.style.background=on?"#22c55e":"#9aa3af"; if(t) t.textContent=on?"live":"offline"; }
+  function showLivePulse(){ var p=document.getElementById("liveDotPip"); if(!p) return;
+    p.style.boxShadow="0 0 0 5px rgba(34,197,94,.25)"; setTimeout(function(){ if(p) p.style.boxShadow="none"; },400); }
+
+  // ---------- realtime: abonneren ----------
+  function subscribeRealtime(){
+    if(!USING_SUPABASE || !sb || rtChannel) return;
+    ensureLiveDot(); setLive(false);
+    rtChannel=sb.channel("deals-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"deals"},handleRemote)
+      .subscribe(function(status){
+        if(status==="SUBSCRIBED"){ setLive(true); if(rtStarted){ resyncDeals(); } rtStarted=true; }
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ setLive(false); }
+      });
+    if(!subscribeRealtime._wired){
+      subscribeRealtime._wired=true;
+      document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") resyncDeals(); });
+      window.addEventListener("online",resyncDeals);
+      setInterval(function(){ if(document.visibilityState==="visible") resyncDeals(); }, 180000); // veiligheidsnet: 3 min
     }
   }
 
@@ -1204,6 +1316,7 @@
       c.addEventListener("dragstart",function(e){
         c.setAttribute("data-dragging","1");
         c.classList.add("dragging");
+        isDragging=true;                 // realtime: hertekenen uitstellen tot na de sleep
         e.dataTransfer.effectAllowed="move";
         e.dataTransfer.setData("text/plain", c.getAttribute("data-id"));
       });
@@ -1211,6 +1324,8 @@
         c.classList.remove("dragging");
         setTimeout(function(){c.removeAttribute("data-dragging");},0);
         board.querySelectorAll(".kcol.drag-over").forEach(function(k){k.classList.remove("drag-over");});
+        isDragging=false;
+        if(deferredRerender){ deferredRerender=false; scheduleRerender(); }  // uitgestelde live-update alsnog tonen
       });
     });
 
@@ -1350,6 +1465,7 @@
     var isNew=!r;
     if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:"",merk:"",waarde:0,
       fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"}; }
+    openDealId=r.id;   // realtime: wijzigingen aan déze kaart parkeren zolang jij 'm open hebt
     var isArchived=!isNew && (r.status==="benut"||r.status==="onbenut");
     var requireNote=!!opts.requireNote;
     var showFase=opts.pendingFase||r.fase;                 // fase-veld toont (nieuwe) fase
@@ -1577,10 +1693,21 @@
       r.bijgewerkt=iso(TODAY);
       if(isNew){ r.status="actief"; r._new=true; data.push(r); }
       saveDeal(r);
+      if(r && r.id!=null) delete pendingRemote[r.id];   // mijn opslag wint van een geparkeerde wijziging
       closeDrawer(); refreshAll();
     };
   }
-  function closeDrawer(){ drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open"); }
+  function closeDrawer(){
+    drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open");
+    var id=openDealId; openDealId=null;
+    // realtime: was deze kaart intussen door iemand anders gewijzigd? Nu alsnog verwerken.
+    if(id!=null && pendingRemote[id]!==undefined){
+      var pr=pendingRemote[id]; delete pendingRemote[id];
+      if(pr && pr.__deleted){ for(var i=0;i<data.length;i++){ if(data[i].id===id){ data.splice(i,1); break; } } }
+      else if(pr){ applyRemoteRow(pr); }
+      scheduleRerender();
+    }
+  }
   scrim.addEventListener("click",closeDrawer);
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDrawer();});
 
@@ -1815,10 +1942,11 @@
     loadDeals(function(rows){
       if(rows && rows.length){
         data.length=0;
-        rows.forEach(function(r){ r.bijlagen=r.bijlagen||[]; data.push(r); });
+        rows.forEach(function(r){ r.bijlagen=r.bijlagen||[]; r._saved=normRow(r); data.push(r); });
       }
       autoArchive();
       boot();
+      subscribeRealtime();
     });
   }
 
