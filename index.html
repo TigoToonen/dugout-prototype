@@ -445,6 +445,55 @@
     .bar-in{padding:12px 16px}
     .tag{display:none}
   }
+
+  /* ---------- Mobiel (telefoon) ---------- */
+  @media (max-width:640px){
+    html,body{overflow-x:hidden;max-width:100%}
+    .wrap{padding:0 12px 64px}
+    .bar-in{padding:11px 12px;gap:10px}
+    .brand-txt b{font-size:15px}
+    .brand-txt span{font-size:9.5px;letter-spacing:.12em}
+
+    /* Tabbladen: horizontaal swipen i.p.v. afkappen */
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+    .tabs::-webkit-scrollbar{height:0}
+    .tab{flex:0 0 auto;padding:10px 12px 12px;font-size:13.5px;min-height:40px}
+
+    /* KPI-tegels compacter */
+    .stat{padding:12px 13px}
+    .stat .num{font-size:22px}
+    .stat .lbl{font-size:10.5px}
+
+    /* Toolbar gestapeld: zoek vol, filters 2-op-een-rij, knop vol */
+    .toolbar{gap:8px}
+    .search{flex:1 0 100%;min-width:0}
+    .selectwrap{flex:1 1 calc(50% - 4px)}
+    select.filter{width:100%}
+    #addBtn{flex:1 0 100%;justify-content:center;padding:12px;font-size:15px}
+
+    /* 16px invoer: iOS zoomt dan niet automatisch in bij focus */
+    .search input,select.filter,.fld input,.fld textarea,.fld select,.auth-input,.modal textarea{font-size:16px}
+
+    /* Grotere tikdoelen */
+    .icon-btn{width:40px;height:40px}
+    .arch-tab{min-height:40px}
+
+    /* Kanban: één fase per keer, vol in beeld, met snap-scroll */
+    .kanban{grid-auto-columns:88vw;gap:10px;scroll-snap-type:x mandatory;scroll-padding-left:12px}
+    .kcol{scroll-snap-align:start;min-height:58vh}
+
+    /* Detailpaneel schermvullend + royale velden */
+    .drawer{width:100%;max-width:100%;border-left:none}
+    .drawer-head{padding:16px}
+    .drawer-body{padding:6px 16px 24px}
+    .row2{grid-template-columns:1fr}
+    .drawer-foot{flex-wrap:wrap;gap:8px}
+    .drawer-foot .btn-primary,.drawer-foot .btn-ghost,.drawer-foot .btn-danger{flex:1 1 auto;justify-content:center}
+    .meta-upd{flex:1 0 100%;order:-1}
+
+    /* Modals passen netjes op smal scherm */
+    .modal-foot .btn-primary,.modal-foot .btn-ghost,.modal-foot .btn-danger{flex:1 1 auto;justify-content:center}
+  }
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important}
   }
@@ -504,7 +553,7 @@
     <section id="view-kanban">
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <b>Sleep</b> kaarten tussen de kolommen om de fase te wijzigen · totalen, stats en het per-merk-overzicht bewegen automatisch mee · klik een kaart voor details.
+        <b>Tik</b> een kaart om details te zien en de fase te wijzigen · op desktop kun je kaarten ook tussen de kolommen <b>slepen</b> · totalen en overzichten bewegen automatisch mee.
       </p>
       <div class="kanban" id="kanban"></div>
     </section>
@@ -1050,9 +1099,9 @@
   function euro(n){n=Number(n)||0; return "€ "+n.toLocaleString("nl-NL");}
   function primaryMerk(s){if(!s||!s.trim())return "Onbekend"; return s.split(/[·,;|]+/)[0].trim();}
   var MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
-  function fmt(s){var d=new Date(s+"T00:00:00"); return d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();}
-  function daysAgo(s){var d=new Date(s+"T00:00:00"); return Math.round((TODAY-d)/86400000);}
-  function rel(s){var n=daysAgo(s); if(n<=0)return "vandaag"; if(n===1)return "gisteren"; if(n<14)return n+" dgn geleden"; if(n<56)return Math.round(n/7)+" wkn geleden"; return Math.round(n/30)+" mnd geleden";}
+  function fmt(s){ if(!s) return "—"; var d=new Date(s+"T00:00:00"); if(isNaN(d.getTime())) return "—"; return d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();}
+  function daysAgo(s){ if(!s) return 0; var d=new Date(s+"T00:00:00"); if(isNaN(d.getTime())) return 0; return Math.round((TODAY-d)/86400000);}
+  function rel(s){ if(!s) return ""; var n=daysAgo(s); if(n<=0)return "vandaag"; if(n===1)return "gisteren"; if(n<14)return n+" dgn geleden"; if(n<56)return Math.round(n/7)+" wkn geleden"; return Math.round(n/30)+" mnd geleden";}
   function faseColor(v){for(var i=0;i<FASES.length;i++)if(FASES[i].v===v)return FASES[i].c; return "c-grey";}
   function actieColor(v){for(var i=0;i<ACTIES.length;i++)if(ACTIES[i].v===v)return ACTIES[i].c; return "c-grey";}
   function brand(k){return BRANDS[k]||{ini:(k||"?").slice(0,2).toUpperCase(),bg:"#8A837B",fg:"#fff"};}
@@ -1614,17 +1663,22 @@
       if(ed&&rm){ ed.addEventListener("change",upd); rm.addEventListener("change",upd); upd(); }
     })();
 
-    // verplichte opmerking bij fase-verplaatsing: pas opslaan als 'ie is aangepast
-    if(requireNote){
-      var opmEl=$("#d_opm"), saveBtn=$("#dSave");
-      var checkNote=function(){
+    // Verplichte opmerking zodra de FASE verandert — bij slepen (requireNote) én bij het wijzigen
+    // van het Fase-menu in de kaart zelf (o.a. mobiel, waar slepen niet werkt). Nieuwe kaart uitgezonderd.
+    (function(){
+      var opmEl=$("#d_opm"), saveBtn=$("#dSave"), faseSel=$("#d_fase"), origFase=r.fase;
+      function need(){ return requireNote || (!isNew && faseSel && faseSel.value!==origFase); }
+      function checkNote(){
+        var req=need();
         var changed = opmEl.value.trim().length>0 && opmEl.value.trim()!==initialOpm.trim();
-        saveBtn.disabled = !changed;
-        opmEl.classList.toggle("need-note", !changed);
-      };
-      opmEl.addEventListener("input",checkNote);
-      checkNote(); opmEl.focus();
-    }
+        if(saveBtn) saveBtn.disabled = req && !changed;
+        if(opmEl) opmEl.classList.toggle("need-note", req && !changed);
+      }
+      if(opmEl) opmEl.addEventListener("input",checkNote);
+      if(faseSel) faseSel.addEventListener("change",checkNote);
+      checkNote();
+      if(requireNote && opmEl) opmEl.focus();
+    })();
 
     // ----- bijlagen (in-memory, demo) -----
     var dBijlagen=(r.bijlagen||[]).slice();
