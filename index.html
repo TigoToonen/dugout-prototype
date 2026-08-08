@@ -430,6 +430,10 @@
   .auth-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   .auth-err{color:var(--red-tx);font-size:12.5px;font-weight:600;margin-top:12px;display:none}
   .auth-btn{width:100%;justify-content:center;margin-top:20px;padding:12px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;padding:11px 16px;border-radius:10px;font-weight:700;font-size:13.5px;box-shadow:var(--shadow-lg);color:#fff;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .toast.ok{background:#16a34a}
+  .toast.err{background:#dc2626}
 
   :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
 
@@ -622,8 +626,8 @@
   var _now = new Date();
   var TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()); // echte datum van vandaag
 
-  var UNITS = ["Atleten","BAT","HoS Algemeen","HYROX","JODP","Schaatsen","SPEX","SportsSpeakers","SportSpreker","ZAR"];
-  var OWNERS = ["Tom T","Michelle","Bart","Koen","Geoffrey","Dille","Bjorn","Joep","Max"];
+  var UNITS = ["Atleten","Influencers","BAT","HoS Algemeen","HYROX","JODP","Schaatsen","SPEX","SportsSpeakers","SportSpreker","ZAR"];
+  var OWNERS = ["Bart Gabriels","Bjorn Bakker","Dille Rikkert","Ivan Spijkerstra","Joep Wouters van den Oudenweijer","Koen Hermes","Mark van den Akker","Max van der Ven","Michelle Geldhof","Ruud Koedijk","Ruud van Doornik","Samuel Aldries","Tom Schouten","Trisztan Post"];
   var FASES = [
     {v:"1e salescontact",                c:"c-grey",   pct:10},
     {v:"Oriënterend gesprek",            c:"c-blue",   pct:25},
@@ -633,8 +637,10 @@
     {v:"Afgevallen",                     c:"c-red",    pct:0}
   ];
 
-  // ---- Athletes / Dug Out (extra velden bij unit "Atleten") ----
+  // ---- Athletes / Dug Out (extra velden bij unit "Atleten" en "Influencers") ----
   var ATLEET_UNIT = "Atleten";
+  var ATLEET_UNITS = ["Atleten","Influencers"];      // units met atleet-/influencer-extra velden
+  function isAthleteUnit(u){ return ATLEET_UNITS.indexOf(u)>=0; }
   var HOA_TYPES   = ["Atletenmanagement","Influencers"];
   var SOORT_DEAL  = ["Arbeidsovereenkomst","Sponsorovereenkomst","Influencers","Commissiedeal"];
   var SPORTEN     = ["Atletiek","Baanwielrennen","BMX","Freerunnen","Hockey","Hyrox","Judo","Padel","Roeien","Schaatsen","Tennis","Volleybal","Wielrennen","Zwemmen","Overige sport"];
@@ -871,18 +877,26 @@
       cb(res.data||[]);
     });
   }
+  function toast(msg, kind){
+    var t=el("div","toast "+(kind||"ok"),msg); document.body.appendChild(t);
+    requestAnimationFrame(function(){ t.classList.add("show"); });
+    setTimeout(function(){ t.classList.remove("show"); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },250); }, kind==="err"?6000:2000);
+  }
+  var SAVE_ERR="⚠ Opslaan mislukt — NIET bewaard. Controleer je internet en probeer opnieuw.";
   function saveDeal(r){
     if(!USING_SUPABASE || !r) return;
     var row=toRow(r);
     if(r._new){
       delete r._new;
       sb.from("deals").insert(row).select().single().then(function(res){
-        if(res.error){ console.error("Insert faalde:",res.error); return; }
+        if(res.error){ console.error("Insert faalde:",res.error); toast(SAVE_ERR,"err"); return; }
         if(res.data) r.id=res.data.id;
+        toast("Opgeslagen ✓","ok");
       });
     } else {
       sb.from("deals").update(row).eq("id",r.id).then(function(res){
-        if(res.error) console.error("Update faalde:",res.error);
+        if(res.error){ console.error("Update faalde:",res.error); toast(SAVE_ERR,"err"); }
+        else { toast("Opgeslagen ✓","ok"); }
       });
     }
   }
@@ -1313,18 +1327,19 @@
 
   // ---- "Wie" (Merk/Atleet/Spreker): label + keuzelijst afhankelijk van unit ----
   function wieLabel(unit){
+    if(unit==="Influencers") return "Influencer";
     if(unit===ATLEET_UNIT) return "Atleet";
     if(unit==="SportsSpeakers"||unit==="SportSpreker") return "Spreker";
     return "Merk / partner";
   }
   function wieList(unit){
     var set={};
-    if(unit===ATLEET_UNIT){
+    if(isAthleteUnit(unit)){
       ATLETEN.forEach(function(v){set[v]=1;});
-      data.forEach(function(d){ if(d.unit===ATLEET_UNIT && d.klant) set[d.klant]=1; });
+      data.forEach(function(d){ if(isAthleteUnit(d.unit) && d.klant) set[d.klant]=1; });
     } else {
       Object.keys(BRANDS).forEach(function(v){set[v]=1;});
-      data.forEach(function(d){ if(d.unit!==ATLEET_UNIT && d.klant) set[d.klant]=1; });
+      data.forEach(function(d){ if(!isAthleteUnit(d.unit) && d.klant) set[d.klant]=1; });
     }
     return Object.keys(set).sort(function(a,b){return a.localeCompare(b,"nl");});
   }
@@ -1398,8 +1413,8 @@
         "</div>"+
 
         // ---- Extra velden · alleen bij unit "Atleten" ----
-        "<div id='d_athBlock' style='display:"+(r.unit===ATLEET_UNIT?"":"none")+"'>"+
-          "<div class='dsec'>Extra velden · Atleten</div>"+
+        "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
+          "<div class='dsec'>Extra velden · Atleten / Influencers</div>"+
           "<div class='row2'>"+
             "<div class='fld'><label>Sport</label>"+
               "<select id='d_sport' class='newsel'>"+newSelectOptions(distinctVals('sport',SPORTEN), r.sport)+"</select>"+
@@ -1459,7 +1474,7 @@
       function curUnit(){ return readNewSelect("#d_unit","#d_unit_new"); }
       function apply(){
         var u=curUnit();
-        if(blk) blk.style.display=(u===ATLEET_UNIT)?"":"none";
+        if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
         if(lbl) lbl.textContent=wieLabel(u);
         var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
         var ks=$("#d_klant"); if(ks){ var cur=readNewSelect("#d_klant","#d_klant_new");
@@ -1833,9 +1848,22 @@
   }
   function doLogout(){ if(USING_SUPABASE && sb) sb.auth.signOut().then(function(){ location.reload(); }); }
 
+  function supaConfigured(){ return SUPA.url.indexOf("http")===0 && SUPA.anon.length>20; }
+  function showConnError(){
+    if(!authScrim) return;
+    authScrim.innerHTML="<div class='auth-card' style='text-align:center'>"+
+      "<img class='mark auth-mark' src='HOS_Profielfoto-LINKEDIN_400x400.png' alt='House of Sports'>"+
+      "<h1 class='auth-title'>Geen verbinding met de database</h1>"+
+      "<p class='auth-sub'>De opslag kon niet geladen worden. <b>Wijzigingen worden nu niet bewaard.</b> Controleer je internet en herlaad de pagina.</p>"+
+      "<button class='btn-primary auth-btn' onclick='location.reload()'>Opnieuw laden</button></div>";
+    authScrim.classList.add("show");
+  }
   function start(){
     initSupabase();
-    if(!USING_SUPABASE){ showApp(); bootApp(); return; }   // offline/testmodus zonder login
+    if(!USING_SUPABASE){
+      if(supaConfigured()){ showConnError(); return; }     // db is ingesteld maar CDN/init faalde -> harde fout i.p.v. stil testdata
+      showApp(); bootApp(); return;                         // echt offline/testmodus (lokale preview, SUPA leeg)
+    }
     if($("#authBtn")) $("#authBtn").onclick=doLogin;
     if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
