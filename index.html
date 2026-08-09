@@ -19,6 +19,7 @@
     --text:#2B2825; --text-muted:#6A645C; --text-soft:#8A837B;
     --accent:#FF5C01; --accent-2:#FFAA00; --accent-soft:rgba(255,92,1,.09); --accent-line:rgba(255,92,1,.28);
     --focus:#FF5C01;
+    --bar-h:59px;
     --shadow:0 1px 2px rgba(47,47,47,.04),0 8px 24px rgba(47,47,47,.06);
     --shadow-lg:0 12px 40px rgba(47,47,47,.16);
     /* status pill palettes (light) */
@@ -163,7 +164,7 @@
 
   /* ---------- Table ---------- */
   .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-  .tscroll{overflow-x:auto}
+  .tscroll{overflow:auto;max-height:calc(100vh - 220px)}
   table{border-collapse:collapse;width:100%;min-width:940px}
   thead th{
     text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-soft);
@@ -327,10 +328,36 @@
   .kcard-cap{font-size:10.5px;color:var(--text-soft)}
   .kcard-v{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .kcard-v.date{font-weight:600;font-variant-numeric:tabular-nums}
-  .kcard-red{border-color:var(--red-bd);background:var(--red-bg)}
-  .kcard-red:hover{border-color:var(--red-tx)}
-  tr.row-red td{background:var(--red-bg)}
+  /* Fase-kleurcode: rustige linker-accentbalk op de kaart (grijs→blauw→indigo→amber→groen) */
+  .kcard.pf-grey{box-shadow:inset 3px 0 0 var(--grey-tx),var(--shadow)}
+  .kcard.pf-blue{box-shadow:inset 3px 0 0 var(--blue-tx),var(--shadow)}
+  .kcard.pf-indigo{box-shadow:inset 3px 0 0 var(--indigo-tx),var(--shadow)}
+  .kcard.pf-amber{box-shadow:inset 3px 0 0 var(--amber-tx),var(--shadow)}
+  .kcard.pf-green{box-shadow:inset 3px 0 0 var(--green-tx),var(--shadow)}
+  /* Aandacht: rustig (rode accentbalk + rode datum) i.p.v. volledig rood vlak */
+  .kcard.kcard-red{background:var(--surface);border-color:var(--border);box-shadow:inset 3px 0 0 var(--red-tx),var(--shadow)}
+  .kcard.kcard-red:hover{border-color:var(--red-bd)}
+  .kcard-red .kcard-v.date{color:var(--red-tx);font-weight:800}
+  tr.row-red td{background:color-mix(in srgb,var(--red-bg) 42%,transparent)}
   tr.row-red:hover td{background:var(--red-bg)}
+  tr.row-red td:first-child{box-shadow:inset 3px 0 0 var(--red-tx)}
+  /* Live-highlight + entree bij (realtime) wijziging */
+  @keyframes cardflash{0%{outline-color:transparent}12%{outline-color:var(--accent)}100%{outline-color:transparent}}
+  @keyframes cardpop{0%{transform:scale(.975)}60%{transform:scale(1.008)}100%{transform:scale(1)}}
+  @keyframes rowflash{0%,100%{background:transparent}25%{background:var(--accent-soft)}}
+  .kcard.just-updated{outline:2px solid transparent;outline-offset:1px;animation:cardflash 1.5s ease-out,cardpop .35s ease-out}
+  tbody tr.just-updated{animation:rowflash 1.5s ease-out}
+  /* Plakkende tabelkop: blijft staan terwijl je door de rijen scrollt */
+  .tscroll thead th{position:sticky;top:0;z-index:3}
+  /* Filterbalk: actieve filters + resultaattelling */
+  .filterbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 14px}
+  .filterbar .fb-count{font-size:12.5px;font-weight:700;color:var(--text-muted)}
+  .fb-chip{appearance:none;cursor:pointer;font:inherit;font-weight:600;font-size:12px;padding:4px 10px;border-radius:999px;display:inline-flex;gap:6px;align-items:center;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--text)}
+  .fb-chip .fb-k{color:var(--text-soft);font-weight:700}
+  .fb-chip .fb-x{font-weight:800;color:var(--accent)}
+  .fb-chip:hover{border-color:var(--accent)}
+  .fb-clear{appearance:none;border:none;background:none;cursor:pointer;font:inherit;font-weight:700;font-size:12px;color:var(--accent);padding:4px}
+  .fb-clear:hover{text-decoration:underline}
   .chip-part{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 9px;font-weight:600}
   .chip-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 auto}
   .chip-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -448,6 +475,7 @@
 
   /* ---------- Mobiel (telefoon) ---------- */
   @media (max-width:640px){
+    html{--bar-h:52px}
     html,body{overflow-x:hidden;max-width:100%}
     .wrap{padding:0 12px 64px}
     .bar-in{padding:11px 12px;gap:10px}
@@ -548,6 +576,8 @@
         Nieuwe saleskans
       </button>
     </div>
+
+    <div class="filterbar" id="filterBar"></div>
 
     <!-- KANBAN (Pipeline) -->
     <section id="view-kanban">
@@ -937,6 +967,18 @@
   var openDealId=null, isDragging=false, deferredRerender=false, rerenderTimer=null;
   var pendingRemote={};                 // id -> binnengekomen wijziging, geparkeerd zolang die kaart openstaat
   var rtChannel=null, rtStarted=false, _ccToast=0;
+  var flashIds=new Set();               // kaarten/rijen die net (realtime of door mij) wijzigden -> kort oplichten
+  function applyFlashes(){
+    if(!flashIds.size) return;
+    flashIds.forEach(function(id){
+      document.querySelectorAll('[data-id="'+id+'"]').forEach(function(elm){
+        if(elm.classList.contains('kcard') || elm.tagName==='TR'){
+          elm.classList.remove('just-updated'); void elm.offsetWidth; elm.classList.add('just-updated');
+        }
+      });
+    });
+    flashIds.clear();
+  }
   // genormaliseerde weergave van een rij over exact DEAL_COLS (undefined -> null), voor vergelijken/diffen
   function normRow(r){ var o={}; for(var i=0;i<DEAL_COLS.length;i++){ var k=DEAL_COLS[i], v=r[k]; o[k]=(v===undefined?null:v); } return o; }
   function rowEq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
@@ -1003,7 +1045,7 @@
       if(oid!=null){ for(var i=0;i<data.length;i++){ if(data[i].id===oid){
         if(openDealId===oid){ pendingRemote[oid]={__deleted:true}; }
         else { data.splice(i,1); changed=true; } break; } } }
-    } else if(payload.new){ changed=applyRemoteRow(payload.new); }
+    } else if(payload.new){ changed=applyRemoteRow(payload.new); if(changed) flashIds.add(payload.new.id); }
     if(changed) scheduleRerender();
   }
 
@@ -1154,8 +1196,28 @@
   }
   rebuildFilters();
 
+  // ---------- filterbalk (actieve filters + resultaattelling) ----------
+  var FILTER_LBL={fUnit:"Unit",fOwner:"Contactpersoon",fWie:"Merk/Partner",fPartner:"Partnership"};
+  function renderFilterBar(){
+    var bar=$("#filterBar"); if(!bar) return;
+    var s=filterVals(), q=$("#q")?$("#q").value.trim():"", chips=[];
+    FILTERS.forEach(function(f){ if(s[f.id]) chips.push({k:f.id,lbl:FILTER_LBL[f.id]||f.ph,val:s[f.id]}); });
+    if(q) chips.push({k:"q",lbl:"Zoek",val:q});
+    var n=currentRows().length;
+    var head="<span class='fb-count'>"+n+(chips.length?(n===1?" resultaat":" resultaten"):(n===1?" traject":" trajecten"))+"</span>";
+    if(!chips.length){ bar.innerHTML=head; return; }
+    bar.innerHTML=head+chips.map(function(c){
+      return "<button class='fb-chip' data-k='"+c.k+"'><span class='fb-k'>"+esc(c.lbl)+":</span> "+esc(c.val)+" <span class='fb-x'>×</span></button>";
+    }).join("")+"<button class='fb-clear' id='fbClear'>Wis alles</button>";
+    bar.querySelectorAll(".fb-chip").forEach(function(b){
+      b.onclick=function(){ var k=b.getAttribute("data-k"); if(k==="q"){ if($("#q")) $("#q").value=""; } else { var el=$("#"+k); if(el) el.value=""; } renderPipe(); };
+    });
+    var clr=$("#fbClear"); if(clr) clr.onclick=function(){ if($("#q")) $("#q").value=""; FILTERS.forEach(function(f){ var el=$("#"+f.id); if(el) el.value=""; }); renderPipe(); };
+  }
+
   // ---------- render stats ----------
   function renderStats(){
+    renderFilterBar();
     var rows=currentRows();                 // gefilterde, actieve kansen
     var totActief=activeData().length;
     var aandacht=0,waarde=0;
@@ -1278,7 +1340,7 @@
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
   // ---------- kanban ----------
-  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderPerMerk(); renderFeed(); renderArchive(); }
+  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
 
   // centrale fase-wijziging (vanuit kanban-drag én tabel-dropdown)
   function requestFaseChange(r, faseV){
@@ -1334,7 +1396,7 @@
       if(!colRows.length){ html+="<div class='kempty'>Sleep hier een deal naartoe</div>"; }
       colRows.forEach(function(r){
         var b=brand(r.klant);
-        html+="<div class='kcard"+(needsAttention(r)?" kcard-red":"")+"' draggable='true' data-id='"+r.id+"'>"+
+        html+="<div class='kcard pf-"+f.c.slice(2)+(needsAttention(r)?" kcard-red":"")+"' draggable='true' data-id='"+r.id+"'>"+
           "<div class='kcard-top'>"+
             "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
             "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
@@ -1747,7 +1809,7 @@
       r.bijgewerkt=iso(TODAY);
       if(isNew){ r.status="actief"; r._new=true; data.push(r); }
       saveDeal(r);
-      if(r && r.id!=null) delete pendingRemote[r.id];   // mijn opslag wint van een geparkeerde wijziging
+      if(r && r.id!=null){ delete pendingRemote[r.id]; flashIds.add(r.id); }   // mijn opslag wint + licht kort op
       closeDrawer(); refreshAll();
     };
   }
@@ -1777,6 +1839,7 @@
     var pipe = (v==="kanban"||v==="tabel"||v==="aandacht");
     $("#stats").style.display = pipe ? "" : "none";
     $("#pipeToolbar").style.display = pipe ? "" : "none";
+    if($("#filterBar")) $("#filterBar").style.display = pipe ? "" : "none";
     if(v==="kanban") renderKanban();
     if(v==="tabel") renderTable();
     if(v==="aandacht") renderAandacht();
