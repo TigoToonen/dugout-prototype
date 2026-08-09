@@ -268,6 +268,7 @@
   .attach-hint{font-size:11px;color:var(--text-soft);margin-top:7px}
 
   .drawer-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
+  .arch-actions{display:flex;flex-direction:column;gap:8px;align-items:stretch}
   .meta-upd{font-size:11.5px;color:var(--text-soft);flex:1}
   .btn-ghost{appearance:none;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);cursor:pointer;font:inherit;font-weight:600;padding:9px 14px;border-radius:9px}
   .btn-ghost:hover{color:var(--text)}
@@ -1677,7 +1678,7 @@
       "</div>"+
       "<div class='drawer-foot'>"+
         (isNew?"":(isArchived
-          ? "<button class='btn-ghost' id='dRestore' title='Terug naar de pipeline'>↩ Terugzetten</button>"
+          ? "<div class='arch-actions'><button class='btn-ghost' id='dRestore' title='Terug naar de pipeline'>↩ Terugzetten</button><button class='btn-ghost del' id='dHardDelete' title='Definitief verwijderen'>🗑 Verwijderen</button></div>"
           : "<button class='btn-ghost del' id='dDelete' title='Naar archief'>🗑 Archiveren</button>"))+
         "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"Laatst bijgewerkt "+fmt(r.bijgewerkt))+"</span>"+
         "<button class='btn-ghost' id='dCancel'>Annuleren</button>"+
@@ -1690,6 +1691,7 @@
     $("#dClose").onclick=closeDrawer; $("#dCancel").onclick=closeDrawer;
     if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
     if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
+    if($("#dHardDelete")) $("#dHardDelete").onclick=function(){ openHardDeleteFlow(r); };
     wireNewSelect("#d_klant","#d_klant_new");
     wireNewSelect("#d_unit","#d_unit_new");
     wireNewSelect("#d_merk","#d_merk_new");
@@ -1925,6 +1927,35 @@
   function restoreDeal(r){
     r.status="actief"; r.archived_at=null; touch(r); saveDeal(r);
     closeDrawer(); refreshAll();
+  }
+  // Definitief verwijderen (alleen vanuit het archief) — uit de database én lokaal.
+  // Verwijdert lokaal pas ALS de database bevestigt dat de rij echt weg is (voorkomt "komt terug bij verversen").
+  function removeLocal(r){ var i=data.indexOf(r); if(i>=0) data.splice(i,1); if(r&&r.id!=null) delete pendingRemote[r.id]; }
+  function hardDeleteDeal(r){
+    if(!(USING_SUPABASE && sb) || r.id==null || r._new){
+      removeLocal(r); closeDrawer(); refreshAll(); return;      // testmodus / nog niet opgeslagen: lokaal weg
+    }
+    sb.from("deals").delete().eq("id",r.id).select().then(function(res){
+      if(res.error || !res.data || !res.data.length){
+        console.error("Verwijderen faalde/geblokkeerd:",res.error);
+        toast("Verwijderen mislukt — controleer de rechten (RLS) en probeer opnieuw.","err");
+        return;                                                  // NIET lokaal weghalen: staat nog in de database
+      }
+      removeLocal(r); closeDrawer(); refreshAll();
+      toast("Definitief verwijderd","ok");
+    });
+  }
+  function openHardDeleteFlow(r){
+    showModal(
+      "<div class='modal-ico del'>🗑️</div>"+
+      "<h3>Definitief verwijderen</h3>"+
+      "<p><b>"+esc(r.klant)+"</b> wordt <b>permanent uit het archief verwijderd</b>. Dit kan niet ongedaan worden gemaakt.</p>"+
+      "<div class='modal-foot'>"+
+        "<button class='btn-ghost' id='m_cancel'>Annuleren</button>"+
+        "<button class='btn-danger' id='m_ok'>Definitief verwijderen</button>"+
+      "</div>");
+    $("#m_cancel").onclick=closeModal;
+    $("#m_ok").onclick=function(){ closeModal(); hardDeleteDeal(r); };
   }
 
   // ========================================================
