@@ -307,6 +307,9 @@
   .kcard:active{cursor:grabbing}
   .kcard.dragging{opacity:.45;box-shadow:var(--shadow-lg);cursor:grabbing}
   @media (hover:none){ .kcard:hover{transform:none;border-color:var(--border)} }
+  /* SortableJS sleep-uiterlijk */
+  .kcard.sortable-ghost{opacity:.4;outline:2px dashed var(--accent);outline-offset:-2px}
+  .sortable-drag,.sortable-fallback{box-shadow:var(--shadow-lg)!important;cursor:grabbing}
   .kcol.drag-over{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft)}
   .kcol.drag-over .kempty{color:var(--accent);font-weight:600}
   .kgrip{color:var(--text-soft);font-size:12px;letter-spacing:-2px;line-height:1;cursor:grab;flex:0 0 auto;user-select:none}
@@ -530,6 +533,7 @@
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sortable.min.js"></script>
 </head>
 <body>
 
@@ -1341,79 +1345,38 @@
 
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
-  // ---------- touch drag & drop (mobiel) ----------
-  // HTML5-drag werkt niet op touch. Daarom: ingedrukt houden (long-press) -> kaart 'oppakken' ->
-  // met de vinger naar een andere fase-kolom slepen (board scrolt automatisch mee bij de randen) -> loslaten.
-  // Een gewone tik opent de kaart. Desktop (muis) blijft de bestaande HTML5-drag gebruiken.
-  var TD={active:false,id:null,ghost:null,card:null,sx:0,sy:0,moved:false,lp:null,scrollTimer:null,suppress:false};
-  function tdCleanup(){
-    if(TD.ghost&&TD.ghost.parentNode) TD.ghost.parentNode.removeChild(TD.ghost);
-    TD.ghost=null;
-    if(TD.card) TD.card.classList.remove("dragging");
-    document.querySelectorAll(".kcol.drag-over").forEach(function(k){k.classList.remove("drag-over");});
-    if(TD.scrollTimer){ clearInterval(TD.scrollTimer); TD.scrollTimer=null; }
-    TD.active=false;
-  }
-  function tdStart(card,x,y){
-    TD.active=true; TD.card=card; TD.id=+card.getAttribute("data-id");
-    card.classList.add("dragging");
-    var g=card.cloneNode(true), r=card.getBoundingClientRect();
-    g.style.cssText="position:fixed;left:0;top:0;width:"+r.width+"px;margin:0;z-index:9999;pointer-events:none;opacity:.96;box-shadow:var(--shadow-lg);transform:translate("+(x-r.width/2)+"px,"+(y-26)+"px) scale(1.04)";
-    document.body.appendChild(g); TD.ghost=g;
-    if(navigator.vibrate){ try{navigator.vibrate(10);}catch(e){} }
-  }
-  function tdEdgeScroll(x){
+  // ---------- kanban sleep: SortableJS (touch + muis) ----------
+  // SortableJS regelt slepen op mobiel én desktop: onderscheid tik/scroll/sleep (even vasthouden),
+  // en automatisch meescrollen naar de volgende fase-kolom. Onze data blijft leidend: bij een
+  // fasewissel draaien we Sortable's DOM-verplaatsing terug (renderKanban) en lopen we door de
+  // normale flow (requestFaseChange -> verplichte notitie / winst-flow).
+  var sortables=[];
+  function destroySortables(){ sortables.forEach(function(s){ try{s.destroy();}catch(e){} }); sortables=[]; }
+  function mountSortables(){
+    if(!window.Sortable) return;
     var board=document.getElementById("kanban"); if(!board) return;
-    var vw=window.innerWidth, EDGE=48, dir=0;
-    if(x>vw-EDGE) dir=1; else if(x<EDGE) dir=-1;
-    if(TD.scrollTimer){ clearInterval(TD.scrollTimer); TD.scrollTimer=null; }
-    if(dir!==0) TD.scrollTimer=setInterval(function(){ board.scrollLeft += dir*12; },16);
-  }
-  function tdColAt(x,y){ var el=document.elementFromPoint(x,y); return (el&&el.closest)?el.closest(".kcol"):null; }
-  function tdMove(x,y){
-    if(TD.ghost){ var w=TD.ghost.offsetWidth; TD.ghost.style.transform="translate("+(x-w/2)+"px,"+(y-26)+"px) scale(1.04)"; }
-    var col=tdColAt(x,y);
-    document.querySelectorAll(".kcol.drag-over").forEach(function(k){ if(k!==col) k.classList.remove("drag-over"); });
-    if(col) col.classList.add("drag-over");
-    tdEdgeScroll(x);
-  }
-  function tdDrop(x,y){
-    var col=tdColAt(x,y), fase=col?col.getAttribute("data-fase"):null, id=TD.id;
-    tdCleanup();
-    if(fase && id!=null) moveToFase(id, fase);
-  }
-  function setupBoardTouch(){
-    var board=document.getElementById("kanban"); if(!board||board._touchWired) return; board._touchWired=true;
-    board.addEventListener("touchstart",function(e){
-      if(e.touches.length!==1||TD.active) return;
-      var card=e.target.closest&&e.target.closest(".kcard"); if(!card) return;
-      var t=e.touches[0]; TD.sx=t.clientX; TD.sy=t.clientY; TD.moved=false; TD.card=card;
-      TD.lp=setTimeout(function(){ if(!TD.moved) tdStart(card,TD.sx,TD.sy); },300);
-    },{passive:true});
-    board.addEventListener("touchmove",function(e){
-      var t=e.touches[0]; if(!t) return;
-      if(!TD.active){
-        if(Math.abs(t.clientX-TD.sx)>8||Math.abs(t.clientY-TD.sy)>8){ TD.moved=true; if(TD.lp){clearTimeout(TD.lp);TD.lp=null;} }
-        return;
-      }
-      e.preventDefault();                 // scroll blokkeren tijdens het slepen
-      tdMove(t.clientX,t.clientY);
-    },{passive:false});
-    board.addEventListener("touchend",function(e){
-      if(TD.lp){clearTimeout(TD.lp);TD.lp=null;}
-      if(TD.active){
-        e.preventDefault();
-        var t=(e.changedTouches&&e.changedTouches[0])||{clientX:TD.sx,clientY:TD.sy};
-        tdDrop(t.clientX,t.clientY);
-        TD.suppress=true; setTimeout(function(){TD.suppress=false;},500);
-      } else if(!TD.moved && TD.card){
-        TD.suppress=true; setTimeout(function(){TD.suppress=false;},500);   // dubbele (synthetische) click voorkomen
-        var id=+TD.card.getAttribute("data-id"), r=data.filter(function(x){return x.id===id;})[0];
-        if(r) openDrawer(r);
-      }
-      TD.card=null;
-    },{passive:false});
-    board.addEventListener("touchcancel",function(){ if(TD.lp){clearTimeout(TD.lp);TD.lp=null;} if(TD.active) tdCleanup(); TD.card=null; },{passive:true});
+    board.querySelectorAll(".kcol-body").forEach(function(body){
+      sortables.push(Sortable.create(body,{
+        group:"deals", draggable:".kcard", animation:150,
+        delay:180, delayOnTouchOnly:true, touchStartThreshold:6,     // tik/scroll blijft werken; even vasthouden = slepen
+        forceFallback:true, fallbackOnBody:true, fallbackTolerance:6,
+        scroll:board, scrollSensitivity:70, scrollSpeed:14, bubbleScroll:true, forceAutoScrollFallback:true,
+        ghostClass:"sortable-ghost", chosenClass:"sortable-chosen", dragClass:"sortable-drag",
+        onStart:function(){ isDragging=true; },
+        onEnd:function(evt){
+          isDragging=false;
+          var fromCol=evt.from.closest(".kcol"), toCol=evt.to.closest(".kcol");
+          var id=+evt.item.getAttribute("data-id");
+          var toFase=toCol?toCol.getAttribute("data-fase"):null;
+          var changed = !!(toCol && fromCol && toCol!==fromCol && toFase && id);
+          setTimeout(function(){
+            renderKanban();                       // Sortable's visuele verplaatsing terugdraaien; data is leidend
+            if(deferredRerender){ deferredRerender=false; scheduleRerender(); }
+            if(changed) moveToFase(id, toFase);   // -> requestFaseChange -> verplichte notitie / winst-flow
+          },0);
+        }
+      }));
+    });
   }
 
   // ---------- kanban ----------
@@ -1461,6 +1424,7 @@
 
   function renderKanban(){
     var board=$("#kanban"); if(!board) return;
+    destroySortables();          // oude Sortable-instanties opruimen vóór herbouw
     board.innerHTML="";
     var rows=currentRows();
     PIPELINE_FASES.forEach(function(f){
@@ -1473,7 +1437,7 @@
       if(!colRows.length){ html+="<div class='kempty'>Sleep hier een deal naartoe</div>"; }
       colRows.forEach(function(r){
         var b=brand(r.klant);
-        html+="<div class='kcard pf-"+f.c.slice(2)+(needsAttention(r)?" kcard-red":"")+"' draggable='true' data-id='"+r.id+"'>"+
+        html+="<div class='kcard pf-"+f.c.slice(2)+(needsAttention(r)?" kcard-red":"")+"' data-id='"+r.id+"'>"+
           "<div class='kcard-top'>"+
             "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
             "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
@@ -1492,52 +1456,16 @@
       board.appendChild(col);
     });
 
-    // ----- klik = detail openen -----
+    // ----- klik = detail openen (SortableJS onderdrukt zelf de klik na een sleep) -----
     board.querySelectorAll(".kcard").forEach(function(c){
       c.addEventListener("click",function(){
-        if(TD.suppress) return;                           // touch heeft dit al afgehandeld (tik of sleep)
-        if(c.getAttribute("data-dragging")==="1") return; // niet openen na een sleep
         var id=+c.getAttribute("data-id");
         var r=data.filter(function(x){return x.id===id;})[0];
         if(r) openDrawer(r);
       });
-      // ----- drag bron -----
-      c.addEventListener("dragstart",function(e){
-        c.setAttribute("data-dragging","1");
-        c.classList.add("dragging");
-        isDragging=true;                 // realtime: hertekenen uitstellen tot na de sleep
-        e.dataTransfer.effectAllowed="move";
-        e.dataTransfer.setData("text/plain", c.getAttribute("data-id"));
-      });
-      c.addEventListener("dragend",function(){
-        c.classList.remove("dragging");
-        setTimeout(function(){c.removeAttribute("data-dragging");},0);
-        board.querySelectorAll(".kcol.drag-over").forEach(function(k){k.classList.remove("drag-over");});
-        isDragging=false;
-        if(deferredRerender){ deferredRerender=false; scheduleRerender(); }  // uitgestelde live-update alsnog tonen
-      });
     });
 
-    // ----- drop doelen (hele kolom) -----
-    board.querySelectorAll(".kcol").forEach(function(col){
-      col.addEventListener("dragover",function(e){
-        e.preventDefault();
-        e.dataTransfer.dropEffect="move";
-        col.classList.add("drag-over");
-      });
-      col.addEventListener("dragleave",function(e){
-        if(!col.contains(e.relatedTarget)) col.classList.remove("drag-over");
-      });
-      col.addEventListener("drop",function(e){
-        e.preventDefault();
-        col.classList.remove("drag-over");
-        var id=parseInt(e.dataTransfer.getData("text/plain"),10);
-        var faseV=col.getAttribute("data-fase");
-        if(!isNaN(id) && faseV) moveToFase(id, faseV);
-      });
-    });
-
-    setupBoardTouch();   // touch-sleep koppelen (eenmalig op het board; overleeft opnieuw tekenen)
+    mountSortables();    // slepen (touch + muis) koppelen via SortableJS
   }
 
   // ---------- per merk ----------
