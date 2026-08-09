@@ -302,10 +302,11 @@
   .kcol-head .kcol-cnt{font-size:11px;font-weight:800;background:rgba(0,0,0,.08);border-radius:999px;padding:1px 8px;min-width:20px;text-align:center}
   .kcol-body{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1;min-height:64px}
   .kempty{color:var(--text-soft);text-align:center;padding:16px 0;font-size:13px}
-  .kcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);cursor:grab;transition:box-shadow .12s,border-color .12s,transform .12s;display:flex;flex-direction:column;gap:8px}
+  .kcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);cursor:grab;transition:box-shadow .12s,border-color .12s,transform .12s;display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
   .kcard:hover{border-color:var(--accent-line);transform:translateY(-1px)}
   .kcard:active{cursor:grabbing}
   .kcard.dragging{opacity:.45;box-shadow:var(--shadow-lg);cursor:grabbing}
+  @media (hover:none){ .kcard:hover{transform:none;border-color:var(--border)} }
   .kcol.drag-over{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft)}
   .kcol.drag-over .kempty{color:var(--accent);font-weight:600}
   .kgrip{color:var(--text-soft);font-size:12px;letter-spacing:-2px;line-height:1;cursor:grab;flex:0 0 auto;user-select:none}
@@ -1340,6 +1341,81 @@
 
   function touch(r){ r.bijgewerkt=iso(TODAY); }
 
+  // ---------- touch drag & drop (mobiel) ----------
+  // HTML5-drag werkt niet op touch. Daarom: ingedrukt houden (long-press) -> kaart 'oppakken' ->
+  // met de vinger naar een andere fase-kolom slepen (board scrolt automatisch mee bij de randen) -> loslaten.
+  // Een gewone tik opent de kaart. Desktop (muis) blijft de bestaande HTML5-drag gebruiken.
+  var TD={active:false,id:null,ghost:null,card:null,sx:0,sy:0,moved:false,lp:null,scrollTimer:null,suppress:false};
+  function tdCleanup(){
+    if(TD.ghost&&TD.ghost.parentNode) TD.ghost.parentNode.removeChild(TD.ghost);
+    TD.ghost=null;
+    if(TD.card) TD.card.classList.remove("dragging");
+    document.querySelectorAll(".kcol.drag-over").forEach(function(k){k.classList.remove("drag-over");});
+    if(TD.scrollTimer){ clearInterval(TD.scrollTimer); TD.scrollTimer=null; }
+    TD.active=false;
+  }
+  function tdStart(card,x,y){
+    TD.active=true; TD.card=card; TD.id=+card.getAttribute("data-id");
+    card.classList.add("dragging");
+    var g=card.cloneNode(true), r=card.getBoundingClientRect();
+    g.style.cssText="position:fixed;left:0;top:0;width:"+r.width+"px;margin:0;z-index:9999;pointer-events:none;opacity:.96;box-shadow:var(--shadow-lg);transform:translate("+(x-r.width/2)+"px,"+(y-26)+"px) scale(1.04)";
+    document.body.appendChild(g); TD.ghost=g;
+    if(navigator.vibrate){ try{navigator.vibrate(10);}catch(e){} }
+  }
+  function tdEdgeScroll(x){
+    var board=document.getElementById("kanban"); if(!board) return;
+    var vw=window.innerWidth, EDGE=48, dir=0;
+    if(x>vw-EDGE) dir=1; else if(x<EDGE) dir=-1;
+    if(TD.scrollTimer){ clearInterval(TD.scrollTimer); TD.scrollTimer=null; }
+    if(dir!==0) TD.scrollTimer=setInterval(function(){ board.scrollLeft += dir*12; },16);
+  }
+  function tdColAt(x,y){ var el=document.elementFromPoint(x,y); return (el&&el.closest)?el.closest(".kcol"):null; }
+  function tdMove(x,y){
+    if(TD.ghost){ var w=TD.ghost.offsetWidth; TD.ghost.style.transform="translate("+(x-w/2)+"px,"+(y-26)+"px) scale(1.04)"; }
+    var col=tdColAt(x,y);
+    document.querySelectorAll(".kcol.drag-over").forEach(function(k){ if(k!==col) k.classList.remove("drag-over"); });
+    if(col) col.classList.add("drag-over");
+    tdEdgeScroll(x);
+  }
+  function tdDrop(x,y){
+    var col=tdColAt(x,y), fase=col?col.getAttribute("data-fase"):null, id=TD.id;
+    tdCleanup();
+    if(fase && id!=null) moveToFase(id, fase);
+  }
+  function setupBoardTouch(){
+    var board=document.getElementById("kanban"); if(!board||board._touchWired) return; board._touchWired=true;
+    board.addEventListener("touchstart",function(e){
+      if(e.touches.length!==1||TD.active) return;
+      var card=e.target.closest&&e.target.closest(".kcard"); if(!card) return;
+      var t=e.touches[0]; TD.sx=t.clientX; TD.sy=t.clientY; TD.moved=false; TD.card=card;
+      TD.lp=setTimeout(function(){ if(!TD.moved) tdStart(card,TD.sx,TD.sy); },300);
+    },{passive:true});
+    board.addEventListener("touchmove",function(e){
+      var t=e.touches[0]; if(!t) return;
+      if(!TD.active){
+        if(Math.abs(t.clientX-TD.sx)>8||Math.abs(t.clientY-TD.sy)>8){ TD.moved=true; if(TD.lp){clearTimeout(TD.lp);TD.lp=null;} }
+        return;
+      }
+      e.preventDefault();                 // scroll blokkeren tijdens het slepen
+      tdMove(t.clientX,t.clientY);
+    },{passive:false});
+    board.addEventListener("touchend",function(e){
+      if(TD.lp){clearTimeout(TD.lp);TD.lp=null;}
+      if(TD.active){
+        e.preventDefault();
+        var t=(e.changedTouches&&e.changedTouches[0])||{clientX:TD.sx,clientY:TD.sy};
+        tdDrop(t.clientX,t.clientY);
+        TD.suppress=true; setTimeout(function(){TD.suppress=false;},500);
+      } else if(!TD.moved && TD.card){
+        TD.suppress=true; setTimeout(function(){TD.suppress=false;},500);   // dubbele (synthetische) click voorkomen
+        var id=+TD.card.getAttribute("data-id"), r=data.filter(function(x){return x.id===id;})[0];
+        if(r) openDrawer(r);
+      }
+      TD.card=null;
+    },{passive:false});
+    board.addEventListener("touchcancel",function(){ if(TD.lp){clearTimeout(TD.lp);TD.lp=null;} if(TD.active) tdCleanup(); TD.card=null; },{passive:true});
+  }
+
   // ---------- kanban ----------
   function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
 
@@ -1419,6 +1495,7 @@
     // ----- klik = detail openen -----
     board.querySelectorAll(".kcard").forEach(function(c){
       c.addEventListener("click",function(){
+        if(TD.suppress) return;                           // touch heeft dit al afgehandeld (tik of sleep)
         if(c.getAttribute("data-dragging")==="1") return; // niet openen na een sleep
         var id=+c.getAttribute("data-id");
         var r=data.filter(function(x){return x.id===id;})[0];
@@ -1459,6 +1536,8 @@
         if(!isNaN(id) && faseV) moveToFase(id, faseV);
       });
     });
+
+    setupBoardTouch();   // touch-sleep koppelen (eenmalig op het board; overleeft opnieuw tekenen)
   }
 
   // ---------- per merk ----------
