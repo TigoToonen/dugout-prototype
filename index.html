@@ -2233,10 +2233,17 @@
     if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
     if($("#logoutBtn")) $("#logoutBtn").onclick=doLogout;
+    // getSession mag nooit eeuwig laten laden: bij een trage/kapotte
+    // sessie vallen we netjes terug op het inlogscherm.
+    var _sessDone=false;
+    function toLogin(){ if(_sessDone) return; _sessDone=true; showLogin(); }
+    function toApp(){ if(_sessDone) return; _sessDone=true; showApp(); bootApp(); }
+    var _sessTimer=setTimeout(toLogin, 6000);   // vangnet: geen antwoord binnen 6s -> toon login
     sb.auth.getSession().then(function(res){
-      if(res.data && res.data.session){ showApp(); bootApp(); }
-      else { showLogin(); }
-    });
+      clearTimeout(_sessTimer);
+      if(res.data && res.data.session){ toApp(); }
+      else { toLogin(); }
+    }).catch(function(){ clearTimeout(_sessTimer); toLogin(); });
   }
   // wacht kort tot de Supabase-bibliotheek geladen is (CDN), val anders terug op testdata
   if(window.supabase){ start(); }
