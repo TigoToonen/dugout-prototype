@@ -1,0 +1,8 @@
+# Netlify-config voor de Commerciële Dugout.
+# De edge function 'basic-auth' zet de héle site achter één gedeeld
+# wachtwoord (HTTP Basic auth). Credentials staan in de Netlify env-vars
+# BASIC_AUTH_USER en BASIC_AUTH_PASSWORD — niet in de code.
+
+[[edge_functions]]
+  path = "/*"
+  function = "basic-auth"

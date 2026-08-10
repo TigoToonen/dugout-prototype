@@ -310,6 +310,27 @@
   /* SortableJS sleep-uiterlijk */
   .kcard.sortable-ghost{opacity:.4;outline:2px dashed var(--accent);outline-offset:-2px}
   .sortable-drag,.sortable-fallback{box-shadow:var(--shadow-lg)!important;cursor:grabbing}
+  /* Mobiel: 'opgetilde' kaart + fase-kiezer onderin */
+  .kcard.kcard-lifted{transform:scale(1.05);box-shadow:var(--shadow-lg);outline:2px solid var(--accent);outline-offset:1px;position:relative;z-index:66}
+  #phaseScrim{position:fixed;inset:0;background:rgba(20,16,10,.14);z-index:64;opacity:0;transition:opacity .18s}
+  #phaseScrim.show{opacity:1}
+  #phaseSheet{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--surface);border-top:1px solid var(--border);
+    border-radius:18px 18px 0 0;box-shadow:var(--shadow-lg);padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(112%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+  #phaseSheet.show{transform:none}
+  .ps-grip{width:38px;height:4px;border-radius:999px;background:var(--border-strong);margin:4px auto 12px}
+  .ps-title{font-weight:800;font-size:14.5px;margin:0 0 12px}
+  .ps-list{display:flex;flex-direction:column;gap:8px}
+  .ps-opt{appearance:none;width:100%;text-align:left;cursor:pointer;font:inherit;font-weight:700;font-size:15px;
+    padding:14px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);
+    display:flex;align-items:center;gap:11px}
+  .ps-opt .ps-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+  .ps-opt .ps-name{flex:1 1 auto}
+  .ps-opt .ps-go{color:var(--accent);font-weight:800}
+  .ps-opt .ps-cur{font-size:11.5px;font-weight:800;color:var(--text-soft)}
+  .ps-opt[disabled]{opacity:.5;cursor:default}
+  .ps-cancel{margin-top:12px;width:100%;text-align:center;appearance:none;border:none;background:none;cursor:pointer;
+    font:inherit;font-weight:700;font-size:14.5px;color:var(--text-muted);padding:12px}
   .kcol.drag-over{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft)}
   .kcol.drag-over .kempty{color:var(--accent);font-weight:600}
   .kgrip{color:var(--text-soft);font-size:12px;letter-spacing:-2px;line-height:1;cursor:grab;flex:0 0 auto;user-select:none}
@@ -1142,7 +1163,7 @@
   // ---------- helpers ----------
   function $(s,r){return (r||document).querySelector(s);}
   function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
-  function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m];});}
+  function esc(s){return (s==null?"":String(s)).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
   function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function euro(n){n=Number(n)||0; return "€ "+n.toLocaleString("nl-NL");}
   function primaryMerk(s){if(!s||!s.trim())return "Onbekend"; return s.split(/[·,;|]+/)[0].trim();}
@@ -1352,8 +1373,10 @@
   // normale flow (requestFaseChange -> verplichte notitie / winst-flow).
   var sortables=[];
   function destroySortables(){ sortables.forEach(function(s){ try{s.destroy();}catch(e){} }); sortables=[]; }
+  function isMobile(){ return !!(window.matchMedia && window.matchMedia("(max-width:640px)").matches); }
   function mountSortables(){
     if(!window.Sortable) return;
+    if(isMobile()) return;               // mobiel: geen sleep-drag, maar de fase-kiezer (vasthouden -> optillen -> tik fase)
     var board=document.getElementById("kanban"); if(!board) return;
     board.querySelectorAll(".kcol-body").forEach(function(body){
       sortables.push(Sortable.create(body,{
@@ -1377,6 +1400,63 @@
         }
       }));
     });
+  }
+
+  // ---------- mobiel: vasthouden -> kaart 'tilt op' -> fase kiezen ----------
+  var phasePickOpen=false;
+  var LP={timer:null,card:null,lifted:null,sx:0,sy:0};
+  function setupMobilePhasePick(){
+    var board=document.getElementById("kanban"); if(!board||board._lpWired) return; board._lpWired=true;
+    board.addEventListener("touchstart",function(e){
+      if(!isMobile()||phasePickOpen||e.touches.length!==1) return;
+      var card=e.target.closest&&e.target.closest(".kcard"); if(!card) return;
+      var t=e.touches[0]; LP.card=card; LP.sx=t.clientX; LP.sy=t.clientY;
+      LP.timer=setTimeout(function(){ LP.timer=null; liftAndPick(card); },380);
+    },{passive:true});
+    board.addEventListener("touchmove",function(e){
+      if(!LP.timer) return; var t=e.touches[0]; if(!t) return;
+      if(Math.abs(t.clientX-LP.sx)>10||Math.abs(t.clientY-LP.sy)>10){ clearTimeout(LP.timer); LP.timer=null; }  // scrollen
+    },{passive:true});
+    board.addEventListener("touchend",function(){ if(LP.timer){clearTimeout(LP.timer);LP.timer=null;} },{passive:true});
+    board.addEventListener("touchcancel",function(){ if(LP.timer){clearTimeout(LP.timer);LP.timer=null;} },{passive:true});
+  }
+  function liftAndPick(card){
+    var id=+card.getAttribute("data-id"), r=data.filter(function(x){return x.id===id;})[0]; if(!r) return;
+    if(navigator.vibrate){ try{navigator.vibrate(12);}catch(e){} }
+    phasePickOpen=true; LP.lifted=card; card.classList.add("kcard-lifted");
+    showPhaseSheet(r);
+  }
+  function removePhaseSheet(){ var s=document.getElementById("phaseSheet"), sc=document.getElementById("phaseScrim"); if(s)s.remove(); if(sc)sc.remove(); }
+  function closePhaseSheet(){
+    if(LP.lifted){ LP.lifted.classList.remove("kcard-lifted"); LP.lifted=null; }
+    removePhaseSheet();
+    setTimeout(function(){ phasePickOpen=false; },60);   // trailing click na long-press opvangen
+  }
+  function showPhaseSheet(r){
+    removePhaseSheet();
+    var scrim=document.createElement("div"); scrim.id="phaseScrim";
+    scrim.addEventListener("click",closePhaseSheet);
+    document.body.appendChild(scrim);
+    var sheet=document.createElement("div"); sheet.id="phaseSheet";
+    var opts=PIPELINE_FASES.map(function(f){
+      var cur=(f.v===r.fase), color="var(--"+f.c.slice(2)+"-tx)";
+      return "<button class='ps-opt' data-fase=\""+esc(f.v)+"\""+(cur?" disabled":"")+">"+
+        "<span class='ps-dot' style='background:"+color+"'></span><span class='ps-name'>"+esc(f.v)+"</span>"+
+        (cur?"<span class='ps-cur'>huidige</span>":"<span class='ps-go'>→</span>")+"</button>";
+    }).join("");
+    sheet.innerHTML="<div class='ps-grip'></div><div class='ps-title'>Verplaats “"+esc(r.klant)+"” naar…</div>"+
+      "<div class='ps-list'>"+opts+"</div><button class='ps-cancel' id='psCancel'>Annuleren</button>";
+    document.body.appendChild(sheet);
+    requestAnimationFrame(function(){ scrim.classList.add("show"); sheet.classList.add("show"); });
+    sheet.querySelectorAll(".ps-opt").forEach(function(b){
+      if(b.hasAttribute("disabled")) return;
+      b.addEventListener("click",function(){
+        var fase=b.getAttribute("data-fase"), id=LP.lifted?+LP.lifted.getAttribute("data-id"):null;
+        closePhaseSheet();
+        if(id!=null) moveToFase(id, fase);   // -> verplichte notitie / winst-flow
+      });
+    });
+    var cx=sheet.querySelector("#psCancel"); if(cx) cx.addEventListener("click",closePhaseSheet);
   }
 
   // ---------- kanban ----------
@@ -1459,13 +1539,15 @@
     // ----- klik = detail openen (SortableJS onderdrukt zelf de klik na een sleep) -----
     board.querySelectorAll(".kcard").forEach(function(c){
       c.addEventListener("click",function(){
+        if(phasePickOpen) return;   // fase-kiezer staat open (of trailing click na long-press) -> niet openen
         var id=+c.getAttribute("data-id");
         var r=data.filter(function(x){return x.id===id;})[0];
         if(r) openDrawer(r);
       });
     });
 
-    mountSortables();    // slepen (touch + muis) koppelen via SortableJS
+    mountSortables();          // desktop: slepen via SortableJS
+    setupMobilePhasePick();    // mobiel: vasthouden -> optillen -> fase kiezen
   }
 
   // ---------- per merk ----------
