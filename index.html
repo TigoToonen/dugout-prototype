@@ -2233,17 +2233,21 @@
     if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
     if($("#logoutBtn")) $("#logoutBtn").onclick=doLogout;
-    // getSession mag nooit eeuwig laten laden: bij een trage/kapotte
-    // sessie vallen we netjes terug op het inlogscherm.
+    // Opstart mag NOOIT eeuwig laten laden. We valideren de sessie echt
+    // (getUser controleert het token bij de server). Is het token weg,
+    // verlopen of kapot -> uitloggen (wist het rotte token) en login tonen.
+    // Zo herstelt de app zichzelf en kan een oude localStorage-sessie de
+    // boel niet meer laten hangen.
     var _sessDone=false;
     function toLogin(){ if(_sessDone) return; _sessDone=true; showLogin(); }
     function toApp(){ if(_sessDone) return; _sessDone=true; showApp(); bootApp(); }
-    var _sessTimer=setTimeout(toLogin, 6000);   // vangnet: geen antwoord binnen 6s -> toon login
-    sb.auth.getSession().then(function(res){
+    function resetAndLogin(){ try{ sb.auth.signOut(); }catch(e){} toLogin(); }
+    var _sessTimer=setTimeout(resetAndLogin, 8000);   // hard vangnet: geen antwoord binnen 8s -> uitloggen + login
+    sb.auth.getUser().then(function(u){
       clearTimeout(_sessTimer);
-      if(res.data && res.data.session){ toApp(); }
-      else { toLogin(); }
-    }).catch(function(){ clearTimeout(_sessTimer); toLogin(); });
+      if(u && u.data && u.data.user){ toApp(); }   // geldig token -> app
+      else { resetAndLogin(); }                     // geen/ongeldig token -> schoon + login
+    }).catch(function(){ clearTimeout(_sessTimer); resetAndLogin(); });
   }
   // wacht kort tot de Supabase-bibliotheek geladen is (CDN), val anders terug op testdata
   if(window.supabase){ start(); }
