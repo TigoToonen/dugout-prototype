@@ -727,7 +727,7 @@
     <section id="view-aandacht" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
-        Saleskansen waarvan de <b>datum volgende actie</b> is bereikt — of die zonder geplande datum <b>&gt;14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een kaart of rij voor details.
+        Saleskansen waarvan de <b>datum volgende actie</b> of de <b>contract-reminderdatum</b> is bereikt — of die zonder geplande datum <b>&gt;14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een kaart of rij voor details.
       </p>
       <div class="kanban" id="aandachtKanban"></div>
       <div class="card tscroll" id="aandachtTabelCard" hidden>
@@ -1008,15 +1008,15 @@
      opm:"Essent akkoord op teamsponsoring rond Schulting. Contract in de maak."},
     {id:21, klant:"Upfront", contact:"Wouter Jansen", functie:"Athlete Management",
      email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"", waarde:22000,
-     atleet:"Jenning de Boo", sport:"Schaatsen", soort_deal:"Influencers", hoa_type:"Influencers", startdatum:"2024-09-01", einddatum:"2026-10-31", reminder_maanden:3,
+     atleet:"Jenning de Boo", sport:"Schaatsen", soort_deal:"Influencers", hoa_type:"Influencers", startdatum:"2024-09-01", einddatum:"2026-10-31", reminder_datum:"2026-07-31",
      fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
      laatste:"2026-06-27", bijgewerkt:"2026-06-27", status:"actief",
      opm:"Upfront interesse in Jenning de Boo. Half juli terugbellen."},
     {id:22, klant:"Indian Maharaja", contact:"Wouter Jansen", functie:"Athlete Management",
      email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Atleten", merk:"", waarde:38000,
-     atleet:"Botic van de Zandschulp", sport:"Tennis", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2025-01-01", einddatum:"2027-12-31", reminder_maanden:3,
+     atleet:"Botic van de Zandschulp", sport:"Tennis", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2025-01-01", einddatum:"2027-12-31", reminder_datum:"2027-09-30",
      fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
-     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief",
+     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief", owner:"",
      opm:"Indian Maharaja (tennis) interesse in Botic van de Zandschulp. Intro gestuurd."},
 
     // ---- Onbenutte saleskansen (afgevallen) ----
@@ -1072,7 +1072,7 @@
     "waarde","fase","type","actie","laatste","bijgewerkt","opm","bijlagen",
     "status","won_at","archived_at","afsluit_notitie","verwijder_reden","volgende_actie",
     // ---- Athletes / Dug Out ----
-    "atleet","sport","soort_deal","hoa_type","startdatum","einddatum","reminder_maanden"];
+    "atleet","sport","soort_deal","hoa_type","startdatum","einddatum","reminder_maanden","reminder_datum"];
 
   function toRow(r){
     var o={}; DEAL_COLS.forEach(function(k){ if(r[k]!==undefined) o[k]=r[k]; });
@@ -1249,6 +1249,9 @@
     if((r.status||"actief")!=="actief") return false;   // niet voor gearchiveerde
     if(r.won_at) return false;                            // niet voor gewonnen kansen
     if(r.fase==="Afgevallen") return false;
+    // Contract-reminder bereikt -> ALTIJD aandacht (ook als er nog een
+    // toekomstige volgende-actie staat; een aflopend contract wacht niet).
+    if(r.reminder_datum && daysAgo(r.reminder_datum)>=0) return true;
     // Leidend: de ingeplande "datum volgende actie". Staat die er, dan telt de
     // kaart mee zodra die datum bereikt of verstreken is — niet eerder.
     if(r.volgende_actie) return daysAgo(r.volgende_actie)>=0;
@@ -1321,7 +1324,7 @@
       return "<div class='kcard-part'><span class='kcard-part-lbl'>"+esc(p.lbl)+"</span><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(p.v)+"</span></span></div>";
     }).join("");
   }
-  function ownerIni(o){var p=o.split(" ");return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase();}
+  function ownerIni(o){ o=(o==null?"":String(o)).trim(); if(!o) return "—"; var p=o.split(" "); return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase(); }
   function typeIcon(t){
     var person="<path d='M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0'/><path d='M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.7'/>";
     var p={"Live":person, "Fysiek":person,
@@ -1452,7 +1455,7 @@
           "<span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
         "<td><div class='stack'><span class='contact-name'>"+esc(r.contact)+"</span>"+
           "<span class='contact-fn'>"+esc(r.functie)+"</span></div></td>"+
-        "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner)+"</span></td>"+
+        "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner||"—")+"</span></td>"+
         "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
         "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
         "<td>"+selectPill("fase",r.fase)+"</td>"+
@@ -1647,9 +1650,15 @@
     if($("#aandachtCount")) $("#aandachtCount").textContent = rows.length ? (" ("+rows.length+")") : "";
     var tb=$("#aandachtBody"); if(!tb) return;
     if(!rows.length){ tb.innerHTML="<tr><td colspan='7'><div class='empty'>Niets dat aandacht nodig heeft — goed bezig!</div></td></tr>"; return; }
-    // meest urgent bovenaan: eerst op volgende-actiedatum (oudste eerst), daarna langst stil
+    // meest urgent bovenaan: verstreken reminder-/volgende-actiedatum eerst, daarna langst stil
+    function urgKey(r){
+      var rem=(r.reminder_datum && daysAgo(r.reminder_datum)>=0) ? r.reminder_datum : null;
+      var va=r.volgende_actie||null;
+      if(rem && va) return rem<va?rem:va;
+      return rem||va||"9999-12-31";
+    }
     rows.sort(function(a,b){
-      var x=a.volgende_actie||"9999-12-31", y=b.volgende_actie||"9999-12-31";
+      var x=urgKey(a), y=urgKey(b);
       if(x!==y) return x<y?-1:1;
       return String(a.laatste)<String(b.laatste)?-1:1;
     });
@@ -1661,8 +1670,14 @@
         "<td><div class='klant-cell'><span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span><span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
         "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
         "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
-        "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner)+"</span></td>"+
-        "<td><div class='stack'><span class='cdate'>"+fmt(r.volgende_actie)+"</span>"+vaRel(r)+"</div></td>"+
+        "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner||"—")+"</span></td>"+
+        "<td><div class='stack'>"+
+          (r.volgende_actie
+            ? "<span class='cdate'>"+fmt(r.volgende_actie)+"</span>"+vaRel(r)
+            : (r.reminder_datum && daysAgo(r.reminder_datum)>=0
+              ? "<span class='cdate'>"+fmt(r.reminder_datum)+"</span><span class='rel warn'>contract-reminder</span>"
+              : "<span class='cdate'>—</span>"))+
+        "</div></td>"+
         "<td><div class='stack'><span class='cdate'>"+fmt(r.laatste)+"</span><span class='rel warn'>"+rel(r.laatste)+"</span></div></td>"+
         "<td class='waarde-cell'>"+euro(r.waarde)+"</td>";
       tr.addEventListener("click",function(){ openDrawer(r); });
@@ -1784,7 +1799,7 @@
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
         "<div class='note-main'>"+
           "<div class='note-top'><span class='kl'>"+esc(r.klant)+"</span>"+
-            "<span class='via'>· "+esc(r.contact)+" · via "+esc(r.owner)+
+            "<span class='via'>· "+esc(r.contact||"—")+" · via "+esc(r.owner||"—")+
             dealSubParts(r).map(function(p){return " · "+esc(p.v);}).join("")+"</span>"+
             "<span class='badge "+faseColor(r.fase)+"'>"+esc(r.fase)+"</span>"+
             "<span class='note-meta'><span class='note-tico'>"+typeIcon(r.type)+esc(r.type)+"</span>"+
@@ -1858,7 +1873,7 @@
   function openDrawer(r, opts){
     opts=opts||{};
     var isNew=!r;
-    if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:"",merk:"",waarde:0,
+    if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:"",unit:"",merk:"",waarde:0,
       fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"};
       if(opts.prefill){ for(var pk in opts.prefill){ if(opts.prefill[pk]) r[pk]=opts.prefill[pk]; } } // bijv. vanuit Toekomst
     }
@@ -1913,8 +1928,10 @@
 
         "<div class='dsec'>Salesgegevens</div>"+
         "<div class='row2'>"+
-          "<div class='fld'><label>Laatst contact gehad door</label><select id='d_owner'>"+optionsHtml(OWNERS,r.owner)+"</select></div>"+
-          "<div class='fld'><label>Type contact</label><select id='d_type'>"+optionsHtml(TYPES,r.type)+"</select></div>"+
+          "<div class='fld'><label>Laatst contact gehad door</label><select id='d_owner'>"+
+            (r.owner?"":"<option value='' selected>— kies —</option>")+optionsHtml(OWNERS,r.owner)+"</select></div>"+
+          "<div class='fld'><label>Type contact</label><select id='d_type'>"+
+            (r.type?"":"<option value='' selected>— kies —</option>")+optionsHtml(TYPES,r.type)+"</select></div>"+
         "</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Datum laatste contact</label><input id='d_laatste' type='date' value='"+showLaatste+"'></div>"+
@@ -1950,10 +1967,8 @@
             "<div class='fld'><label>Einddatum</label><input id='d_eind' type='date' value='"+(r.einddatum||"")+"'></div>"+
           "</div>"+
           "<div class='row2'>"+
-            "<div class='fld'><label>Reminder vóór einddatum</label><select id='d_reminder'>"+
-                "<option value=''>Geen reminder</option>"+
-                REMINDER_OPTS.map(function(m){return "<option value='"+m+"'"+(String(r.reminder_maanden)===String(m)?" selected":"")+">"+m+" maanden vooraf</option>";}).join("")+
-              "</select></div>"+
+            "<div class='fld'><label>Reminderdatum contract</label><input id='d_remdat' type='date' value='"+(r.reminder_datum||"")+"'>"+
+              "<div class='attach-hint'>Op deze datum verschijnt de kaart bij “Aandacht nodig” (bijv. 3 mnd vóór de einddatum).</div></div>"+
             "<div class='fld'><label>Reminderstatus</label><div id='d_remstat' class='rel' style='padding-top:10px'>—</div></div>"+
           "</div>"+
         "</div>"+
@@ -2012,17 +2027,17 @@
       apply();
     })();
 
-    // ---- reminderstatus (maanden tot einddatum) ----
+    // ---- reminderstatus (op basis van de gekozen reminderdatum) ----
     (function(){
-      var ed=$("#d_eind"), rm=$("#d_reminder"), out=$("#d_remstat");
+      var ed=$("#d_eind"), rd=$("#d_remdat"), out=$("#d_remstat");
       function upd(){ if(!out) return;
-        var eind=ed.value, m=rm.value, mu=monthsUntil(eind);
-        if(!eind){ out.textContent="—"; out.className="rel"; return; }
-        if(!m){ out.textContent="Einddatum over "+mu+" mnd (geen reminder)"; out.className="rel"; return; }
-        if(mu<=Number(m)){ out.innerHTML="⚠ Contract loopt af — nog "+mu+" mnd"; out.className="rel warn"; }
-        else { out.textContent="Reminder over "+(mu-Number(m))+" mnd (op "+m+" mnd vooraf)"; out.className="rel"; }
+        var eind=ed?ed.value:"", rem=rd?rd.value:"";
+        if(!rem){ out.textContent=eind?("Einddatum "+fmt(eind)+" · geen reminder ingesteld"):"—"; out.className="rel"; return; }
+        var n=daysAgo(rem);
+        if(n>=0){ out.innerHTML="⚠ Reminderdatum bereikt — staat bij “Aandacht nodig”"+(eind?" · contract t/m "+fmt(eind):""); out.className="rel warn"; }
+        else { out.textContent="Reminder op "+fmt(rem)+" (over "+(-n)+" dgn)"; out.className="rel"; }
       }
-      if(ed&&rm){ ed.addEventListener("change",upd); rm.addEventListener("change",upd); upd(); }
+      if(rd){ rd.addEventListener("change",upd); rd.addEventListener("input",upd); if(ed){ ed.addEventListener("change",upd); } upd(); }
     })();
 
     // Snelkeuzes voor "datum volgende actie" (+1 wk / +2 wkn / +3 wkn / +1 mnd)
@@ -2127,7 +2142,7 @@
       r.soort_deal=$("#d_soort")?$("#d_soort").value:"";
       r.startdatum=($("#d_start")&&$("#d_start").value)||null;
       r.einddatum=($("#d_eind")&&$("#d_eind").value)||null;
-      r.reminder_maanden=($("#d_reminder")&&$("#d_reminder").value)?parseInt($("#d_reminder").value,10):null;
+      r.reminder_datum=($("#d_remdat")&&$("#d_remdat").value)||null;
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
       r.volgende_actie=($("#d_va")&&$("#d_va").value)||null;
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
