@@ -1620,7 +1620,7 @@
   }
 
   // ---------- kanban ----------
-  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderToekomst(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
+  function refreshAll(){ rebuildFilters(); renderStats(); renderKanban(); renderTable(); renderAandacht(); renderToekomst(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
 
   // ---- optimistische fase-verplaatsing: kaart blijft alvast in de doelkolom staan
   //      zolang het opmerking-paneel openstaat; annuleren draait het terug ----
@@ -2760,6 +2760,9 @@
 
   // ---------- init ----------
   function boot(){
+    // filters opnieuw opbouwen NADAT de echte data geladen is — anders blijven
+    // de dropdowns de opstart-/demodata tonen tot de eerste filterwijziging
+    rebuildFilters();
     renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive();
     switchView(pipeViewPref());   // open Pipeline in de laatst gekozen weergave (bord of tabel)
   }
