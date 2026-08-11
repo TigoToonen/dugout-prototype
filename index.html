@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
@@ -660,12 +660,12 @@
     <div class="toolbar" id="pipeToolbar">
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3" stroke-linecap="round"/></svg>
-        <input id="q" type="search" placeholder="Zoek op merk, atleet, partnership of contact…" aria-label="Zoeken">
+        <input id="q" type="search" placeholder="Zoek op merk/bedrijf, propositie, atleet of contact…" aria-label="Zoeken">
       </div>
       <div class="selectwrap"><select class="filter" id="fUnit" aria-label="Filter unit"><option value="">Alle units</option></select></div>
       <div class="selectwrap"><select class="filter" id="fOwner" aria-label="Filter contactpersoon HoS"><option value="">Contactpersoon (HoS)</option></select></div>
-      <div class="selectwrap"><select class="filter" id="fWie" aria-label="Filter merk/atleet/spreker"><option value="">Merk / Partner</option></select></div>
-      <div class="selectwrap"><select class="filter" id="fPartner" aria-label="Filter partnership"><option value="">Partnership</option></select></div>
+      <div class="selectwrap"><select class="filter" id="fWie" aria-label="Filter merk/bedrijf"><option value="">Merk / bedrijf</option></select></div>
+      <div class="selectwrap"><select class="filter" id="fPartner" aria-label="Filter propositie/atleet/sport"><option value="">Propositie / atleet / sport</option></select></div>
       <div class="vswitch" id="vswitch">
         <button id="vwBord" class="vw-btn active" title="Bordweergave" aria-label="Bordweergave">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg>
@@ -707,7 +707,7 @@
                 <th>Contactpersoon</th>
                 <th>Laatst contact gehad door</th>
                 <th>Unit</th>
-                <th>Atleet / Partnership</th>
+                <th>Propositie / atleet / sport</th>
                 <th>Fase</th>
                 <th class="sortable" id="sortContact">Laatste contact <span class="arrow" id="arrContact"></span></th>
                 <th>Actie</th>
@@ -733,7 +733,7 @@
       <div class="card tscroll" id="aandachtTabelCard" hidden>
         <table>
           <thead><tr>
-            <th>Merk</th><th>Unit</th><th>Atleet / Partnership</th>
+            <th>Merk</th><th>Unit</th><th>Propositie / atleet / sport</th>
             <th>Accounthouder</th><th>Volgende actie</th><th>Laatste contact</th><th>Waarde</th>
           </tr></thead>
           <tbody id="aandachtBody"></tbody>
@@ -795,8 +795,8 @@
         </div>
         <div class="selectwrap"><select class="filter" id="afUnit"><option value="">Alle units</option></select></div>
         <div class="selectwrap"><select class="filter" id="afOwner"><option value="">Contactpersoon (HoS)</option></select></div>
-        <div class="selectwrap"><select class="filter" id="afWie"><option value="">Merk / Partner</option></select></div>
-        <div class="selectwrap"><select class="filter" id="afPartner"><option value="">Partnership</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afWie"><option value="">Merk / bedrijf</option></select></div>
+        <div class="selectwrap"><select class="filter" id="afPartner"><option value="">Propositie / atleet / sport</option></select></div>
       </div>
       <div class="stats two" id="archStats"></div>
       <p class="hint" style="margin-top:2px">Gegroepeerd per klant · klik een groep om de losse saleskansen uit/in te klappen.</p>
@@ -829,7 +829,7 @@
   var _now = new Date();
   var TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()); // echte datum van vandaag
 
-  var UNITS = ["Atleten","Influencers","BAT","HoS Algemeen","HYROX","JODP","Schaatsen","SPEX","SportsSpeakers","SportSpreker","ZAR"];
+  var UNITS = ["Athletes","BAT","HoS Algemeen","HYROX","JODP","Schaatsen","SPEX","TEN","ZAR"];
   var OWNERS = ["Bart Gabriels","Bjorn Bakker","Dille Rikkert","Ivan Spijkerstra","Joep Wouters van den Oudenweijer","Koen Hermes","Mark van den Akker","Max van der Ven","Michelle Geldhof","Ruud Koedijk","Ruud van Doornik","Samuel Aldries","Tom Schouten","Trisztan Post"];
   var FASES = [
     {v:"1e salescontact",                c:"c-grey",   pct:10},
@@ -840,9 +840,10 @@
     {v:"Afgevallen",                     c:"c-red",    pct:0}
   ];
 
-  // ---- Athletes / Dug Out (extra velden bij unit "Atleten" en "Influencers") ----
-  var ATLEET_UNIT = "Atleten";
-  var ATLEET_UNITS = ["Atleten","Influencers"];      // units met atleet-/influencer-extra velden
+  // ---- Athletes / Dug Out (extra velden bij unit "Athletes") ----
+  var ATLEET_UNIT = "Athletes";
+  // legacy-namen blijven herkend zodat nog niet gemigreerde rijen goed blijven werken
+  var ATLEET_UNITS = ["Athletes","Atleten","Influencers","SportsSpeakers","SportSpreker"];
   function isAthleteUnit(u){ return ATLEET_UNITS.indexOf(u)>=0; }
   var HOA_TYPES   = ["Atletenmanagement","Influencers"];
   var SOORT_DEAL  = ["Arbeidsovereenkomst","Sponsorovereenkomst","Influencers","Commissiedeal"];
@@ -995,25 +996,25 @@
      opm:"Upfront wil content en creators leveren rond HYROX."},
     // ---- Atleten (4 kansen) · merk bovenaan (klant=merk), atleet in eigen veld ----
     {id:19, klant:"Upfront", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"", waarde:30000,
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Athletes", merk:"", waarde:30000,
      atleet:"Suzanne Schulting", sport:"Schaatsen", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2024-01-01", einddatum:"2026-12-31", reminder_maanden:6,
      fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
      laatste:"2026-07-05", bijgewerkt:"2026-07-05", status:"actief",
      opm:"Upfront als sponsor voor Suzanne Schulting; voorstel gedeeld."},
     {id:20, klant:"Team Essent", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Atleten", merk:"", waarde:45000,
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Athletes", merk:"", waarde:45000,
      atleet:"Suzanne Schulting", sport:"Schaatsen", soort_deal:"Arbeidsovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2024-07-01", einddatum:"2027-06-30", reminder_maanden:3,
      fase:"Voorstel akkoord", type:"Live", actie:"Ongoing",
      laatste:"2026-07-09", bijgewerkt:"2026-07-09", status:"actief",
      opm:"Essent akkoord op teamsponsoring rond Schulting. Contract in de maak."},
     {id:21, klant:"Upfront", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"", waarde:22000,
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Athletes", merk:"", waarde:22000,
      atleet:"Jenning de Boo", sport:"Schaatsen", soort_deal:"Influencers", hoa_type:"Influencers", startdatum:"2024-09-01", einddatum:"2026-10-31", reminder_datum:"2026-07-31",
      fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
      laatste:"2026-06-27", bijgewerkt:"2026-06-27", status:"actief",
      opm:"Upfront interesse in Jenning de Boo. Half juli terugbellen."},
     {id:22, klant:"Indian Maharaja", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Atleten", merk:"", waarde:38000,
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Athletes", merk:"", waarde:38000,
      atleet:"Botic van de Zandschulp", sport:"Tennis", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2025-01-01", einddatum:"2027-12-31", reminder_datum:"2027-09-30",
      fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
      laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief", owner:"",
@@ -1283,6 +1284,7 @@
   function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
   function esc(s){return (s==null?"":String(s)).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
   function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+  function plusDays(n){ var d=new Date(TODAY); d.setDate(d.getDate()+n); return iso(d); }
   function euro(n){n=Number(n)||0; return "€ "+n.toLocaleString("nl-NL");}
   function primaryMerk(s){if(!s||!s.trim())return "Onbekend"; return s.split(/[·,;|]+/)[0].trim();}
   var MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
@@ -1300,7 +1302,7 @@
   function dealSubParts(r){
     var parts=[];
     if(isAthleteUnit(r.unit) && r.atleet && String(r.atleet).trim()) parts.push({lbl:atleetLabel(r.unit), v:String(r.atleet)});
-    if(r.merk && String(r.merk).trim() && r.merk!==r.klant) parts.push({lbl:"Partnership", v:String(r.merk)});
+    if(r.merk && String(r.merk).trim() && r.merk!==r.klant) parts.push({lbl:"Propositie", v:String(r.merk)});
     return parts;
   }
   function subChips(r){
@@ -1319,9 +1321,10 @@
     return "<span class='rel'>over "+(-n===1?"1 dag":(-n)+" dgn")+"</span>";
   }
   function kcardSub(r){
+    // alleen de chip met de naam — geen label-woord ervoor (strak, zoals de Amazon-kaart)
     var parts=dealSubParts(r);
     return parts.map(function(p){
-      return "<div class='kcard-part'><span class='kcard-part-lbl'>"+esc(p.lbl)+"</span><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(p.v)+"</span></span></div>";
+      return "<div class='kcard-part'><span class='chip-part' title='"+esc(p.lbl)+"'><span class='chip-dot'></span><span class='chip-txt'>"+esc(p.v)+"</span></span></div>";
     }).join("");
   }
   function ownerIni(o){ o=(o==null?"":String(o)).trim(); if(!o) return "—"; var p=o.split(" "); return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase(); }
@@ -1342,8 +1345,8 @@
   var FILTERS=[
     {id:"fUnit",   field:"unit",  ph:"Alle units"},
     {id:"fOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
-    {id:"fWie",    field:"klant", ph:"Merk / Partner"},
-    {id:"fPartner",field:"merk",  ph:"Partnership"}
+    {id:"fWie",    field:"klant", ph:"Merk / bedrijf"},
+    {id:"fPartner",field:"merk",  ph:"Propositie / atleet / sport"}
   ];
   function filterVals(){ var o={}; FILTERS.forEach(function(f){ var el=$("#"+f.id); o[f.id]=el?el.value:""; }); return o; }
   function matchesFilters(r){
@@ -1370,7 +1373,7 @@
   rebuildFilters();
 
   // ---------- filterbalk (actieve filters + resultaattelling) ----------
-  var FILTER_LBL={fUnit:"Unit",fOwner:"Contactpersoon",fWie:"Merk/Partner",fPartner:"Partnership"};
+  var FILTER_LBL={fUnit:"Unit",fOwner:"Contactpersoon",fWie:"Merk/bedrijf",fPartner:"Propositie"};
   function renderFilterBar(){
     var bar=$("#filterBar"); if(!bar) return;
     var s=filterVals(), q=$("#q")?$("#q").value.trim():"", chips=[];
@@ -1854,7 +1857,7 @@
 
   // ---- "Wie" is voortaan ALTIJD het merk (bovenaan de kaart); de atleet of het
   //      partnership staat eronder in een eigen veld ----
-  function wieLabel(unit){ return "Merk / partner"; }
+  function wieLabel(unit){ return "Merk / bedrijf"; }
   function wieList(unit){
     var set={};
     Object.keys(BRANDS).forEach(function(v){set[v]=1;});
@@ -1888,9 +1891,9 @@
     var fWieHtml="<div class='fld'><label id='d_klant_lbl'>"+wieLabel(r.unit)+"</label>"+
         "<select id='d_klant' class='newsel'>"+newSelectOptions(wieList(r.unit), r.klant)+"</select>"+
         "<input id='d_klant_new' class='newinput' placeholder='Nieuw toevoegen…' style='display:none;margin-top:8px'></div>";
-    var fPartHtml="<div class='fld'><label>Partnership</label>"+
-        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk, "Geen partnership")+"</select>"+
-        "<input id='d_merk_new' class='newinput' placeholder='Nieuw partnership…' style='display:none;margin-top:8px'></div>";
+    var fPartHtml="<div class='fld' id='d_partWrap'><label>Propositie / sport</label>"+
+        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk, "Geen propositie")+"</select>"+
+        "<input id='d_merk_new' class='newinput' placeholder='Nieuwe propositie…' style='display:none;margin-top:8px'></div>";
     var fUnitField="<div class='fld'><label>Unit</label>"+
         "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
         "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
@@ -1942,13 +1945,13 @@
           "<div class='fld'><label>Actie</label><select id='d_actie'>"+optionsHtml(ACTIES,r.actie)+"</select></div>"+
         "</div>"+
         "<div class='fld'><label>Datum volgende actie"+(requireNote?" <span class='req'>· verplicht</span>":"")+"</label>"+
-          "<input id='d_va' type='date' value='"+(r.volgende_actie||"")+"'>"+
+          "<input id='d_va' type='date' value='"+(r.volgende_actie||(isArchived?"":plusDays(14)))+"'>"+
           "<div class='va-quick'>"+
             [["+1 wk",7],["+2 wkn",14],["+3 wkn",21],["+1 mnd",30]].map(function(q){
               return "<button type='button' class='va-btn' data-days='"+q[1]+"'>"+q[0]+"</button>";
             }).join("")+
           "</div>"+
-          "<div class='attach-hint'>Wanneer moet dit contact weer opgepakt worden? Op die datum verschijnt de kaart bij “Aandacht nodig”.</div></div>"+
+          "<div class='attach-hint'>Wanneer moet dit contact weer opgepakt worden? Op die datum verschijnt de kaart bij “Aandacht nodig”. Niet ingesteld = automatisch over 2 weken.</div></div>"+
 
         // ---- Extra velden · alleen bij unit "Atleten" ----
         "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
@@ -2016,6 +2019,9 @@
       function apply(){
         var u=curUnit();
         if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
+        // geen dubbele sub-velden: bij Athletes is de atleet-keuzelijst hét tweede veld,
+        // bij andere units de propositie/sport-keuzelijst
+        var pw=$("#d_partWrap"); if(pw) pw.style.display=isAthleteUnit(u)?"none":"";
         if(lbl) lbl.textContent=wieLabel(u);
         var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
         var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
@@ -2043,6 +2049,10 @@
     // Snelkeuzes voor "datum volgende actie" (+1 wk / +2 wkn / +3 wkn / +1 mnd)
     (function(){
       var vaEl=$("#d_va");
+      // standaard vooringevuld op +2 weken -> markeer die snelkeuze als actief
+      if(vaEl && vaEl.value===plusDays(14)){
+        var b14=drawer.querySelector(".va-btn[data-days='14']"); if(b14) b14.classList.add("active");
+      }
       drawer.querySelectorAll(".va-btn").forEach(function(b){
         b.addEventListener("click",function(){
           var d=new Date(TODAY); d.setDate(d.getDate()+parseInt(b.getAttribute("data-days"),10));
@@ -2144,7 +2154,8 @@
       r.einddatum=($("#d_eind")&&$("#d_eind").value)||null;
       r.reminder_datum=($("#d_remdat")&&$("#d_remdat").value)||null;
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
-      r.volgende_actie=($("#d_va")&&$("#d_va").value)||null;
+      // geen datum gekozen -> standaard over 2 weken (elke kaart heeft altijd een opvolgdatum)
+      r.volgende_actie=($("#d_va")&&$("#d_va").value)||plusDays(14);
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
       // opmerking gewijzigd + datum niet handmatig aangepast -> teller reset (contact gehad vandaag)
@@ -2364,8 +2375,8 @@
   var ARCH_FILTERS=[
     {id:"afUnit",   field:"unit",  ph:"Alle units"},
     {id:"afOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
-    {id:"afWie",    field:"klant", ph:"Merk / Partner"},
-    {id:"afPartner",field:"merk",  ph:"Partnership"}
+    {id:"afWie",    field:"klant", ph:"Merk / bedrijf"},
+    {id:"afPartner",field:"merk",  ph:"Propositie / atleet / sport"}
   ];
   function archPool(){ return archBucket==="alle" ? archived("benut").concat(archived("onbenut")) : archived(archBucket); }
   function matchesArchFilters(r){
@@ -2635,7 +2646,7 @@
         "<div class='fld'><label>Titel <span class='req'>· verplicht</span></label>"+
           "<input id='tk_titel' value='"+esc(t.titel)+"' placeholder='Bijv. Partnership Feyenoord opent vanaf Q4'></div>"+
         "<div class='row2'>"+
-          "<div class='fld'><label>Merk / partner</label>"+
+          "<div class='fld'><label>Merk / bedrijf</label>"+
             "<select id='tk_merk' class='newsel'>"+newSelectOptions(wieList(""), t.merk, "Nog geen merk")+"</select>"+
             "<input id='tk_merk_new' class='newinput' placeholder='Nieuw merk…' style='display:none;margin-top:8px'></div>"+
           "<div class='fld'><label>Unit</label>"+
