@@ -23,7 +23,10 @@ update public.toekomst
 -- select unit, count(*) from public.deals group by unit order by unit;
 
 -- ============================================================
---  Personen (volgt zodra de namen bekend zijn):
---  · hernoeming Sam ("Samuel Aldries" -> juiste naam) gaat straks zo:
---    update public.deals set owner = 'NIEUWE NAAM' where owner = 'Samuel Aldries';
+--  Personen:
+--  · Ederik Tiessen en Tom Taminiau zijn toegevoegd aan de keuzelijst (app)
+--  · Ivan Spijkerstra, Mark van den Akker en Trisztan Post (SPSP) zijn uit
+--    de keuzelijst gehaald; bestaande deals op hun naam blijven leesbaar
+--  · Naamscorrectie Sam: "Samuel Aldries" -> "Samuel Ardies", ook in de data:
 -- ============================================================
+update public.deals set owner = 'Samuel Ardies' where owner = 'Samuel Aldries';
