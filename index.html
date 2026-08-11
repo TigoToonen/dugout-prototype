@@ -334,6 +334,11 @@
   .kcol.drag-over{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft)}
   .kcol.drag-over .kempty{color:var(--accent);font-weight:600}
   .kgrip{color:var(--text-soft);font-size:12px;letter-spacing:-2px;line-height:1;cursor:grab;flex:0 0 auto;user-select:none}
+  /* mobiel/touch: zichtbare verplaats-knop (opent de fase-kiezer; slepen hoeft niet) */
+  .kmove{display:none;appearance:none;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-muted);
+    border-radius:8px;width:32px;height:32px;flex:0 0 auto;cursor:pointer;font-size:15px;line-height:1;padding:0}
+  .kmove:active{color:var(--accent);border-color:var(--accent-line)}
+  @media (hover:none),(max-width:640px){ .kmove{display:grid;place-items:center} }
   .kcard-top{display:flex;align-items:center;gap:9px}
   .kcard-klant{font-weight:700;font-size:13.5px}
   .avatar.sm{width:26px;height:26px;border-radius:7px;font-size:10.5px}
@@ -395,8 +400,46 @@
   .row2 > .fld > label{min-height:2.4em}
   .save-err{color:var(--red-tx);font-size:12.5px;font-weight:700;margin-top:14px;padding:9px 11px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:9px}
   .fld .need, select.need, input.need{border-color:var(--red-tx)!important;background:var(--red-bg)}
+  /* snelkeuzes datum volgende actie */
+  .va-quick{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .va-btn{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:12px;color:var(--text-muted);
+    background:var(--surface-2);border:1px solid var(--border-strong);border-radius:999px;padding:5px 11px;transition:.15s}
+  .va-btn:hover{color:var(--accent);border-color:var(--accent-line)}
+  .va-btn.active{color:#fff;background:linear-gradient(180deg,var(--accent-2),var(--accent));border-color:transparent}
   .kcol-foot{padding:11px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center}
   .kcol-foot b{color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}
+
+  /* ---------- Toekomst ---------- */
+  .tk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .tk-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 16px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:border-color .12s,transform .12s}
+  .tk-card:hover{border-color:var(--accent-line);transform:translateY(-1px)}
+  .tk-top{display:flex;align-items:center;gap:10px}
+  .tk-merk{font-weight:800;font-size:14.5px;flex:1;min-width:0;overflow-wrap:anywhere}
+  .tk-vanaf{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--accent);
+    background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .tk-titel{font-weight:700;font-size:13.5px;line-height:1.35}
+  .tk-oms{font-size:12.5px;color:var(--text-muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .tk-links{display:flex;flex-direction:column;gap:3px}
+  .tk-links a{color:var(--accent);text-decoration:none;font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tk-links a:hover{text-decoration:underline}
+  .tk-atts{display:flex;flex-wrap:wrap;gap:5px}
+  .tk-att{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;background:var(--surface-2);
+    border:1px solid var(--border-strong);border-radius:7px;padding:3px 8px;cursor:pointer;max-width:100%}
+  .tk-att:hover{border-color:var(--accent-line);color:var(--accent)}
+  .tk-att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+  .tk-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--border);padding-top:9px;margin-top:auto}
+  .tk-unit{font-size:11px;color:var(--text-soft);font-weight:600}
+  .tk-convert{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:12px;color:var(--accent);
+    background:none;border:1px solid var(--accent-line);border-radius:8px;padding:5px 10px;transition:.15s}
+  .tk-convert:hover{background:var(--accent-soft)}
+  .link-row{display:flex;gap:6px;margin-bottom:6px}
+  .link-row input{flex:1;min-width:0}
+  .link-row .link-url{flex:1.4}
+  .link-del{appearance:none;border:none;background:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 4px;border-radius:6px;flex:0 0 auto}
+  .link-del:hover{color:var(--red-tx);background:var(--red-bg)}
+  .link-add{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:12.5px;color:var(--accent);background:none;border:none;padding:2px 0}
+  .link-add:hover{text-decoration:underline}
 
   /* ---------- Per merk ---------- */
   table.pm{min-width:900px}
@@ -581,6 +624,7 @@
       <button class="tab" role="tab" aria-selected="true" data-view="kanban">Pipeline<span class="cnt" id="tabCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="tabel">Tabel</button>
       <button class="tab" role="tab" aria-selected="false" data-view="aandacht">Aandacht nodig<span class="cnt" id="aandachtCount"></span></button>
+      <button class="tab" role="tab" aria-selected="false" data-view="toekomst">Toekomst<span class="cnt" id="toekomstCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per unit</button>
       <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
       <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
@@ -592,7 +636,7 @@
     <div class="toolbar" id="pipeToolbar">
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3" stroke-linecap="round"/></svg>
-        <input id="q" type="search" placeholder="Zoek op merk/atleet/spreker, partnership of contact…" aria-label="Zoeken">
+        <input id="q" type="search" placeholder="Zoek op merk, atleet, partnership of contact…" aria-label="Zoeken">
       </div>
       <div class="selectwrap"><select class="filter" id="fUnit" aria-label="Filter unit"><option value="">Alle units</option></select></div>
       <div class="selectwrap"><select class="filter" id="fOwner" aria-label="Filter contactpersoon HoS"><option value="">Contactpersoon (HoS)</option></select></div>
@@ -610,7 +654,7 @@
     <section id="view-kanban">
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <b>Tik</b> een kaart om details te zien en de fase te wijzigen · op desktop kun je kaarten ook tussen de kolommen <b>slepen</b> · totalen en overzichten bewegen automatisch mee.
+        <b>Sleep</b> een kaart naar een andere kolom om de fase te wijzigen (op mobiel: tik <b>⇅</b> op de kaart of houd hem even vast) · <b>klik/tik</b> een kaart voor alle details · totalen bewegen automatisch mee.
       </p>
       <div class="kanban" id="kanban"></div>
     </section>
@@ -627,14 +671,15 @@
           <table>
             <thead>
               <tr>
-                <th>Klant</th>
+                <th>Merk</th>
                 <th>Contactpersoon</th>
                 <th>Laatst contact gehad door</th>
                 <th>Unit</th>
-                <th>Merk / Atleet</th>
+                <th>Atleet / Partnership</th>
                 <th>Fase</th>
                 <th class="sortable" id="sortContact">Laatste contact <span class="arrow" id="arrContact"></span></th>
                 <th>Actie</th>
+                <th class="sortable" id="sortVA">Volgende actie <span class="arrow" id="arrVA"></span></th>
                 <th class="sortable" id="sortUpd">Laatst bijgewerkt <span class="arrow" id="arrUpd"></span></th>
                 <th class="sortable" id="sortWaarde">Waarde <span class="arrow" id="arrWaarde"></span></th>
               </tr>
@@ -650,17 +695,36 @@
     <section id="view-aandacht" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
-        Saleskansen die <b>meer dan 14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een rij voor details.
+        Saleskansen waarvan de <b>datum volgende actie</b> is bereikt — of die zonder geplande datum <b>&gt;14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een rij voor details.
       </p>
       <div class="card tscroll">
         <table>
           <thead><tr>
-            <th>Merk / Atleet</th><th>Unit</th><th>Partnership</th>
-            <th>Accounthouder</th><th>Laatste contact</th><th>Waarde</th>
+            <th>Merk</th><th>Unit</th><th>Atleet / Partnership</th>
+            <th>Accounthouder</th><th>Volgende actie</th><th>Laatste contact</th><th>Waarde</th>
           </tr></thead>
           <tbody id="aandachtBody"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- TOEKOMST -->
+    <section id="view-toekomst" hidden>
+      <p class="hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        Kansen die er <b>aan komen</b> maar nog geen saleskans zijn — bijv. “partnership Feyenoord opent vanaf Q4” · voeg links, documenten en screenshots toe · klaar om op te pakken? Zet hem om naar een saleskans.
+      </p>
+      <div class="toolbar">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+          <input id="tkq" type="search" placeholder="Zoek in toekomstkansen…" aria-label="Zoeken in toekomst">
+        </div>
+        <button class="btn-primary" id="tkAddBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nieuwe toekomstkans
+        </button>
+      </div>
+      <div class="tk-grid" id="tkGrid"></div>
     </section>
 
     <section id="view-permerk" hidden>
@@ -776,7 +840,20 @@
     "Univé Het Groene Hart":   {ini:"UG", bg:"#5FB247", fg:"#1A1A1A"},
     "Decathlon":               {ini:"DE", bg:"#0082C3", fg:"#FFFFFF"},
     "HYROX":                   {ini:"HY", bg:"#0A0A0A", fg:"#D9FB06"},
-    "Atleten":                 {ini:"AT", bg:"#FF5C01", fg:"#FFFFFF"}
+    "Atleten":                 {ini:"AT", bg:"#FF5C01", fg:"#FFFFFF"},
+    "Samsung":                 {ini:"SA", bg:"#1428A0", fg:"#FFFFFF"},
+    "Rituals":                 {ini:"RI", bg:"#1A1A1A", fg:"#D8C7A9"},
+    "Lidl":                    {ini:"LI", bg:"#0050AA", fg:"#FFF000"},
+    "Craft":                   {ini:"CR", bg:"#111111", fg:"#FFFFFF"},
+    "TCL":                     {ini:"TC", bg:"#E60012", fg:"#FFFFFF"},
+    "Gamma":                   {ini:"GA", bg:"#003DA5", fg:"#FFFFFF"},
+    "Amazon":                  {ini:"AM", bg:"#232F3E", fg:"#FF9900"},
+    "Ziggo Sport":             {ini:"ZS", bg:"#F48C00", fg:"#1A1A1A"},
+    "Thule":                   {ini:"TH", bg:"#003D6E", fg:"#FFFFFF"},
+    "Kärcher":                 {ini:"KÄ", bg:"#FFED00", fg:"#1A1A1A"},
+    "Team Essent":             {ini:"TE", bg:"#E4003A", fg:"#FFFFFF"},
+    "Prescan":                 {ini:"PR", bg:"#00A0DF", fg:"#FFFFFF"},
+    "Corona 0.0":              {ini:"CO", bg:"#005BAB", fg:"#F4C445"}
   };
 
   var data = [
@@ -789,13 +866,13 @@
     {id:2, klant:"Univé Het Groene Hart", contact:"Sandra Bosch", functie:"Coördinator Sponsoring",
      email:"s.bosch@unive.nl", tel:"+31 6 42 11 78 90", owner:"Dille", unit:"SPEX", merk:"Premier Padel", waarde:18000,
      fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
-     laatste:"2026-06-24", bijgewerkt:"2026-06-24", status:"actief",
+     laatste:"2026-06-24", bijgewerkt:"2026-06-24", status:"actief", volgende_actie:"2026-08-05",
      opm:"Interesse in padel-activatie via Premier Padel. Budget na de zomer duidelijk."},
     // ---- Univé Centraal ----
     {id:3, klant:"Univé Centraal", contact:"Mark Visser", functie:"Manager Merkactivatie",
      email:"mark.visser@unive.nl", tel:"+31 6 18 22 90 55", owner:"Michelle", unit:"HoS Algemeen", merk:"Supporter van Sport", waarde:55000,
      fase:"Voorstel akkoord", type:"Live", actie:"Ongoing",
-     laatste:"2026-07-08", bijgewerkt:"2026-07-08", status:"actief",
+     laatste:"2026-07-08", bijgewerkt:"2026-07-08", status:"actief", volgende_actie:"2026-09-01",
      opm:"Akkoord op hoofdlijnen voor het 'Supporter van Sport'-programma. Contract in de maak."},
     // ---- ARAG (2 kansen) ----
     {id:4, klant:"ARAG", contact:"Sanne de Groot", functie:"Hoofd Sponsoring",
@@ -883,27 +960,27 @@
      fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
      laatste:"2026-07-02", bijgewerkt:"2026-07-02", status:"actief",
      opm:"Upfront wil content en creators leveren rond HYROX."},
-    // ---- Atleten (4 kansen) ----
-    {id:19, klant:"Suzanne Schulting", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"Upfront", waarde:30000,
+    // ---- Atleten (4 kansen) · merk bovenaan (klant=merk), atleet in eigen veld ----
+    {id:19, klant:"Upfront", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"", waarde:30000,
      atleet:"Suzanne Schulting", sport:"Schaatsen", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2024-01-01", einddatum:"2026-12-31", reminder_maanden:6,
      fase:"Propositie/voorstel gedeeld", type:"Online meeting", actie:"Saleskans",
      laatste:"2026-07-05", bijgewerkt:"2026-07-05", status:"actief",
      opm:"Upfront als sponsor voor Suzanne Schulting; voorstel gedeeld."},
-    {id:20, klant:"Suzanne Schulting", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Atleten", merk:"Team Essent", waarde:45000,
+    {id:20, klant:"Team Essent", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Tom T", unit:"Atleten", merk:"", waarde:45000,
      atleet:"Suzanne Schulting", sport:"Schaatsen", soort_deal:"Arbeidsovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2024-07-01", einddatum:"2027-06-30", reminder_maanden:3,
      fase:"Voorstel akkoord", type:"Live", actie:"Ongoing",
      laatste:"2026-07-09", bijgewerkt:"2026-07-09", status:"actief",
      opm:"Essent akkoord op teamsponsoring rond Schulting. Contract in de maak."},
-    {id:21, klant:"Jenning de Boo", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"Upfront", waarde:22000,
+    {id:21, klant:"Upfront", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Dille", unit:"Atleten", merk:"", waarde:22000,
      atleet:"Jenning de Boo", sport:"Schaatsen", soort_deal:"Influencers", hoa_type:"Influencers", startdatum:"2024-09-01", einddatum:"2026-10-31", reminder_maanden:3,
      fase:"Oriënterend gesprek", type:"Telefonisch", actie:"Terugbellen",
      laatste:"2026-06-27", bijgewerkt:"2026-06-27", status:"actief",
      opm:"Upfront interesse in Jenning de Boo. Half juli terugbellen."},
-    {id:22, klant:"Botic van de Zandschulp", contact:"Wouter Jansen", functie:"Athlete Management",
-     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Atleten", merk:"Indian Maharaja", waarde:38000,
+    {id:22, klant:"Indian Maharaja", contact:"Wouter Jansen", functie:"Athlete Management",
+     email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Atleten", merk:"", waarde:38000,
      atleet:"Botic van de Zandschulp", sport:"Tennis", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2025-01-01", einddatum:"2027-12-31", reminder_maanden:3,
      fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
      laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief",
@@ -960,7 +1037,7 @@
 
   var DEAL_COLS = ["klant","contact","functie","email","tel","owner","unit","merk",
     "waarde","fase","type","actie","laatste","bijgewerkt","opm","bijlagen",
-    "status","won_at","archived_at","afsluit_notitie","verwijder_reden",
+    "status","won_at","archived_at","afsluit_notitie","verwijder_reden","volgende_actie",
     // ---- Athletes / Dug Out ----
     "atleet","sport","soort_deal","hoa_type","startdatum","einddatum","reminder_maanden"];
 
@@ -1119,8 +1196,9 @@
     ensureLiveDot(); setLive(false);
     rtChannel=sb.channel("deals-live")
       .on("postgres_changes",{event:"*",schema:"public",table:"deals"},handleRemote)
+      .on("postgres_changes",{event:"*",schema:"public",table:"toekomst"},function(){ handleTkRemote(); })
       .subscribe(function(status){
-        if(status==="SUBSCRIBED"){ setLive(true); if(rtStarted){ resyncDeals(); } rtStarted=true; }
+        if(status==="SUBSCRIBED"){ setLive(true); if(rtStarted){ resyncDeals(); loadToekomst(); } rtStarted=true; }
         else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ setLive(false); }
       });
     if(!subscribeRealtime._wired){
@@ -1133,11 +1211,15 @@
 
   // ---------- status / archief helpers ----------
   var WON_FASE = "Contractueel/formeel vastgelegd"; // laatste pipeline-fase = gewonnen
-  var ATTENTIE_DAGEN = 14; // stiller dan dit -> rood / aandacht nodig
+  var ATTENTIE_DAGEN = 14; // vangnet: stiller dan dit -> rood / aandacht nodig
   function needsAttention(r){
     if((r.status||"actief")!=="actief") return false;   // niet voor gearchiveerde
     if(r.won_at) return false;                            // niet voor gewonnen kansen
     if(r.fase==="Afgevallen") return false;
+    // Leidend: de ingeplande "datum volgende actie". Staat die er, dan telt de
+    // kaart mee zodra die datum bereikt of verstreken is — niet eerder.
+    if(r.volgende_actie) return daysAgo(r.volgende_actie)>=0;
+    // Vangnet zonder ingeplande datum: >14 dagen stil of actie "Terugbellen"
     return daysAgo(r.laatste)>ATTENTIE_DAGEN || r.actie==="Terugbellen";
   }
   function activeData(){ return data.filter(function(r){return (r.status||"actief")==="actief";}); }
@@ -1178,6 +1260,34 @@
     if(!s||!s.trim())return "<span class='mdash'>—</span>";
     return s.split(/[·,;|]+/).map(function(t){t=t.trim();return t?"<span class='mchip'>"+esc(t)+"</span>":"";}).join("");
   }
+  // ---- sub-regel onder het merk: atleet/influencer (bij die units) en/of partnership ----
+  function dealSubParts(r){
+    var parts=[];
+    if(isAthleteUnit(r.unit) && r.atleet && String(r.atleet).trim()) parts.push({lbl:atleetLabel(r.unit), v:String(r.atleet)});
+    if(r.merk && String(r.merk).trim() && r.merk!==r.klant) parts.push({lbl:"Partnership", v:String(r.merk)});
+    return parts;
+  }
+  function subChips(r){
+    var parts=dealSubParts(r);
+    if(!parts.length) return "<span class='mdash'>—</span>";
+    return parts.map(function(p){
+      return p.v.split(/[·,;|]+/).map(function(t){t=t.trim();return t?"<span class='mchip' title='"+esc(p.lbl)+"'>"+esc(t)+"</span>":"";}).join("");
+    }).join("");
+  }
+  // relatieve status van de volgende-actiedatum ("verstreken" / "vandaag" / "over X dgn")
+  function vaRel(r){
+    if(!r.volgende_actie) return "";
+    var n=daysAgo(r.volgende_actie);
+    if(n>0) return "<span class='rel warn'>"+(n===1?"1 dag":n+" dgn")+" verstreken</span>";
+    if(n===0) return "<span class='rel warn'>vandaag</span>";
+    return "<span class='rel'>over "+(-n===1?"1 dag":(-n)+" dgn")+"</span>";
+  }
+  function kcardSub(r){
+    var parts=dealSubParts(r);
+    return parts.map(function(p){
+      return "<div class='kcard-part'><span class='kcard-part-lbl'>"+esc(p.lbl)+"</span><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(p.v)+"</span></span></div>";
+    }).join("");
+  }
   function ownerIni(o){var p=o.split(" ");return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase();}
   function typeIcon(t){
     var person="<path d='M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0'/><path d='M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.7'/>";
@@ -1203,7 +1313,7 @@
   function matchesFilters(r){
     var s=filterVals(), q=$("#q").value.trim().toLowerCase();
     for(var i=0;i<FILTERS.length;i++){ var f=FILTERS[i]; if(s[f.id] && r[f.field]!==s[f.id]) return false; }
-    if(q){ var hay=(r.klant+" "+r.merk+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
     return true;
   }
   // cascaderend: elke dropdown toont alleen waarden die passen bij de andere gekozen filters
@@ -1258,7 +1368,7 @@
     var cfg=[
       {lbl:"Actieve trajecten",num:rows.length,sub:filtered?"binnen filter":"in de pipeline",cls:""},
       {lbl:"Pipelinewaarde",num:euro(waarde),sub:filtered?"binnen filter":"excl. archief",cls:"",dot:"var(--green-tx)"},
-      {lbl:"Aandacht nodig",num:aandacht,sub:">14 dgn stil of terugbellen",cls:aandacht?"alert":"",view:"aandacht"},
+      {lbl:"Aandacht nodig",num:aandacht,sub:"volgende actie bereikt of lang stil",cls:aandacht?"alert":"",view:"aandacht"},
       {lbl:"Geslaagde sales",num:won.length,sub:euro(wonWaarde)+" afgerond",cls:"",dot:"var(--green-tx)"}
     ];
     var s=$("#stats"); s.innerHTML="";
@@ -1277,6 +1387,7 @@
     var rows=activeData().filter(matchesFilters);
     rows.sort(function(a,b){
       var x=a[sortKey],y=b[sortKey];
+      if(x==null)x=""; if(y==null)y="";
       if(x<y)return -1*sortDir; if(x>y)return 1*sortDir; return 0;
     });
     return rows;
@@ -1296,7 +1407,7 @@
     var tb=$("#tbody"); tb.innerHTML="";
     var rows=currentRows();
     if(!rows.length){
-      tb.innerHTML="<tr><td colspan='10'><div class='empty'>Geen contacten gevonden met deze filters.</div></td></tr>";
+      tb.innerHTML="<tr><td colspan='11'><div class='empty'>Geen contacten gevonden met deze filters.</div></td></tr>";
       updateArrows(); return;
     }
     rows.forEach(function(r){
@@ -1310,12 +1421,13 @@
           "<span class='contact-fn'>"+esc(r.functie)+"</span></div></td>"+
         "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner)+"</span></td>"+
         "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
-        "<td><div class='mcell'>"+merkChips(r.merk)+"</div></td>"+
+        "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
         "<td>"+selectPill("fase",r.fase)+"</td>"+
         "<td><div class='contact-line'><span class='tico' title='"+esc(r.type)+"'>"+typeIcon(r.type)+"</span>"+
           "<div class='stack'><span class='cdate'>"+fmt(r.laatste)+"</span>"+
           "<span class='rel"+(warn?" warn":"")+"'>"+rel(r.laatste)+"</span></div></div></td>"+
         "<td>"+selectPill("actie",r.actie)+"</td>"+
+        "<td><div class='stack'><span class='cdate'>"+fmt(r.volgende_actie)+"</span>"+vaRel(r)+"</div></td>"+
         "<td><div class='upd'><span class='cdate'>"+fmt(r.bijgewerkt)+"</span>"+
           "<span class='rel'>"+rel(r.bijgewerkt)+"</span></div></td>"+
         "<td class='waarde-cell'>"+euro(r.waarde)+"</td>";
@@ -1353,6 +1465,7 @@
 
   function updateArrows(){
     $("#arrContact").textContent = sortKey==="laatste" ? (sortDir===1?"▲":"▼") : "";
+    $("#arrVA").textContent      = sortKey==="volgende_actie" ? (sortDir===1?"▲":"▼") : "";
     $("#arrUpd").textContent     = sortKey==="bijgewerkt" ? (sortDir===1?"▲":"▼") : "";
     $("#arrWaarde").textContent  = sortKey==="waarde" ? (sortDir===1?"▲":"▼") : "";
   }
@@ -1361,6 +1474,7 @@
     renderTable();
   }
   $("#sortContact").addEventListener("click",function(){setSort("laatste");});
+  $("#sortVA").addEventListener("click",function(){setSort("volgende_actie");});
   $("#sortUpd").addEventListener("click",function(){setSort("bijgewerkt");});
   $("#sortWaarde").addEventListener("click",function(){setSort("waarde");});
 
@@ -1381,21 +1495,27 @@
     board.querySelectorAll(".kcol-body").forEach(function(body){
       sortables.push(Sortable.create(body,{
         group:"deals", draggable:".kcard", animation:150,
-        delay:180, delayOnTouchOnly:true, touchStartThreshold:6,     // tik/scroll blijft werken; even vasthouden = slepen
-        forceFallback:true, fallbackOnBody:true, fallbackTolerance:6,
+        delay:150, delayOnTouchOnly:true, touchStartThreshold:6,     // muis: direct slepen; touch: even vasthouden
+        forceFallback:true, fallbackOnBody:true, fallbackTolerance:5,
         scroll:board, scrollSensitivity:70, scrollSpeed:14, bubbleScroll:true, forceAutoScrollFallback:true,
         ghostClass:"sortable-ghost", chosenClass:"sortable-chosen", dragClass:"sortable-drag",
         onStart:function(){ isDragging=true; },
+        onMove:function(evt){
+          // doelkolom oplichten zodat je ziet waar de kaart gaat landen
+          board.querySelectorAll(".kcol.drag-over").forEach(function(c){ c.classList.remove("drag-over"); });
+          var col=evt.to && evt.to.closest(".kcol"); if(col) col.classList.add("drag-over");
+        },
         onEnd:function(evt){
           isDragging=false;
+          board.querySelectorAll(".kcol.drag-over").forEach(function(c){ c.classList.remove("drag-over"); });
           var fromCol=evt.from.closest(".kcol"), toCol=evt.to.closest(".kcol");
           var id=+evt.item.getAttribute("data-id");
           var toFase=toCol?toCol.getAttribute("data-fase"):null;
           var changed = !!(toCol && fromCol && toCol!==fromCol && toFase && id);
           setTimeout(function(){
-            renderKanban();                       // Sortable's visuele verplaatsing terugdraaien; data is leidend
             if(deferredRerender){ deferredRerender=false; scheduleRerender(); }
-            if(changed) moveToFase(id, toFase);   // -> requestFaseChange -> verplichte notitie / winst-flow
+            if(changed){ moveToFase(id, toFase); }   // optimistisch: kaart blijft in de doelkolom staan (pendingMove)
+            else { renderKanban(); }                 // zelfde kolom: volgorde is niet persistent -> netjes terugzetten
           },0);
         }
       }));
@@ -1460,7 +1580,12 @@
   }
 
   // ---------- kanban ----------
-  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
+  function refreshAll(){ renderStats(); renderKanban(); renderTable(); renderAandacht(); renderToekomst(); renderPerMerk(); renderFeed(); renderArchive(); applyFlashes(); }
+
+  // ---- optimistische fase-verplaatsing: kaart blijft alvast in de doelkolom staan
+  //      zolang het opmerking-paneel openstaat; annuleren draait het terug ----
+  var pendingMove=null;   // {id, fase} zolang de verplaatsing nog niet is opgeslagen
+  function effectiveFase(r){ return (pendingMove && pendingMove.id===r.id) ? pendingMove.fase : r.fase; }
 
   // centrale fase-wijziging (vanuit kanban-drag én tabel-dropdown)
   function requestFaseChange(r, faseV){
@@ -1471,7 +1596,10 @@
       openWinFlow(r);
       return;
     }
-    // andere fase -> open de kaart met verplichte opmerking; wijziging pas bij Opslaan
+    // andere fase -> kaart blijft optimistisch in de doelkolom; open de kaart met
+    // verplichte opmerking + datum volgende actie; wijziging pas bij Opslaan
+    pendingMove={id:r.id, fase:faseV};
+    renderKanban();
     openDrawer(r, {pendingFase:faseV, requireNote:true});
   }
   function moveToFase(id, faseV){
@@ -1484,8 +1612,13 @@
     var rows=currentRows().filter(needsAttention);
     if($("#aandachtCount")) $("#aandachtCount").textContent = rows.length ? (" ("+rows.length+")") : "";
     var tb=$("#aandachtBody"); if(!tb) return;
-    if(!rows.length){ tb.innerHTML="<tr><td colspan='6'><div class='empty'>Niets dat aandacht nodig heeft — goed bezig!</div></td></tr>"; return; }
-    rows.sort(function(a,b){ return String(a.laatste)<String(b.laatste)?-1:1; }); // langst stil bovenaan
+    if(!rows.length){ tb.innerHTML="<tr><td colspan='7'><div class='empty'>Niets dat aandacht nodig heeft — goed bezig!</div></td></tr>"; return; }
+    // meest urgent bovenaan: eerst op volgende-actiedatum (oudste eerst), daarna langst stil
+    rows.sort(function(a,b){
+      var x=a.volgende_actie||"9999-12-31", y=b.volgende_actie||"9999-12-31";
+      if(x!==y) return x<y?-1:1;
+      return String(a.laatste)<String(b.laatste)?-1:1;
+    });
     tb.innerHTML="";
     rows.forEach(function(r){
       var b=brand(r.klant);
@@ -1493,8 +1626,9 @@
       tr.innerHTML=
         "<td><div class='klant-cell'><span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span><span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
         "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
-        "<td><div class='mcell'>"+merkChips(r.merk)+"</div></td>"+
+        "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
         "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner)+"</span></td>"+
+        "<td><div class='stack'><span class='cdate'>"+fmt(r.volgende_actie)+"</span>"+vaRel(r)+"</div></td>"+
         "<td><div class='stack'><span class='cdate'>"+fmt(r.laatste)+"</span><span class='rel warn'>"+rel(r.laatste)+"</span></div></td>"+
         "<td class='waarde-cell'>"+euro(r.waarde)+"</td>";
       tr.addEventListener("click",function(){ openDrawer(r); });
@@ -1508,7 +1642,7 @@
     board.innerHTML="";
     var rows=currentRows();
     PIPELINE_FASES.forEach(function(f){
-      var colRows=rows.filter(function(r){return r.fase===f.v;});
+      var colRows=rows.filter(function(r){return effectiveFase(r)===f.v;});
       var total=colRows.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
       var col=el("div","kcol");
       col.setAttribute("data-fase", f.v);
@@ -1520,13 +1654,16 @@
         html+="<div class='kcard pf-"+f.c.slice(2)+(needsAttention(r)?" kcard-red":"")+"' data-id='"+r.id+"'>"+
           "<div class='kcard-top'>"+
             "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
-            "<span class='kcard-klant'>"+esc(r.klant)+"</span></div>"+
+            "<span class='kcard-klant'>"+esc(r.klant)+"</span>"+
+            "<button class='kmove' type='button' aria-label='Verplaats naar andere fase' title='Verplaats naar andere fase'>⇅</button></div>"+
           "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
-          (r.merk?"<div class='kcard-part'><span class='chip-part'><span class='chip-dot'></span><span class='chip-txt'>"+esc(primaryMerk(r.merk))+"</span></span></div>":"")+
+          kcardSub(r)+
           "<div class='kcard-unit-sub'>"+esc(r.unit)+"</div>"+
           "<div class='kcard-foot'>"+
             "<div class='kcard-col'><div class='kcard-cap'>Contact gehad</div><div class='kcard-v'>"+esc(r.owner||"—")+"</div></div>"+
-            "<div class='kcard-col r'><div class='kcard-cap'>Laatst contact</div><div class='kcard-v date'>"+fmt(r.laatste)+"</div></div>"+
+            (r.volgende_actie
+              ? "<div class='kcard-col r'><div class='kcard-cap'>Volgende actie</div><div class='kcard-v date'>"+fmt(r.volgende_actie)+"</div></div>"
+              : "<div class='kcard-col r'><div class='kcard-cap'>Laatst contact</div><div class='kcard-v date'>"+fmt(r.laatste)+"</div></div>")+
           "</div>"+
           "</div>";
       });
@@ -1544,6 +1681,8 @@
         var r=data.filter(function(x){return x.id===id;})[0];
         if(r) openDrawer(r);
       });
+      var mv=c.querySelector(".kmove");
+      if(mv) mv.addEventListener("click",function(e){ e.stopPropagation(); liftAndPick(c); });
     });
 
     mountSortables();          // desktop: slepen via SortableJS
@@ -1591,7 +1730,8 @@
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
         "<div class='note-main'>"+
           "<div class='note-top'><span class='kl'>"+esc(r.klant)+"</span>"+
-            "<span class='via'>· "+esc(r.contact)+" · via "+esc(r.owner)+(r.merk?" · "+esc(r.merk):"")+"</span>"+
+            "<span class='via'>· "+esc(r.contact)+" · via "+esc(r.owner)+
+            dealSubParts(r).map(function(p){return " · "+esc(p.v);}).join("")+"</span>"+
             "<span class='badge "+faseColor(r.fase)+"'>"+esc(r.fase)+"</span>"+
             "<span class='note-meta'><span class='note-tico'>"+typeIcon(r.type)+esc(r.type)+"</span>"+
               "<span>"+fmt(r.laatste)+"</span></span>"+
@@ -1623,8 +1763,10 @@
   function klantList(){ return distinctVals("klant", Object.keys(BRANDS)); }
   function unitList(){ return distinctVals("unit", UNITS); }
   function merkList(){ return distinctVals("merk", []); }
-  function newSelectOptions(list, val){
-    var html="<option value='__new__'>➕ Nieuw toevoegen…</option>";
+  function newSelectOptions(list, val, emptyLabel){
+    var html="";
+    if(emptyLabel!==undefined) html+="<option value=''"+(!val?" selected":"")+">"+esc(emptyLabel)+"</option>"; // optioneel veld: lege keuze bovenaan
+    html+="<option value='__new__'>➕ Nieuw toevoegen…</option>";
     var found=false;
     list.forEach(function(v){ if(v===val) found=true; html+="<option"+(v===val?" selected":"")+">"+esc(v)+"</option>"; });
     if(val && !found) html+="<option selected>"+esc(val)+"</option>"; // bestaande, niet-standaard waarde behouden
@@ -1641,22 +1783,20 @@
     return sel.value;
   }
 
-  // ---- "Wie" (Merk/Atleet/Spreker): label + keuzelijst afhankelijk van unit ----
-  function wieLabel(unit){
-    if(unit==="Influencers") return "Influencer";
-    if(unit===ATLEET_UNIT) return "Atleet";
-    if(unit==="SportsSpeakers"||unit==="SportSpreker") return "Spreker";
-    return "Merk / partner";
-  }
+  // ---- "Wie" is voortaan ALTIJD het merk (bovenaan de kaart); de atleet of het
+  //      partnership staat eronder in een eigen veld ----
+  function wieLabel(unit){ return "Merk / partner"; }
   function wieList(unit){
     var set={};
-    if(isAthleteUnit(unit)){
-      ATLETEN.forEach(function(v){set[v]=1;});
-      data.forEach(function(d){ if(isAthleteUnit(d.unit) && d.klant) set[d.klant]=1; });
-    } else {
-      Object.keys(BRANDS).forEach(function(v){set[v]=1;});
-      data.forEach(function(d){ if(!isAthleteUnit(d.unit) && d.klant) set[d.klant]=1; });
-    }
+    Object.keys(BRANDS).forEach(function(v){set[v]=1;});
+    data.forEach(function(d){ if(d.klant) set[d.klant]=1; });
+    return Object.keys(set).sort(function(a,b){return a.localeCompare(b,"nl");});
+  }
+  function atleetLabel(unit){ return unit==="Influencers" ? "Influencer" : "Atleet"; }
+  function atleetList(){
+    var set={};
+    ATLETEN.forEach(function(v){set[v]=1;});
+    data.forEach(function(d){ if(d.atleet && String(d.atleet).trim()) set[d.atleet]=1; });
     return Object.keys(set).sort(function(a,b){return a.localeCompare(b,"nl");});
   }
   function splitNaam(full){ full=(full||"").trim(); if(!full) return {vn:"",an:""}; var i=full.indexOf(" "); return i<0?{vn:full,an:""}:{vn:full.slice(0,i),an:full.slice(i+1)}; }
@@ -1665,7 +1805,9 @@
     opts=opts||{};
     var isNew=!r;
     if(isNew){ r={id:++seq,klant:"",contact:"",functie:"",email:"",tel:"",owner:OWNERS[0],unit:"",merk:"",waarde:0,
-      fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"}; }
+      fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"};
+      if(opts.prefill){ for(var pk in opts.prefill){ if(opts.prefill[pk]) r[pk]=opts.prefill[pk]; } } // bijv. vanuit Toekomst
+    }
     openDealId=r.id;   // realtime: wijzigingen aan déze kaart parkeren zolang jij 'm open hebt
     var isArchived=!isNew && (r.status==="benut"||r.status==="onbenut");
     var requireNote=!!opts.requireNote;
@@ -1678,14 +1820,14 @@
         "<select id='d_klant' class='newsel'>"+newSelectOptions(wieList(r.unit), r.klant)+"</select>"+
         "<input id='d_klant_new' class='newinput' placeholder='Nieuw toevoegen…' style='display:none;margin-top:8px'></div>";
     var fPartHtml="<div class='fld'><label>Partnership</label>"+
-        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk)+"</select>"+
+        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk, "Geen partnership")+"</select>"+
         "<input id='d_merk_new' class='newinput' placeholder='Nieuw partnership…' style='display:none;margin-top:8px'></div>";
     var fUnitField="<div class='fld'><label>Unit</label>"+
         "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
         "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
     var fUnitPicker="<div class='fld'><label>Unit <span class='req'>· kies dit eerst</span></label>"+
-        "<select id='d_unit' class='newsel'><option value='' selected>Kies unit…</option>"+
-        UNITS.map(function(u){return "<option>"+esc(u)+"</option>";}).join("")+
+        "<select id='d_unit' class='newsel'><option value=''"+(r.unit?"":" selected")+">Kies unit…</option>"+
+        UNITS.map(function(u){return "<option"+(u===r.unit?" selected":"")+">"+esc(u)+"</option>";}).join("")+
         "<option value='__new__'>➕ Nieuw toevoegen…</option></select>"+
         "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
     drawer.innerHTML=
@@ -1696,7 +1838,7 @@
         "<button class='closex' id='dClose' aria-label='Sluiten'><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M18 6 6 18M6 6l12 12'/></svg></button>"+
       "</div>"+
       "<div class='drawer-body'>"+
-        (requireNote?"<div class='move-banner'>Je verplaatst deze kans naar <b>"+esc(showFase)+"</b>. Datum laatste contact is op vandaag gezet — <b>werk de opmerking bij</b> om op te slaan.</div>":"")+
+        (requireNote?"<div class='move-banner'>Je verplaatst deze kans naar <b>"+esc(showFase)+"</b>. Datum laatste contact is op vandaag gezet — <b>werk de opmerking bij</b> en kies een <b>datum volgende actie</b> om op te slaan.</div>":"")+
         (bundle.length>1?"<div class='bundle-banner'>📎 "+esc(r.klant)+" heeft <b>"+bundle.length+" open saleskansen</b> — dit is er één van.</div>":"")+
         (isNew
           ? fUnitPicker+"<div id='d_rest' style='display:none'>"+fWieHtml+fPartHtml
@@ -1728,13 +1870,24 @@
           "<div class='fld'><label>Fase</label><select id='d_fase'>"+faseOptions(showFase)+"</select></div>"+
           "<div class='fld'><label>Actie</label><select id='d_actie'>"+optionsHtml(ACTIES,r.actie)+"</select></div>"+
         "</div>"+
+        "<div class='fld'><label>Datum volgende actie"+(requireNote?" <span class='req'>· verplicht</span>":"")+"</label>"+
+          "<input id='d_va' type='date' value='"+(r.volgende_actie||"")+"'>"+
+          "<div class='va-quick'>"+
+            [["+1 wk",7],["+2 wkn",14],["+3 wkn",21],["+1 mnd",30]].map(function(q){
+              return "<button type='button' class='va-btn' data-days='"+q[1]+"'>"+q[0]+"</button>";
+            }).join("")+
+          "</div>"+
+          "<div class='attach-hint'>Wanneer moet dit contact weer opgepakt worden? Op die datum verschijnt de kaart bij “Aandacht nodig”.</div></div>"+
 
         // ---- Extra velden · alleen bij unit "Atleten" ----
         "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
           "<div class='dsec'>Extra velden · Atleten / Influencers</div>"+
+          "<div class='fld'><label id='d_atleet_lbl'>"+atleetLabel(r.unit)+"</label>"+
+            "<select id='d_atleet' class='newsel'>"+newSelectOptions(atleetList(), r.atleet||"", "Nog geen atleet gekozen")+"</select>"+
+            "<input id='d_atleet_new' class='newinput' placeholder='Nieuwe atleet…' style='display:none;margin-top:8px'></div>"+
           "<div class='row2'>"+
             "<div class='fld'><label>Sport</label>"+
-              "<select id='d_sport' class='newsel'>"+newSelectOptions(distinctVals('sport',SPORTEN), r.sport)+"</select>"+
+              "<select id='d_sport' class='newsel'>"+newSelectOptions(distinctVals('sport',SPORTEN), r.sport, "—")+"</select>"+
               "<input id='d_sport_new' class='newinput' placeholder='Nieuwe sport…' style='display:none;margin-top:8px'></div>"+
             "<div class='fld'><label>Soort deal</label><select id='d_soort'>"+optionsHtml([""].concat(SOORT_DEAL), r.soort_deal)+"</select></div>"+
           "</div>"+
@@ -1760,7 +1913,7 @@
           "<label class='attach-add'>"+
             "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49'/></svg>"+
             "Bijlage toevoegen<input type='file' id='d_file' multiple style='display:none'></label>"+
-          "<div class='attach-hint'>Demo — bestanden worden nog niet echt opgeslagen.</div>"+
+          "<div class='attach-hint'>"+(USING_SUPABASE?"Klik een bijlage om hem te openen · bestanden worden veilig opgeslagen.":"Demo-modus — bestanden worden niet echt opgeslagen.")+"</div>"+
         "</div>"+
         (isNew?"</div>":"")+
         "<div id='dSaveErr' class='save-err' style='display:none'></div>"+
@@ -1785,6 +1938,7 @@
     wireNewSelect("#d_unit","#d_unit_new");
     wireNewSelect("#d_merk","#d_merk_new");
     wireNewSelect("#d_sport","#d_sport_new");
+    wireNewSelect("#d_atleet","#d_atleet_new");
 
     // ---- unit stuurt: atleten-blok tonen, Wie-label en Wie-keuzelijst ----
     (function(){
@@ -1794,6 +1948,7 @@
         var u=curUnit();
         if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
         if(lbl) lbl.textContent=wieLabel(u);
+        var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
         var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
         var ks=$("#d_klant"); if(ks){ var cur=readNewSelect("#d_klant","#d_klant_new");
           ks.innerHTML=newSelectOptions(wieList(u), cur); wireNewSelect("#d_klant","#d_klant_new"); }
@@ -1816,19 +1971,35 @@
       if(ed&&rm){ ed.addEventListener("change",upd); rm.addEventListener("change",upd); upd(); }
     })();
 
-    // Verplichte opmerking zodra de FASE verandert — bij slepen (requireNote) én bij het wijzigen
-    // van het Fase-menu in de kaart zelf (o.a. mobiel, waar slepen niet werkt). Nieuwe kaart uitgezonderd.
+    // Snelkeuzes voor "datum volgende actie" (+1 wk / +2 wkn / +3 wkn / +1 mnd)
     (function(){
-      var opmEl=$("#d_opm"), saveBtn=$("#dSave"), faseSel=$("#d_fase"), origFase=r.fase;
+      var vaEl=$("#d_va");
+      drawer.querySelectorAll(".va-btn").forEach(function(b){
+        b.addEventListener("click",function(){
+          var d=new Date(TODAY); d.setDate(d.getDate()+parseInt(b.getAttribute("data-days"),10));
+          if(vaEl){ vaEl.value=iso(d); vaEl.dispatchEvent(new Event("change",{bubbles:true})); }
+          drawer.querySelectorAll(".va-btn").forEach(function(x){ x.classList.toggle("active",x===b); });
+        });
+      });
+      if(vaEl) vaEl.addEventListener("input",function(){ drawer.querySelectorAll(".va-btn").forEach(function(x){ x.classList.remove("active"); }); });
+    })();
+
+    // Verplicht bij fase-wijziging (slepen of Fase-menu): opmerking bijwerken ÉN een
+    // datum volgende actie kiezen. Nieuwe kaart uitgezonderd.
+    (function(){
+      var opmEl=$("#d_opm"), saveBtn=$("#dSave"), faseSel=$("#d_fase"), vaEl=$("#d_va"), origFase=r.fase;
       function need(){ return requireNote || (!isNew && faseSel && faseSel.value!==origFase); }
       function checkNote(){
         var req=need();
         var changed = opmEl.value.trim().length>0 && opmEl.value.trim()!==initialOpm.trim();
-        if(saveBtn) saveBtn.disabled = req && !changed;
+        var vaOk = !!(vaEl && vaEl.value);
+        if(saveBtn) saveBtn.disabled = req && !(changed && vaOk);
         if(opmEl) opmEl.classList.toggle("need-note", req && !changed);
+        if(vaEl) vaEl.classList.toggle("need", req && !vaOk);
       }
       if(opmEl) opmEl.addEventListener("input",checkNote);
       if(faseSel) faseSel.addEventListener("change",checkNote);
+      if(vaEl){ vaEl.addEventListener("change",checkNote); vaEl.addEventListener("input",checkNote); }
       checkNote();
       if(requireNote && opmEl) opmEl.focus();
     })();
@@ -1842,19 +2013,30 @@
       box.innerHTML=dBijlagen.map(function(f,i){
         return "<div class='attach-row'>"+
           "<span class='attach-ico'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49'/></svg></span>"+
-          "<span class='attach-name'>"+esc(f.name)+"</span>"+
+          "<span class='attach-name' data-i='"+i+"' style='cursor:pointer'>"+esc(f.name)+(f._uploading?" <span class='rel'>(uploaden…)</span>":"")+"</span>"+
           "<span class='attach-size'>"+fmtSize(f.size)+"</span>"+
           "<button type='button' class='attach-del' data-i='"+i+"' aria-label='Verwijderen'>✕</button>"+
         "</div>";
       }).join("");
+      box.querySelectorAll(".attach-name").forEach(function(sp){
+        sp.addEventListener("click",function(){ openAttachment(dBijlagen[+sp.getAttribute("data-i")]); });
+      });
       box.querySelectorAll(".attach-del").forEach(function(btn){
         btn.addEventListener("click",function(){ dBijlagen.splice(+btn.getAttribute("data-i"),1); renderBijlagen(); });
       });
     }
     renderBijlagen();
     $("#d_file").addEventListener("change",function(e){
-      Array.prototype.forEach.call(e.target.files,function(f){ dBijlagen.push({name:f.name,size:f.size}); });
-      e.target.value=""; renderBijlagen();
+      Array.prototype.forEach.call(e.target.files,function(f){
+        var ph={name:f.name,size:f.size,_uploading:true}; dBijlagen.push(ph); renderBijlagen();
+        uploadFile("deals", f, function(err, att){
+          var idx=dBijlagen.indexOf(ph);
+          if(err){ if(idx>=0) dBijlagen.splice(idx,1); console.error(err); toast("Upload mislukt: "+f.name,"err"); }
+          else if(idx>=0){ dBijlagen[idx]=att; }
+          renderBijlagen();
+        });
+      });
+      e.target.value="";
     });
 
     $("#dSave").onclick=function(){
@@ -1886,26 +2068,33 @@
       r.owner=ownerVal; r.unit=unitVal; r.merk=readNewSelect("#d_merk","#d_merk_new");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
       // ---- Extra velden · Atleten ----
+      r.atleet=isAthleteUnit(unitVal) ? (readNewSelect("#d_atleet","#d_atleet_new")||null) : null;
       r.sport=readNewSelect("#d_sport","#d_sport_new");
       r.soort_deal=$("#d_soort")?$("#d_soort").value:"";
       r.startdatum=($("#d_start")&&$("#d_start").value)||null;
       r.einddatum=($("#d_eind")&&$("#d_eind").value)||null;
       r.reminder_maanden=($("#d_reminder")&&$("#d_reminder").value)?parseInt($("#d_reminder").value,10):null;
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
+      r.volgende_actie=($("#d_va")&&$("#d_va").value)||null;
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
       // opmerking gewijzigd + datum niet handmatig aangepast -> teller reset (contact gehad vandaag)
       if(r.opm!==origOpm && r.laatste===origLaatste){ r.laatste=iso(TODAY); }
-      r.bijlagen=dBijlagen;
+      r.bijlagen=dBijlagen.filter(function(a){return !a._uploading;});
       r.bijgewerkt=iso(TODAY);
       if(isNew){ r.status="actief"; r._new=true; data.push(r); }
       saveDeal(r);
+      if(opts.onSaved) opts.onSaved(r);
       if(r && r.id!=null){ delete pendingRemote[r.id]; flashIds.add(r.id); }   // mijn opslag wint + licht kort op
       closeDrawer(); refreshAll();
     };
   }
   function closeDrawer(){
+    if(tkEditorOpen){ closeToekomstDrawer(); return; }   // toekomst-paneel gebruikt hetzelfde paneel-element
     drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open");
+    // optimistische verplaatsing afronden: na opslaan staat de nieuwe fase al in de data,
+    // na annuleren niet -> in beide gevallen tekent renderKanban de juiste (definitieve) stand
+    if(pendingMove){ pendingMove=null; renderKanban(); }
     var id=openDealId; openDealId=null;
     // realtime: was deze kaart intussen door iemand anders gewijzigd? Nu alsnog verwerken.
     if(id!=null && pendingRemote[id]!==undefined){
@@ -1924,6 +2113,7 @@
     $("#view-kanban").hidden = v!=="kanban";
     $("#view-tabel").hidden = v!=="tabel";
     $("#view-aandacht").hidden = v!=="aandacht";
+    $("#view-toekomst").hidden = v!=="toekomst";
     $("#view-permerk").hidden = v!=="permerk";
     $("#view-opmerkingen").hidden = v!=="opmerkingen";
     $("#view-archief").hidden = v!=="archief";
@@ -1934,6 +2124,7 @@
     if(v==="kanban") renderKanban();
     if(v==="tabel") renderTable();
     if(v==="aandacht") renderAandacht();
+    if(v==="toekomst") renderToekomst();
     if(v==="permerk") renderPerMerk();
     if(v==="archief") renderArchive();
   }
@@ -2064,7 +2255,7 @@
   function matchesArchFilters(r){
     var q=($("#aq")?$("#aq").value:"").trim().toLowerCase();
     for(var i=0;i<ARCH_FILTERS.length;i++){ var f=ARCH_FILTERS[i], sel=$("#"+f.id); if(sel && sel.value && r[f.field]!==sel.value) return false; }
-    if(q){ var hay=(r.klant+" "+r.merk+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
     return true;
   }
   function isFilteredArch(){ if($("#aq")&&$("#aq").value.trim())return true; return ARCH_FILTERS.some(function(f){var e=$("#"+f.id);return e&&e.value;}); }
@@ -2138,7 +2329,7 @@
         var note=benut?(r.afsluit_notitie||r.opm||"—"):(r.verwijder_reden||"—");
         var row=el("div","arch-grow");
         row.innerHTML=
-          "<span class='arch-merk'>"+(isAlle?"<span class='badge "+(benut?"c-green":"c-red")+"' style='margin-right:6px'>"+(benut?"Benut":"Onbenut")+"</span>":"")+"<div class='mcell'>"+merkChips(r.merk)+"</div></span>"+
+          "<span class='arch-merk'>"+(isAlle?"<span class='badge "+(benut?"c-green":"c-red")+"' style='margin-right:6px'>"+(benut?"Benut":"Onbenut")+"</span>":"")+"<div class='mcell'>"+subChips(r)+"</div></span>"+
           "<span class='arch-rval'>"+euro(r.waarde)+"</span>"+
           "<span class='arch-rnote'>"+esc(note)+"</span>"+
           "<span class='arch-rdate'>"+(r.archived_at?fmt(String(r.archived_at).slice(0,10)):"—")+"</span>";
@@ -2170,6 +2361,276 @@
     });
   }
 
+  // ========================================================
+  //  BIJLAGEN-OPSLAG (Supabase Storage, bucket 'dugout-bijlagen')
+  // ========================================================
+  var BUCKET="dugout-bijlagen";
+  function uploadFile(prefix, file, cb){
+    if(!USING_SUPABASE){ cb(null,{name:file.name,size:file.size,demo:true}); return; }
+    var safe=file.name.replace(/[^\w.\-]+/g,"_");
+    var path=prefix+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,7)+"-"+safe;
+    sb.storage.from(BUCKET).upload(path,file).then(function(res){
+      if(res.error){ cb(res.error); return; }
+      cb(null,{name:file.name,size:file.size,type:file.type||"",path:path});
+    });
+  }
+  function openAttachment(att){
+    if(!att||!att.path){ toast("Demo-bijlage — nog niet echt opgeslagen.","err"); return; }
+    sb.storage.from(BUCKET).createSignedUrl(att.path,3600).then(function(res){
+      if(res.error||!res.data){ console.error(res.error); toast("Kon de bijlage niet openen.","err"); return; }
+      window.open(res.data.signedUrl,"_blank");
+    });
+  }
+
+  // ========================================================
+  //  TOEKOMST — kansen die eraan komen maar nog geen saleskans zijn
+  // ========================================================
+  var TK_COLS=["titel","merk","unit","verwacht_vanaf","omschrijving","links","bijlagen","status"];
+  var tkSeq=100, tkEditorOpen=false, tkPendingRefetch=false, tkRefetchTimer=null;
+  var toekomst=[
+    {id:1, titel:"Partnership Feyenoord opent vanaf Q4", merk:"Univé Centraal", unit:"HoS Algemeen",
+     verwacht_vanaf:"Q4 2026",
+     omschrijving:"Univé geeft aan dat er vanaf Q4 ruimte komt voor een nieuw partnership rond Feyenoord. Contact warm houden en propositie alvast voorbereiden.",
+     links:[{label:"Sponsorpagina Univé",url:"https://www.unive.nl"}], bijlagen:[], status:"open"}
+  ];
+  function toTkRow(t){ var o={}; TK_COLS.forEach(function(k){ if(t[k]!==undefined) o[k]=t[k]; }); return o; }
+  function loadToekomst(){
+    if(!USING_SUPABASE) return;
+    sb.from("toekomst").select("*").order("id",{ascending:false}).then(function(res){
+      if(res.error){ console.error("Toekomst laden faalde:",res.error); return; }
+      toekomst=(res.data||[]);
+      toekomst.forEach(function(t){ t.links=t.links||[]; t.bijlagen=t.bijlagen||[]; });
+      renderToekomst();
+    });
+  }
+  function saveToekomst(t, cb){
+    if(!USING_SUPABASE){
+      if(t._new){ delete t._new; t.id=++tkSeq; toekomst.unshift(t); }
+      renderToekomst(); if(cb)cb(true); return;
+    }
+    if(t._new){
+      delete t._new;
+      sb.from("toekomst").insert(toTkRow(t)).select().single().then(function(res){
+        if(res.error){ console.error(res.error); toast(SAVE_ERR,"err"); if(cb)cb(false); return; }
+        t.id=res.data.id; toekomst.unshift(t); renderToekomst(); toast("Opgeslagen ✓","ok"); if(cb)cb(true);
+      });
+    } else {
+      sb.from("toekomst").update(toTkRow(t)).eq("id",t.id).then(function(res){
+        if(res.error){ console.error(res.error); toast(SAVE_ERR,"err"); if(cb)cb(false); return; }
+        renderToekomst(); toast("Opgeslagen ✓","ok"); if(cb)cb(true);
+      });
+    }
+  }
+  function hardDeleteToekomst(t){
+    if(!USING_SUPABASE || t.id==null){
+      toekomst=toekomst.filter(function(x){return x!==t;}); renderToekomst(); return;
+    }
+    sb.from("toekomst").delete().eq("id",t.id).select().then(function(res){
+      if(res.error||!res.data||!res.data.length){ toast("Verwijderen mislukt — probeer opnieuw.","err"); return; }
+      toekomst=toekomst.filter(function(x){return x.id!==t.id;}); renderToekomst(); toast("Verwijderd","ok");
+    });
+  }
+  function handleTkRemote(){
+    if(tkEditorOpen){ tkPendingRefetch=true; return; }
+    clearTimeout(tkRefetchTimer);
+    tkRefetchTimer=setTimeout(loadToekomst,200);
+  }
+
+  function renderToekomst(){
+    var host=$("#tkGrid"); if(!host) return;
+    var q=($("#tkq")?$("#tkq").value:"").trim().toLowerCase();
+    var rows=toekomst.filter(function(t){ return (t.status||"open")==="open"; });
+    if($("#toekomstCount")) $("#toekomstCount").textContent = rows.length ? (" ("+rows.length+")") : "";
+    if(q){ rows=rows.filter(function(t){
+      var hay=((t.titel||"")+" "+(t.merk||"")+" "+(t.unit||"")+" "+(t.verwacht_vanaf||"")+" "+(t.omschrijving||"")).toLowerCase();
+      return hay.indexOf(q)>=0;
+    }); }
+    host.innerHTML="";
+    if(!rows.length){
+      host.innerHTML="<div class='card' style='grid-column:1/-1'><div class='empty'>"+(q?"Niets gevonden.":"Nog geen toekomstkansen — voeg de eerste toe zodra je iets ziet aankomen.")+"</div></div>";
+      return;
+    }
+    rows.forEach(function(t){
+      var b=brand(t.merk||"?");
+      var card=el("div","tk-card");
+      card.innerHTML=
+        "<div class='tk-top'>"+
+          "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
+          "<span class='tk-merk'>"+esc(t.merk||"Nog geen merk")+"</span>"+
+          (t.verwacht_vanaf?"<span class='tk-vanaf'>vanaf "+esc(t.verwacht_vanaf)+"</span>":"")+
+        "</div>"+
+        "<div class='tk-titel'>"+esc(t.titel||"")+"</div>"+
+        (t.omschrijving?"<div class='tk-oms'>"+esc(t.omschrijving)+"</div>":"")+
+        ((t.links&&t.links.length)?"<div class='tk-links'>"+t.links.map(function(l){
+          return "<a href='"+esc(l.url)+"' target='_blank' rel='noopener'>🔗 "+esc(l.label||l.url)+"</a>";
+        }).join("")+"</div>":"")+
+        ((t.bijlagen&&t.bijlagen.length)?"<div class='tk-atts'>"+t.bijlagen.map(function(a,i){
+          return "<span class='tk-att' data-i='"+i+"'>📎 <span>"+esc(a.name)+"</span></span>";
+        }).join("")+"</div>":"")+
+        "<div class='tk-foot'>"+
+          "<span class='tk-unit'>"+esc(t.unit||"")+"</span>"+
+          "<button class='tk-convert' type='button'>→ Saleskans</button>"+
+        "</div>";
+      card.querySelectorAll(".tk-links a").forEach(function(a){ a.addEventListener("click",function(e){ e.stopPropagation(); }); });
+      card.querySelectorAll(".tk-att").forEach(function(chip){
+        chip.addEventListener("click",function(e){ e.stopPropagation(); openAttachment(t.bijlagen[+chip.getAttribute("data-i")]); });
+      });
+      card.querySelector(".tk-convert").addEventListener("click",function(e){ e.stopPropagation(); convertToekomst(t); });
+      card.addEventListener("click",function(){ openToekomstDrawer(t); });
+      host.appendChild(card);
+    });
+  }
+
+  function convertToekomst(t){
+    closeToekomstDrawer();
+    openDrawer(null,{
+      prefill:{ klant:t.merk||"", unit:t.unit||"", opm:((t.titel||"")+(t.omschrijving?" — "+t.omschrijving:"")).trim() },
+      onSaved:function(){ t.status="omgezet"; saveToekomst(t,function(){}); toast("Toekomstkans omgezet naar saleskans ✓","ok"); }
+    });
+  }
+
+  var tkAddFilesCurrent=null;   // actieve upload-functie van het geopende toekomst-paneel (voor Ctrl+V)
+  document.addEventListener("paste",function(e){
+    if(!tkEditorOpen||!tkAddFilesCurrent) return;
+    var files=e.clipboardData && e.clipboardData.files;
+    if(files && files.length){ e.preventDefault(); tkAddFilesCurrent(files); }
+  });
+  function closeToekomstDrawer(){
+    tkEditorOpen=false; tkAddFilesCurrent=null;
+    drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open");
+    if(tkPendingRefetch){ tkPendingRefetch=false; loadToekomst(); }
+  }
+
+  function openToekomstDrawer(t){
+    var isNew=!t;
+    if(isNew){ t={_new:true,titel:"",merk:"",unit:"",verwacht_vanaf:"",omschrijving:"",links:[],bijlagen:[],status:"open"}; }
+    tkEditorOpen=true;
+    var b=brand(t.merk||"?");
+    var dLinks=(t.links||[]).map(function(l){return {label:l.label||"",url:l.url||""};});
+    var dAtts=(t.bijlagen||[]).slice();
+    drawer.innerHTML=
+      "<div class='drawer-head'>"+
+        "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+(isNew?"+":b.ini)+"</span>"+
+        "<div><div class='drawer-title'>"+(isNew?"Nieuwe toekomstkans":esc(t.merk||t.titel||"Toekomstkans"))+"</div>"+
+        "<div class='drawer-sub'>"+(isNew?"Iets wat eraan komt — nog geen saleskans":"Toekomstkans")+"</div></div>"+
+        "<button class='closex' id='tkClose' aria-label='Sluiten'><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M18 6 6 18M6 6l12 12'/></svg></button>"+
+      "</div>"+
+      "<div class='drawer-body'>"+
+        "<div class='fld'><label>Titel <span class='req'>· verplicht</span></label>"+
+          "<input id='tk_titel' value='"+esc(t.titel)+"' placeholder='Bijv. Partnership Feyenoord opent vanaf Q4'></div>"+
+        "<div class='row2'>"+
+          "<div class='fld'><label>Merk / partner</label>"+
+            "<select id='tk_merk' class='newsel'>"+newSelectOptions(wieList(""), t.merk, "Nog geen merk")+"</select>"+
+            "<input id='tk_merk_new' class='newinput' placeholder='Nieuw merk…' style='display:none;margin-top:8px'></div>"+
+          "<div class='fld'><label>Unit</label>"+
+            "<select id='tk_unit' class='newsel'>"+newSelectOptions(unitList(), t.unit, "Nog geen unit")+"</select>"+
+            "<input id='tk_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>"+
+        "</div>"+
+        "<div class='fld'><label>Verwacht vanaf</label>"+
+          "<input id='tk_vanaf' value='"+esc(t.verwacht_vanaf||"")+"' placeholder='Bijv. Q4 2026, zomer 2027…'></div>"+
+        "<div class='fld'><label>Omschrijving</label>"+
+          "<textarea id='tk_oms' placeholder='Wat komt eraan, hoe weten we dit, wat is de vervolgstap?'>"+esc(t.omschrijving||"")+"</textarea></div>"+
+        "<div class='dsec'>Links</div>"+
+        "<div class='fld'><div id='tk_links'></div>"+
+          "<button type='button' class='link-add' id='tk_linkAdd'>+ Link toevoegen</button></div>"+
+        "<div class='dsec'>Documenten &amp; screenshots</div>"+
+        "<div class='fld'>"+
+          "<div id='tk_atts' class='attach-list'></div>"+
+          "<label class='attach-add'>"+
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49'/></svg>"+
+            "Bestand toevoegen<input type='file' id='tk_file' multiple style='display:none'></label>"+
+          "<div class='attach-hint'>"+(USING_SUPABASE?"Je kunt hier ook een screenshot <b>plakken</b> (Ctrl+V). Bestanden worden veilig opgeslagen.":"Demo-modus — bestanden worden niet echt opgeslagen.")+"</div>"+
+        "</div>"+
+        "<div id='tkSaveErr' class='save-err' style='display:none'></div>"+
+      "</div>"+
+      "<div class='drawer-foot'>"+
+        (isNew?"":"<div class='arch-actions'>"+
+          "<button class='btn-ghost' id='tkConvert' title='Maak er een saleskans van'>→ Saleskans</button>"+
+          "<button class='btn-ghost del' id='tkDelete' title='Definitief verwijderen'>🗑 Verwijderen</button></div>")+
+        "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"")+"</span>"+
+        "<button class='btn-ghost' id='tkCancel'>Annuleren</button>"+
+        "<button class='btn-primary' id='tkSave'>"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
+      "</div>";
+    drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false"); scrim.classList.add("open");
+    wireNewSelect("#tk_merk","#tk_merk_new");
+    wireNewSelect("#tk_unit","#tk_unit_new");
+
+    // ----- links-editor -----
+    function renderLinkRows(){
+      var box=$("#tk_links"); if(!box) return;
+      box.innerHTML=dLinks.map(function(l,i){
+        return "<div class='link-row'>"+
+          "<input class='link-lbl' data-i='"+i+"' placeholder='Omschrijving' value='"+esc(l.label)+"'>"+
+          "<input class='link-url' data-i='"+i+"' placeholder='https://…' value='"+esc(l.url)+"'>"+
+          "<button type='button' class='link-del' data-i='"+i+"' aria-label='Verwijderen'>✕</button></div>";
+      }).join("");
+      box.querySelectorAll(".link-lbl").forEach(function(inp){ inp.addEventListener("input",function(){ dLinks[+inp.getAttribute("data-i")].label=inp.value; }); });
+      box.querySelectorAll(".link-url").forEach(function(inp){ inp.addEventListener("input",function(){ dLinks[+inp.getAttribute("data-i")].url=inp.value; }); });
+      box.querySelectorAll(".link-del").forEach(function(btn){ btn.addEventListener("click",function(){ dLinks.splice(+btn.getAttribute("data-i"),1); renderLinkRows(); }); });
+    }
+    renderLinkRows();
+    $("#tk_linkAdd").onclick=function(){ dLinks.push({label:"",url:""}); renderLinkRows(); var last=drawer.querySelectorAll(".link-lbl"); if(last.length) last[last.length-1].focus(); };
+
+    // ----- bijlagen -----
+    function fmtSize(x){ if(x==null)return ""; if(x<1024)return x+" B"; if(x<1048576)return Math.round(x/1024)+" KB"; return (x/1048576).toFixed(1)+" MB"; }
+    function renderAtts(){
+      var box=$("#tk_atts"); if(!box) return;
+      if(!dAtts.length){ box.innerHTML="<div class='attach-empty'>Nog geen bijlagen</div>"; return; }
+      box.innerHTML=dAtts.map(function(f,i){
+        return "<div class='attach-row'>"+
+          "<span class='attach-ico'>📎</span>"+
+          "<span class='attach-name' data-i='"+i+"' style='cursor:pointer'>"+esc(f.name)+(f._uploading?" <span class='rel'>(uploaden…)</span>":"")+"</span>"+
+          "<span class='attach-size'>"+fmtSize(f.size)+"</span>"+
+          "<button type='button' class='attach-del' data-i='"+i+"' aria-label='Verwijderen'>✕</button></div>";
+      }).join("");
+      box.querySelectorAll(".attach-name").forEach(function(sp){ sp.addEventListener("click",function(){ openAttachment(dAtts[+sp.getAttribute("data-i")]); }); });
+      box.querySelectorAll(".attach-del").forEach(function(btn){ btn.addEventListener("click",function(){ dAtts.splice(+btn.getAttribute("data-i"),1); renderAtts(); }); });
+    }
+    renderAtts();
+    function addTkFiles(files){
+      Array.prototype.forEach.call(files,function(f){
+        var ph={name:f.name,size:f.size,_uploading:true}; dAtts.push(ph); renderAtts();
+        uploadFile("toekomst", f, function(err, att){
+          var idx=dAtts.indexOf(ph);
+          if(err){ if(idx>=0) dAtts.splice(idx,1); toast("Upload mislukt: "+f.name,"err"); }
+          else if(idx>=0){ dAtts[idx]=att; }
+          renderAtts();
+        });
+      });
+    }
+    $("#tk_file").addEventListener("change",function(e){ addTkFiles(e.target.files); e.target.value=""; });
+    tkAddFilesCurrent=addTkFiles;   // screenshot plakken (Ctrl+V) zolang dit paneel open is
+
+    function cleanupAndClose(){ closeToekomstDrawer(); }
+    $("#tkClose").onclick=cleanupAndClose;
+    $("#tkCancel").onclick=cleanupAndClose;
+    if($("#tkDelete")) $("#tkDelete").onclick=function(){
+      showModal(
+        "<div class='modal-ico del'>🗑️</div><h3>Toekomstkans verwijderen</h3>"+
+        "<p><b>"+esc(t.titel)+"</b> wordt definitief verwijderd.</p>"+
+        "<div class='modal-foot'><button class='btn-ghost' id='m_cancel'>Annuleren</button>"+
+        "<button class='btn-danger' id='m_ok'>Verwijderen</button></div>");
+      $("#m_cancel").onclick=closeModal;
+      $("#m_ok").onclick=function(){ closeModal(); cleanupAndClose(); hardDeleteToekomst(t); };
+    };
+    if($("#tkConvert")) $("#tkConvert").onclick=function(){ convertToekomst(t); };
+    $("#tkSave").onclick=function(){
+      var titel=$("#tk_titel").value.trim();
+      if(!titel){ $("#tk_titel").classList.add("need"); var e2=$("#tkSaveErr"); e2.textContent="Vul in elk geval een titel in."; e2.style.display="block"; $("#tk_titel").focus(); return; }
+      if(dAtts.some(function(a){return a._uploading;})){ var e3=$("#tkSaveErr"); e3.textContent="Nog even wachten — een bijlage is nog aan het uploaden."; e3.style.display="block"; return; }
+      t.titel=titel;
+      t.merk=readNewSelect("#tk_merk","#tk_merk_new");
+      t.unit=readNewSelect("#tk_unit","#tk_unit_new");
+      t.verwacht_vanaf=$("#tk_vanaf").value.trim();
+      t.omschrijving=$("#tk_oms").value.trim();
+      t.links=dLinks.filter(function(l){return (l.url||"").trim();}).map(function(l){ var u=l.url.trim(); if(!/^https?:\/\//i.test(u)) u="https://"+u; return {label:l.label.trim(),url:u}; });
+      t.bijlagen=dAtts.filter(function(a){return !a._uploading;});
+      saveToekomst(t,function(ok){ if(ok){ cleanupAndClose(); } });
+    };
+  }
+  if($("#tkAddBtn")) $("#tkAddBtn").addEventListener("click",function(){ openToekomstDrawer(null); });
+  if($("#tkq")) $("#tkq").addEventListener("input",renderToekomst);
+
   // ---------- init ----------
   function boot(){
     renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive();
@@ -2183,6 +2644,7 @@
       }
       autoArchive();
       boot();
+      loadToekomst();
       subscribeRealtime();
     });
   }
@@ -2224,6 +2686,9 @@
     authScrim.classList.add("show");
   }
   function start(){
+    // Demo-modus (?demo=1): draait volledig op de lokale testdata, zonder login
+    // en zonder Supabase. Voor lokaal testen/ontwikkelen; slaat NIETS op.
+    if(/[?&]demo=1/.test(location.search)){ showApp(); bootApp(); return; }
     initSupabase();
     if(!USING_SUPABASE){
       if(supaConfigured()){ showConnError(); return; }     // db is ingesteld maar CDN/init faalde -> harde fout i.p.v. stil testdata
