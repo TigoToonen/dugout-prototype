@@ -124,6 +124,7 @@
   .more-arrow{font-size:10px;opacity:.7;margin-left:2px}
   .more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:36;background:var(--surface);border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:170px;display:flex;flex-direction:column;gap:2px}
+  .more-menu[hidden]{display:none}   /* hidden-attribuut moet winnen van display:flex */
   .more-item{appearance:none;background:none;border:none;cursor:pointer;font:inherit;font-weight:600;color:var(--text-muted);
     text-align:left;padding:9px 12px;border-radius:8px}
   .more-item:hover{background:var(--surface-2);color:var(--text)}
@@ -726,9 +727,10 @@
     <section id="view-aandacht" hidden>
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
-        Saleskansen waarvan de <b>datum volgende actie</b> is bereikt — of die zonder geplande datum <b>&gt;14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een rij voor details.
+        Saleskansen waarvan de <b>datum volgende actie</b> is bereikt — of die zonder geplande datum <b>&gt;14 dagen stil liggen</b> of op <b>terugbellen</b> staan · klik een kaart of rij voor details.
       </p>
-      <div class="card tscroll">
+      <div class="kanban" id="aandachtKanban"></div>
+      <div class="card tscroll" id="aandachtTabelCard" hidden>
         <table>
           <thead><tr>
             <th>Merk</th><th>Unit</th><th>Atleet / Partnership</th>
@@ -1519,11 +1521,11 @@
   var sortables=[];
   function destroySortables(){ sortables.forEach(function(s){ try{s.destroy();}catch(e){} }); sortables=[]; }
   function isMobile(){ return !!(window.matchMedia && window.matchMedia("(max-width:640px)").matches); }
-  function mountSortables(){
+  function mountSortables(board){
     if(!window.Sortable) return;
     // Ook op mobiel: echte drag met de vinger (kaart volgt 1:1); de ⇅-knop
     // op de kaart blijft als sneller alternatief (fase-sheet).
-    var board=document.getElementById("kanban"); if(!board) return;
+    if(!board) return;
     board.querySelectorAll(".kcol-body").forEach(function(body){
       sortables.push(Sortable.create(body,{
         group:"deals", draggable:".kcard", animation:150,
@@ -1668,11 +1670,16 @@
     });
   }
 
+  // Eén render voor beide borden: de volledige pipeline én het aandacht-bord
+  // (zelfde kolommen, alleen kaarten die aandacht vragen).
   function renderKanban(){
-    var board=$("#kanban"); if(!board) return;
     destroySortables();          // oude Sortable-instanties opruimen vóór herbouw
+    renderBoardInto($("#kanban"), currentRows());
+    renderBoardInto($("#aandachtKanban"), currentRows().filter(needsAttention));
+  }
+  function renderBoardInto(board, rows){
+    if(!board) return;
     board.innerHTML="";
-    var rows=currentRows();
     PIPELINE_FASES.forEach(function(f){
       var colRows=rows.filter(function(r){return effectiveFase(r)===f.v;});
       var total=colRows.reduce(function(s,r){return s+(Number(r.waarde)||0);},0);
@@ -1717,9 +1724,23 @@
       if(mv) mv.addEventListener("click",function(e){ e.stopPropagation(); liftAndPick(c); });
     });
 
-    mountSortables();          // slepen via SortableJS (muis én touch)
+    mountSortables(board);     // slepen via SortableJS (muis én touch)
     // Long-press-fase-kiezer staat UIT: vasthouden = nu échte drag (Sortable).
     // De fase-sheet blijft bereikbaar via de ⇅-knop op de kaart.
+  }
+
+  // ---------- Aandacht: bord- of tabelweergave (standaard bord, zoals Pipeline) ----------
+  function aandachtViewPref(){ var p=null; try{ p=localStorage.getItem("dugoutAandachtView"); }catch(e){} return p==="tabel"?"tabel":"bord"; }
+  function setAandachtView(m){
+    try{ localStorage.setItem("dugoutAandachtView", m); }catch(e){}
+    var b=$("#aandachtKanban"), t=$("#aandachtTabelCard");
+    if(b) b.hidden=(m!=="bord");
+    if(t) t.hidden=(m!=="tabel");
+    if(curView==="aandacht"){
+      var vb=$("#vwBord"), vt=$("#vwTabel");
+      if(vb) vb.classList.toggle("active", m==="bord");
+      if(vt) vt.classList.toggle("active", m==="tabel");
+    }
   }
 
   // ---------- per merk ----------
@@ -2143,7 +2164,9 @@
   // ---------- view switch ----------
   // Bord/Tabel zijn twee weergaven van hetzelfde Pipeline-tabblad; de keuze wordt onthouden.
   function pipeViewPref(){ var p=null; try{ p=localStorage.getItem("dugoutPipeView"); }catch(e){} return p==="tabel"?"tabel":"kanban"; }
+  var curView="kanban";
   function switchView(v){
+    curView=v;
     if(v==="kanban"||v==="tabel"){ try{ localStorage.setItem("dugoutPipeView", v); }catch(e){} }
     var tabView=(v==="tabel")?"kanban":v;   // Tabel valt onder het Pipeline-tabblad
     document.querySelectorAll(".tab[data-view]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===tabView);});
@@ -2151,9 +2174,16 @@
     var mt=$("#moreTab"); if(mt) mt.setAttribute("aria-selected", moreActive?"true":"false");
     document.querySelectorAll(".more-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===v); });
     var vb=$("#vwBord"), vt=$("#vwTabel");
-    if(vb) vb.classList.toggle("active", v==="kanban");
-    if(vt) vt.classList.toggle("active", v==="tabel");
-    if($("#vswitch")) $("#vswitch").style.display=(v==="kanban"||v==="tabel")?"":"none";
+    if(v==="aandacht"){
+      var am=aandachtViewPref();
+      if(vb) vb.classList.toggle("active", am==="bord");
+      if(vt) vt.classList.toggle("active", am==="tabel");
+      setAandachtView(am);
+    } else {
+      if(vb) vb.classList.toggle("active", v==="kanban");
+      if(vt) vt.classList.toggle("active", v==="tabel");
+    }
+    if($("#vswitch")) $("#vswitch").style.display=(v==="kanban"||v==="tabel"||v==="aandacht")?"":"none";
     $("#view-kanban").hidden = v!=="kanban";
     $("#view-tabel").hidden = v!=="tabel";
     $("#view-aandacht").hidden = v!=="aandacht";
@@ -2167,7 +2197,7 @@
     if($("#filterBar")) $("#filterBar").style.display = pipe ? "" : "none";
     if(v==="kanban") renderKanban();
     if(v==="tabel") renderTable();
-    if(v==="aandacht") renderAandacht();
+    if(v==="aandacht"){ renderKanban(); renderAandacht(); }
     if(v==="toekomst") renderToekomst();
     if(v==="permerk") renderPerMerk();
     if(v==="archief") renderArchive();
@@ -2193,9 +2223,13 @@
     document.addEventListener("keydown",function(e){ if(e.key==="Escape") close(); });
     mm.querySelectorAll(".more-item").forEach(function(b){ b.addEventListener("click",function(){ close(); switchView(b.dataset.view); }); });
   })();
-  // weergave-schakelaar Bord/Tabel
-  if($("#vwBord")) $("#vwBord").addEventListener("click",function(){ switchView("kanban"); });
-  if($("#vwTabel")) $("#vwTabel").addEventListener("click",function(){ switchView("tabel"); });
+  // weergave-schakelaar Bord/Tabel — werkt per tabblad (Pipeline én Aandacht nodig)
+  if($("#vwBord")) $("#vwBord").addEventListener("click",function(){
+    if(curView==="aandacht"){ setAandachtView("bord"); } else { switchView("kanban"); }
+  });
+  if($("#vwTabel")) $("#vwTabel").addEventListener("click",function(){
+    if(curView==="aandacht"){ setAandachtView("tabel"); } else { switchView("tabel"); }
+  });
 
   // ---------- toolbar events ----------
   function renderPipe(){ rebuildFilters(); renderStats(); renderKanban(); renderTable(); renderAandacht(); }
