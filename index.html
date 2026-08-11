@@ -119,6 +119,21 @@
     background:linear-gradient(90deg,var(--accent),var(--accent-2))
   }
   .tab .cnt{font-size:11px;color:var(--text-soft);margin-left:6px}
+  /* "Meer"-menu in de tabbalk */
+  .tab-more-wrap{position:relative;margin-left:auto}
+  .more-arrow{font-size:10px;opacity:.7;margin-left:2px}
+  .more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:36;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:170px;display:flex;flex-direction:column;gap:2px}
+  .more-item{appearance:none;background:none;border:none;cursor:pointer;font:inherit;font-weight:600;color:var(--text-muted);
+    text-align:left;padding:9px 12px;border-radius:8px}
+  .more-item:hover{background:var(--surface-2);color:var(--text)}
+  .more-item.active{color:var(--accent);background:var(--accent-soft)}
+  /* weergave-schakelaar Bord/Tabel in de pipeline-toolbar */
+  .vswitch{display:flex;border:1px solid var(--border-strong);border-radius:10px;overflow:hidden;flex:0 0 auto}
+  .vw-btn{appearance:none;border:none;background:var(--surface);color:var(--text-soft);cursor:pointer;padding:0 12px;height:38px;display:grid;place-items:center;transition:.15s}
+  .vw-btn:hover{color:var(--text)}
+  .vw-btn.active{background:var(--surface-3);color:var(--accent)}
+  .vw-btn+.vw-btn{border-left:1px solid var(--border-strong)}
 
   /* ---------- Stat tiles ---------- */
   .stats{
@@ -310,6 +325,10 @@
   /* SortableJS sleep-uiterlijk */
   .kcard.sortable-ghost{opacity:.4;outline:2px dashed var(--accent);outline-offset:-2px}
   .sortable-drag,.sortable-fallback{box-shadow:var(--shadow-lg)!important;cursor:grabbing}
+  /* KRITIEK: de sleep-kloon mag GEEN transition/animatie erven van .kcard —
+     anders rubberbandt hij achter de muis/vinger aan i.p.v. 1:1 te volgen */
+  .sortable-fallback,.kcard.sortable-fallback,.sortable-drag{
+    transition:none!important;animation:none!important;pointer-events:none!important;transform-origin:center center}
   /* Mobiel: 'opgetilde' kaart + fase-kiezer onderin */
   .kcard.kcard-lifted{transform:scale(1.05);box-shadow:var(--shadow-lg);outline:2px solid var(--accent);outline-offset:1px;position:relative;z-index:66}
   #phaseScrim{position:fixed;inset:0;background:rgba(20,16,10,.14);z-index:64;opacity:0;transition:opacity .18s}
@@ -622,12 +641,16 @@
   <div class="wrap">
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="kanban">Pipeline<span class="cnt" id="tabCount"></span></button>
-      <button class="tab" role="tab" aria-selected="false" data-view="tabel">Tabel</button>
       <button class="tab" role="tab" aria-selected="false" data-view="aandacht">Aandacht nodig<span class="cnt" id="aandachtCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="toekomst">Toekomst<span class="cnt" id="toekomstCount"></span></button>
-      <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per unit</button>
-      <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
       <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
+      <div class="tab-more-wrap">
+        <button class="tab" id="moreTab" aria-selected="false" aria-haspopup="true" aria-expanded="false">Meer <span class="more-arrow">▾</span></button>
+        <div class="more-menu" id="moreMenu" hidden>
+          <button class="more-item" data-view="permerk">Per unit</button>
+          <button class="more-item" data-view="opmerkingen">Opmerkingen</button>
+        </div>
+      </div>
     </nav>
 
     <!-- SHARED stats + toolbar (kanban + tabel) -->
@@ -642,6 +665,14 @@
       <div class="selectwrap"><select class="filter" id="fOwner" aria-label="Filter contactpersoon HoS"><option value="">Contactpersoon (HoS)</option></select></div>
       <div class="selectwrap"><select class="filter" id="fWie" aria-label="Filter merk/atleet/spreker"><option value="">Merk / Partner</option></select></div>
       <div class="selectwrap"><select class="filter" id="fPartner" aria-label="Filter partnership"><option value="">Partnership</option></select></div>
+      <div class="vswitch" id="vswitch">
+        <button id="vwBord" class="vw-btn active" title="Bordweergave" aria-label="Bordweergave">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg>
+        </button>
+        <button id="vwTabel" class="vw-btn" title="Tabelweergave" aria-label="Tabelweergave">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
       <button class="btn-primary" id="addBtn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Nieuwe saleskans
@@ -654,7 +685,7 @@
     <section id="view-kanban">
       <p class="hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <b>Sleep</b> een kaart naar een andere kolom om de fase te wijzigen (op mobiel: tik <b>⇅</b> op de kaart of houd hem even vast) · <b>klik/tik</b> een kaart voor alle details · totalen bewegen automatisch mee.
+        <b>Sleep</b> een kaart naar een andere kolom om de fase te wijzigen — met muis of vinger (op mobiel kan het ook snel via <b>⇅</b> op de kaart) · <b>klik/tik</b> een kaart voor alle details.
       </p>
       <div class="kanban" id="kanban"></div>
     </section>
@@ -1490,12 +1521,13 @@
   function isMobile(){ return !!(window.matchMedia && window.matchMedia("(max-width:640px)").matches); }
   function mountSortables(){
     if(!window.Sortable) return;
-    if(isMobile()) return;               // mobiel: geen sleep-drag, maar de fase-kiezer (vasthouden -> optillen -> tik fase)
+    // Ook op mobiel: echte drag met de vinger (kaart volgt 1:1); de ⇅-knop
+    // op de kaart blijft als sneller alternatief (fase-sheet).
     var board=document.getElementById("kanban"); if(!board) return;
     board.querySelectorAll(".kcol-body").forEach(function(body){
       sortables.push(Sortable.create(body,{
         group:"deals", draggable:".kcard", animation:150,
-        delay:150, delayOnTouchOnly:true, touchStartThreshold:6,     // muis: direct slepen; touch: even vasthouden
+        delay:250, delayOnTouchOnly:true, touchStartThreshold:6,     // muis: direct slepen; touch: even vasthouden (scrollen blijft werken)
         forceFallback:true, fallbackOnBody:true, fallbackTolerance:5,
         scroll:board, scrollSensitivity:70, scrollSpeed:14, bubbleScroll:true, forceAutoScrollFallback:true,
         ghostClass:"sortable-ghost", chosenClass:"sortable-chosen", dragClass:"sortable-drag",
@@ -1685,8 +1717,9 @@
       if(mv) mv.addEventListener("click",function(e){ e.stopPropagation(); liftAndPick(c); });
     });
 
-    mountSortables();          // desktop: slepen via SortableJS
-    setupMobilePhasePick();    // mobiel: vasthouden -> optillen -> fase kiezen
+    mountSortables();          // slepen via SortableJS (muis én touch)
+    // Long-press-fase-kiezer staat UIT: vasthouden = nu échte drag (Sortable).
+    // De fase-sheet blijft bereikbaar via de ⇅-knop op de kaart.
   }
 
   // ---------- per merk ----------
@@ -2108,8 +2141,19 @@
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDrawer();});
 
   // ---------- view switch ----------
+  // Bord/Tabel zijn twee weergaven van hetzelfde Pipeline-tabblad; de keuze wordt onthouden.
+  function pipeViewPref(){ var p=null; try{ p=localStorage.getItem("dugoutPipeView"); }catch(e){} return p==="tabel"?"tabel":"kanban"; }
   function switchView(v){
-    document.querySelectorAll(".tab").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===v);});
+    if(v==="kanban"||v==="tabel"){ try{ localStorage.setItem("dugoutPipeView", v); }catch(e){} }
+    var tabView=(v==="tabel")?"kanban":v;   // Tabel valt onder het Pipeline-tabblad
+    document.querySelectorAll(".tab[data-view]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===tabView);});
+    var moreActive=(v==="permerk"||v==="opmerkingen");
+    var mt=$("#moreTab"); if(mt) mt.setAttribute("aria-selected", moreActive?"true":"false");
+    document.querySelectorAll(".more-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===v); });
+    var vb=$("#vwBord"), vt=$("#vwTabel");
+    if(vb) vb.classList.toggle("active", v==="kanban");
+    if(vt) vt.classList.toggle("active", v==="tabel");
+    if($("#vswitch")) $("#vswitch").style.display=(v==="kanban"||v==="tabel")?"":"none";
     $("#view-kanban").hidden = v!=="kanban";
     $("#view-tabel").hidden = v!=="tabel";
     $("#view-aandacht").hidden = v!=="aandacht";
@@ -2128,7 +2172,30 @@
     if(v==="permerk") renderPerMerk();
     if(v==="archief") renderArchive();
   }
-  document.querySelectorAll(".tab").forEach(function(t){t.addEventListener("click",function(){switchView(t.dataset.view);});});
+  document.querySelectorAll(".tab[data-view]").forEach(function(t){t.addEventListener("click",function(){
+    var v=t.dataset.view;
+    if(v==="kanban") v=pipeViewPref();   // Pipeline-tab opent in je laatst gekozen weergave
+    switchView(v);
+  });});
+  // "Meer"-menu (Per unit / Opmerkingen)
+  (function(){
+    var mt=$("#moreTab"), mm=$("#moreMenu"); if(!mt||!mm) return;
+    function close(){ mm.hidden=true; mt.setAttribute("aria-expanded","false"); }
+    mt.addEventListener("click",function(e){
+      e.stopPropagation(); mm.hidden=!mm.hidden; mt.setAttribute("aria-expanded",String(!mm.hidden));
+      // mobiel: tabbalk scrollt horizontaal en zou het menu afknippen -> fixed positioneren
+      if(!mm.hidden && window.matchMedia && window.matchMedia("(max-width:640px)").matches){
+        var r=mt.getBoundingClientRect();
+        mm.style.position="fixed"; mm.style.top=(r.bottom+6)+"px"; mm.style.right=Math.max(8,(window.innerWidth-r.right))+"px";
+      } else { mm.style.position=""; mm.style.top=""; mm.style.right=""; }
+    });
+    document.addEventListener("click",function(e){ if(!mm.hidden && !mm.contains(e.target) && e.target!==mt) close(); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape") close(); });
+    mm.querySelectorAll(".more-item").forEach(function(b){ b.addEventListener("click",function(){ close(); switchView(b.dataset.view); }); });
+  })();
+  // weergave-schakelaar Bord/Tabel
+  if($("#vwBord")) $("#vwBord").addEventListener("click",function(){ switchView("kanban"); });
+  if($("#vwTabel")) $("#vwTabel").addEventListener("click",function(){ switchView("tabel"); });
 
   // ---------- toolbar events ----------
   function renderPipe(){ rebuildFilters(); renderStats(); renderKanban(); renderTable(); renderAandacht(); }
@@ -2634,7 +2701,7 @@
   // ---------- init ----------
   function boot(){
     renderStats(); renderKanban(); renderTable(); renderPerMerk(); renderFeed(); renderArchive();
-    switchView("kanban");
+    switchView(pipeViewPref());   // open Pipeline in de laatst gekozen weergave (bord of tabel)
   }
   function bootApp(){
     loadDeals(function(rows){
