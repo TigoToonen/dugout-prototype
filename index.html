@@ -1977,6 +1977,33 @@
   }
   function splitNaam(full){ full=(full||"").trim(); if(!full) return {vn:"",an:""}; var i=full.indexOf(" "); return i<0?{vn:full,an:""}:{vn:full.slice(0,i),an:full.slice(i+1)}; }
 
+  // ---- contactpersonen ----
+  // Er is bewust GEEN aparte contactpersonen-tabel: de lijst wordt afgeleid uit de
+  // saleskansen van hetzelfde bedrijf (ook gearchiveerde — die persoon bestaat nog).
+  // Scheelt een database-migratie; de prijs is dat dezelfde persoon los op elke kaart
+  // staat. Daarom biedt openContactSyncFlow() bij een wijziging aan om de andere
+  // kaarten meteen mee bij te werken.
+  function contactKey(c){
+    var e=((c&&c.email)||"").trim().toLowerCase();
+    if(e) return "e:"+e;                                   // e-mail is leidend
+    return "n:"+((c&&c.contact)||"").trim().toLowerCase().replace(/\s+/g," ");
+  }
+  function contactsForKlant(klant){
+    if(!klant) return [];
+    var byKey={};
+    data.forEach(function(r){
+      if(r.klant!==klant || !r.contact || !String(r.contact).trim()) return;
+      var k=contactKey(r), cur=byKey[k];
+      // bij dubbelingen wint de meest recent bijgewerkte kaart
+      if(!cur || String(r.bijgewerkt||"")>String(cur.bijgewerkt||"")){
+        byKey[k]={key:k, contact:String(r.contact).trim(), functie:r.functie||"",
+                  email:r.email||"", tel:r.tel||"", bijgewerkt:r.bijgewerkt||""};
+      }
+    });
+    return Object.keys(byKey).map(function(k){return byKey[k];})
+      .sort(function(a,b){return a.contact.localeCompare(b.contact,"nl");});
+  }
+
   function openDrawer(r, opts){
     opts=opts||{};
     var isNew=!r;
@@ -2022,6 +2049,9 @@
           : fWieHtml+fPartHtml+fUnitField)+
 
         "<div class='dsec'>Contactgegevens</div>"+
+        "<div class='fld'><label>Contactpersoon</label>"+
+          "<select id='d_cp'></select>"+
+          "<div class='attach-hint' id='d_cpHint'></div></div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Voornaam</label><input id='d_vn' value='"+esc(splitNaam(r.contact).vn)+"' placeholder='Voornaam'></div>"+
           "<div class='fld'><label>Achternaam</label><input id='d_an' value='"+esc(splitNaam(r.contact).an)+"' placeholder='Achternaam'></div>"+
@@ -2147,6 +2177,67 @@
       apply();
     })();
 
+    // ---- contactpersoon: kies iemand die al bij dit bedrijf bekend is, of maak
+    //      een nieuwe aan. Bij een bestaande persoon vullen we de velden vast in;
+    //      ze blijven bewerkbaar, want een functie of nummer wijzigt nu eenmaal. ----
+    (function(){
+      var sel=$("#d_cp"), hint=$("#d_cpHint");
+      if(!sel) return;
+      var lijst=[];
+      function veld(id){ return $("#"+id); }
+      function huidigeKey(){
+        return contactKey({email:(veld("d_email")||{}).value||"",
+          contact:(((veld("d_vn")||{}).value||"")+" "+((veld("d_an")||{}).value||"")).trim()});
+      }
+      function toonHint(){
+        if(!hint) return;
+        if(sel.disabled) hint.textContent="Kies eerst een merk / bedrijf; daarna zie je wie daar al bekend is.";
+        else if(sel.value && sel.value!=="__newc__") hint.textContent="Overgenomen van een bestaande contactpersoon. Aanpassingen gelden alleen voor deze saleskans.";
+        else if(!lijst.length) hint.textContent="Nog geen contactpersoon bekend bij dit bedrijf — vul de gegevens hieronder in.";
+        else hint.textContent="Kies iemand uit de lijst, of vul hieronder een nieuwe contactpersoon in.";
+      }
+      function bouw(){
+        var klant=readPick("d_klant");
+        lijst=contactsForKlant(klant);
+        var cur=huidigeKey(), html="";
+        if(!klant){
+          sel.disabled=true;
+          html="<option value=''>— kies eerst een merk / bedrijf —</option>";
+        }else{
+          sel.disabled=false;
+          html="<option value=''>— kies contactpersoon —</option>";
+          lijst.forEach(function(c){
+            html+="<option value='"+esc(c.key)+"'"+(c.key===cur?" selected":"")+">"+
+              esc(c.contact+(c.functie?" · "+c.functie:""))+"</option>";
+          });
+          html+="<option value='__newc__'>➕ Nieuw contactpersoon…</option>";
+        }
+        sel.innerHTML=html;
+        toonHint();
+      }
+      sel.addEventListener("change",function(){
+        if(sel.value==="__newc__"){
+          ["d_vn","d_an","d_functie","d_email","d_tel"].forEach(function(id){ var e=veld(id); if(e) e.value=""; });
+          toonHint(); var vn=veld("d_vn"); if(vn) vn.focus(); return;
+        }
+        var c=lijst.filter(function(x){return x.key===sel.value;})[0];
+        if(c){
+          var n=splitNaam(c.contact);
+          if(veld("d_vn")) veld("d_vn").value=n.vn;
+          if(veld("d_an")) veld("d_an").value=n.an;
+          if(veld("d_functie")) veld("d_functie").value=c.functie||"";
+          if(veld("d_email")) veld("d_email").value=c.email||"";
+          if(veld("d_tel")) veld("d_tel").value=c.tel||"";
+        }
+        toonHint();
+      });
+      // Merk/bedrijf gewijzigd -> lijst opnieuw opbouwen. Al ingevulde gegevens
+      // blijven staan; de keuzelijst valt hooguit terug op de handmatige stand.
+      var kSel=$("#d_klant"); if(kSel){ kSel.addEventListener("change",bouw); kSel.addEventListener("input",bouw); }
+      var kInp=$("#d_klant_inp"); if(kInp) kInp.addEventListener("input",bouw);
+      bouw();
+    })();
+
     // ---- reminderstatus (op basis van de gekozen reminderdatum) ----
     (function(){
       var ed=$("#d_eind"), rd=$("#d_remdat"), out=$("#d_remstat");
@@ -2235,6 +2326,8 @@
 
     $("#dSave").onclick=function(){
       var origLaatste=r.laatste, origOpm=(initialOpm||"").trim();
+      // contactgegevens zoals ze vóór deze bewerking waren (voor de "ook overal?"-vraag)
+      var origEmail=r.email||"", origTel=r.tel||"", origFunctie=r.functie||"", origContact=r.contact||"";
       var unitVal=($("#d_unit")&&$("#d_unit").value)||"";
       var klantVal=readPick("d_klant");
       var vn=($("#d_vn")&&$("#d_vn").value||"").trim(), an=($("#d_an")&&$("#d_an").value||"").trim();
@@ -2288,7 +2381,18 @@
       saveDeal(r);
       if(opts.onSaved) opts.onSaved(r);
       if(r && r.id!=null){ delete pendingRemote[r.id]; flashIds.add(r.id); }   // mijn opslag wint + licht kort op
+      // Zonder centrale contactpersonen-tabel staat dezelfde persoon los op elke
+      // kaart. Wijzigde je hier iets aan de contactgegevens, bied dan aan om de
+      // andere ACTIEVE kansen van dit bedrijf meteen mee bij te werken (archief
+      // blijft staan: dat is historie).
+      var cpGewijzigd = !isNew && origContact &&
+        (emailVal!==origEmail || telVal!==origTel || r.functie!==origFunctie || r.contact!==origContact);
+      var oudeKey = contactKey({email:origEmail, contact:origContact});
+      var zussen = cpGewijzigd ? data.filter(function(d){
+        return d.id!==r.id && d.klant===r.klant && (d.status||"actief")==="actief" && contactKey(d)===oudeKey;
+      }) : [];
       closeDrawer(); refreshAll();
+      if(zussen.length) openContactSyncFlow(r, zussen);
     };
   }
   function closeDrawer(){
@@ -2411,6 +2515,31 @@
         "<button class='btn-primary' id='m_yes'>Begrepen</button>"+
       "</div>");
     $("#m_yes").onclick=function(){ touch(r); saveDeal(r); closeModal(); refreshAll(); };
+  }
+  // Contactgegevens gewijzigd terwijl dezelfde persoon ook op andere kansen staat.
+  // Zonder centrale tabel zouden die stilletjes het oude adres houden — vandaar deze vraag.
+  function openContactSyncFlow(r, zussen){
+    var meer=zussen.length>1;
+    showModal(
+      "<div class='modal-ico afas'>👤</div>"+
+      "<h3>Ook op de andere saleskansen bijwerken?</h3>"+
+      "<p><b>"+esc(r.contact)+"</b> staat ook op <b>"+zussen.length+" andere saleskans"+(meer?"en":"")+"</b> van "+esc(r.klant)+":<br>"+
+        zussen.map(function(z){return "· "+esc(z.merk||z.unit||"—")+" <span style='opacity:.7'>("+esc(z.fase)+")</span>";}).join("<br>")+
+        "<br><br>Bijwerken zet daar dezelfde naam, functie, e-mail en telefoon."+
+        (meer?"":"")+" Gearchiveerde kansen blijven ongewijzigd.</p>"+
+      "<div class='modal-foot'>"+
+        "<button class='btn-ghost' id='m_no'>Alleen hier</button>"+
+        "<button class='btn-primary' id='m_yes'>Ja, overal bijwerken</button>"+
+      "</div>");
+    $("#m_no").onclick=function(){ closeModal(); };
+    $("#m_yes").onclick=function(){
+      zussen.forEach(function(z){
+        z.contact=r.contact; z.functie=r.functie; z.email=r.email; z.tel=r.tel;
+        touch(z); saveDeal(z);
+      });
+      closeModal(); refreshAll();
+      toast(zussen.length+" andere saleskans"+(meer?"en":"")+" bijgewerkt","ok");
+    };
   }
   // Verwijderen: vanaf fase 2 verplichte reden -> Onbenutte saleskansen
   function openDeleteFlow(r){
