@@ -420,6 +420,12 @@
   .row2 > .fld > label{min-height:2.4em}
   .save-err{color:var(--red-tx);font-size:12.5px;font-weight:700;margin-top:14px;padding:9px 11px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:9px}
   .fld .need, select.need, input.need{border-color:var(--red-tx)!important;background:var(--red-bg)}
+  /* keuzeveld met in-place "nieuw"-typveld */
+  .picknew{display:flex;gap:6px;align-items:center}
+  .picknew input{flex:1;min-width:0}
+  .pickback{appearance:none;flex:0 0 auto;cursor:pointer;font:inherit;font-weight:700;font-size:12px;color:var(--text-muted);
+    background:var(--surface-2);border:1px solid var(--border-strong);border-radius:9px;padding:9px 10px;white-space:nowrap}
+  .pickback:hover{color:var(--accent);border-color:var(--accent-line)}
   /* snelkeuzes datum volgende actie */
   .va-quick{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
   .va-btn{appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:12px;color:var(--text-muted);
@@ -645,13 +651,8 @@
       <button class="tab" role="tab" aria-selected="false" data-view="aandacht">Aandacht nodig<span class="cnt" id="aandachtCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="toekomst">Toekomst<span class="cnt" id="toekomstCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
-      <div class="tab-more-wrap">
-        <button class="tab" id="moreTab" aria-selected="false" aria-haspopup="true" aria-expanded="false">Meer <span class="more-arrow">▾</span></button>
-        <div class="more-menu" id="moreMenu" hidden>
-          <button class="more-item" data-view="permerk">Per unit</button>
-          <button class="more-item" data-view="opmerkingen">Opmerkingen</button>
-        </div>
-      </div>
+      <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per unit</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
     </nav>
 
     <!-- SHARED stats + toolbar (kanban + tabel) -->
@@ -1883,13 +1884,39 @@
     if(val && !found) html+="<option selected>"+esc(val)+"</option>"; // bestaande, niet-standaard waarde behouden
     return html;
   }
-  // ---- combinatieveld: ÉÉN invulvak met suggesties — typen filtert de lijst,
-  //      staat je invoer er niet tussen dan is dat automatisch de nieuwe waarde ----
-  function comboField(id, list, val, placeholder){
-    return "<input id='"+id+"' list='"+id+"_dl' value='"+esc(val||"")+"' placeholder='"+esc(placeholder||"Typ of kies…")+"' autocomplete='off'>"+
-      "<datalist id='"+id+"_dl'>"+list.map(function(v){return "<option value='"+esc(v)+"'></option>";}).join("")+"</datalist>";
+  // ---- keuzeveld: échte dropdown (zelfde element als Unit). Onderaan staat
+  //      "➕ Nieuw toevoegen…"; die keuze wisselt de dropdown TER PLEKKE om naar
+  //      één typveld, met een "↩ lijst"-knopje terug. Nooit twee vakjes tegelijk. ----
+  function pickField(id, list, val, emptyLabel){
+    var opts="<option value=''"+(!val?" selected":"")+">"+esc(emptyLabel||"— kies —")+"</option>";
+    var found=false;
+    list.forEach(function(v){ if(v===val) found=true; opts+="<option"+(v===val?" selected":"")+">"+esc(v)+"</option>"; });
+    if(val && !found) opts+="<option selected>"+esc(val)+"</option>";   // bestaande, niet-standaard waarde behouden
+    opts+="<option value='__new__'>➕ Nieuw toevoegen…</option>";
+    return "<div class='pickwrap'>"+
+      "<select id='"+id+"'>"+opts+"</select>"+
+      "<div class='picknew' id='"+id+"_nw' style='display:none'>"+
+        "<input id='"+id+"_inp' placeholder='Typ de nieuwe naam…' autocomplete='off'>"+
+        "<button type='button' class='pickback' id='"+id+"_back' title='Terug naar de lijst'>↩ lijst</button>"+
+      "</div></div>";
   }
-  function readCombo(id){ var e=$("#"+id); return e?e.value.trim():""; }
+  function wirePick(id){
+    var sel=$("#"+id), nw=$("#"+id+"_nw"), inp=$("#"+id+"_inp"), back=$("#"+id+"_back");
+    if(!sel||!nw) return;
+    sel.addEventListener("change",function(){
+      if(sel.value==="__new__"){ sel.style.display="none"; nw.style.display="flex"; if(inp) inp.focus(); }
+    });
+    if(back) back.addEventListener("click",function(){
+      if(inp) inp.value="";
+      nw.style.display="none"; sel.style.display=""; sel.value=""; sel.focus();
+    });
+  }
+  function readPick(id){
+    var sel=$("#"+id), inp=$("#"+id+"_inp");
+    if(!sel) return "";
+    if(sel.value==="__new__") return (inp&&inp.value||"").trim();
+    return sel.value;
+  }
 
   function wireNewSelect(selId, inputId){
     var sel=$(selId), inp=$(inputId); if(!sel||!inp) return;
@@ -1936,13 +1963,13 @@
     var bundle=(!isNew && r.klant) ? activeData().filter(function(d){return d.klant===r.klant;}) : [];
     var b=brand(r.klant);
     var fWieHtml="<div class='fld'><label id='d_klant_lbl'>"+wieLabel(r.unit)+"</label>"+
-        comboField("d_klant", wieList(r.unit), r.klant, "Typ of kies een merk/bedrijf…")+"</div>";
+        pickField("d_klant", wieList(r.unit), r.klant, "— kies —")+"</div>";
     var fPartHtml="<div class='fld' id='d_partWrap'><label>Propositie / sport</label>"+
-        comboField("d_merk", merkList(), r.merk, "Typ of kies… (mag leeg blijven)")+"</div>";
+        pickField("d_merk", merkList(), r.merk, "Geen propositie")+"</div>";
     var fUnitField="<div class='fld'><label>Unit</label>"+
         "<select id='d_unit'>"+(r.unit?"":"<option value='' selected>— kies —</option>")+
         (r.unit&&UNITS.indexOf(r.unit)<0?"<option selected>"+esc(r.unit)+"</option>":"")+optionsHtml(UNITS,r.unit)+"</select></div>";
-    var fUnitPicker="<div class='fld'><label>Unit <span class='req'>· kies dit eerst</span></label>"+
+    var fUnitPicker="<div class='fld'><label>Unit <span class='req'>· verplicht</span></label>"+
         "<select id='d_unit'><option value=''"+(r.unit?"":" selected")+">Kies unit…</option>"+
         UNITS.map(function(u){return "<option"+(u===r.unit?" selected":"")+">"+esc(u)+"</option>";}).join("")+
         "</select></div>";
@@ -1956,8 +1983,12 @@
       "<div class='drawer-body'>"+
         (requireNote?"<div class='move-banner'>Je verplaatst deze kans naar <b>"+esc(showFase)+"</b>. Datum laatste contact is op vandaag gezet — <b>werk de opmerking bij</b> en kies een <b>datum volgende actie</b> om op te slaan.</div>":"")+
         (bundle.length>1?"<div class='bundle-banner'>📎 "+esc(r.klant)+" heeft <b>"+bundle.length+" open saleskansen</b> — dit is er één van.</div>":"")+
+        // Het formulier staat ALTIJD volledig open. Eerder zat alles verstopt
+        // tot je een unit koos; kwam die keuze niet door (mobiele pickers sturen
+        // soms alleen 'input', geen 'change'), dan zag je een leeg paneel met een
+        // dropdown die "niets deed". Unit blijft gewoon verplicht bij opslaan.
         (isNew
-          ? fUnitPicker+"<div id='d_rest' style='display:none'>"+fWieHtml+fPartHtml
+          ? fUnitPicker+fWieHtml+fPartHtml
           : fWieHtml+fPartHtml+fUnitField)+
 
         "<div class='dsec'>Contactgegevens</div>"+
@@ -2003,10 +2034,10 @@
         "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
           "<div class='dsec'>Extra velden · Atleten / Influencers</div>"+
           "<div class='fld'><label id='d_atleet_lbl'>"+atleetLabel(r.unit)+"</label>"+
-            comboField("d_atleet", atleetList(), r.atleet||"", "Typ of kies een atleet…")+"</div>"+
+            pickField("d_atleet", atleetList(), r.atleet||"", "Nog geen atleet gekozen")+"</div>"+
           "<div class='row2'>"+
             "<div class='fld'><label>Sport</label>"+
-              comboField("d_sport", distinctVals('sport',SPORTEN), r.sport, "Typ of kies een sport…")+"</div>"+
+              pickField("d_sport", distinctVals('sport',SPORTEN), r.sport, "—")+"</div>"+
             "<div class='fld'><label>Soort deal</label><select id='d_soort'>"+optionsHtml([""].concat(SOORT_DEAL), r.soort_deal)+"</select></div>"+
           "</div>"+
           "<div class='row2'>"+
@@ -2031,13 +2062,12 @@
             "Bijlage toevoegen<input type='file' id='d_file' multiple style='display:none'></label>"+
           "<div class='attach-hint'>"+(USING_SUPABASE?"Klik een bijlage om hem te openen · bestanden worden veilig opgeslagen.":"Demo-modus — bestanden worden niet echt opgeslagen.")+"</div>"+
         "</div>"+
-        (isNew?"</div>":"")+
         "<div id='dSaveErr' class='save-err' style='display:none'></div>"+
       "</div>"+
       "<div class='drawer-foot'>"+
         (isNew?"":(isArchived
           ? "<div class='arch-actions'><button class='btn-ghost' id='dRestore' title='Terug naar de pipeline'>↩ Terugzetten</button><button class='btn-ghost del' id='dHardDelete' title='Definitief verwijderen'>🗑 Verwijderen</button></div>"
-          : "<button class='btn-ghost del' id='dDelete' title='Naar archief'>🗑 Archiveren</button>"))+
+          : "<button class='btn-ghost del' id='dDelete' title='Sluiten — de kans gaat naar het archief'>Saleskans sluiten</button>"))+
         "<span class='meta-upd'>"+(isNew?"Nog niet opgeslagen":"Laatst bijgewerkt "+fmt(r.bijgewerkt))+"</span>"+
         "<button class='btn-ghost' id='dCancel'>Annuleren</button>"+
         "<button class='btn-primary' id='dSave'"+(requireNote?" disabled":"")+">"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
@@ -2050,6 +2080,7 @@
     if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
     if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
     if($("#dHardDelete")) $("#dHardDelete").onclick=function(){ openHardDeleteFlow(r); };
+    wirePick("d_klant"); wirePick("d_merk"); wirePick("d_atleet"); wirePick("d_sport");
 
     // ---- unit stuurt: atleten-blok tonen, Wie-label en Wie-keuzelijst ----
     (function(){
@@ -2063,9 +2094,9 @@
         var pw=$("#d_partWrap"); if(pw) pw.style.display=isAthleteUnit(u)?"none":"";
         if(lbl) lbl.textContent=wieLabel(u);
         var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
-        var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
       }
-      var us=$("#d_unit"); if(us) us.addEventListener("change",apply);
+      // change én input: mobiele pickers sturen niet altijd 'change'
+      var us=$("#d_unit"); if(us){ us.addEventListener("change",apply); us.addEventListener("input",apply); }
       apply();
     })();
 
@@ -2105,6 +2136,7 @@
       var opmEl=$("#d_opm"), saveBtn=$("#dSave"), faseSel=$("#d_fase"), vaEl=$("#d_va"), origFase=r.fase;
       function need(){ return requireNote || (!isNew && faseSel && faseSel.value!==origFase); }
       function checkNote(){
+        if(!opmEl) return;                 // nooit halverwege afbreken: dan bleef Opslaan ongekoppeld
         var req=need();
         var changed = opmEl.value.trim().length>0 && opmEl.value.trim()!==initialOpm.trim();
         var vaOk = !!(vaEl && vaEl.value);
@@ -2157,12 +2189,12 @@
     $("#dSave").onclick=function(){
       var origLaatste=r.laatste, origOpm=(initialOpm||"").trim();
       var unitVal=($("#d_unit")&&$("#d_unit").value)||"";
-      var klantVal=readCombo("d_klant");
+      var klantVal=readPick("d_klant");
       var vn=($("#d_vn")&&$("#d_vn").value||"").trim(), an=($("#d_an")&&$("#d_an").value||"").trim();
       var emailVal=$("#d_email").value.trim(), telVal=$("#d_tel").value.trim();
       var ownerVal=$("#d_owner").value;
       // ---- verplichte velden (e-mail óf telefoon volstaat) ----
-      ["d_unit","d_klant","d_vn","d_owner","d_email","d_tel"].forEach(function(id){ var e=$("#"+id); if(e) e.classList.remove("need"); });
+      ["d_unit","d_klant","d_klant_inp","d_vn","d_owner","d_email","d_tel"].forEach(function(id){ var e=$("#"+id); if(e) e.classList.remove("need"); });
       var miss=[];
       if(!unitVal) miss.push("d_unit");
       if(!klantVal) miss.push("d_klant");
@@ -2170,7 +2202,10 @@
       if(!ownerVal) miss.push("d_owner");
       if(!emailVal && !telVal){ miss.push("d_email"); miss.push("d_tel"); }
       if(miss.length){
-        miss.forEach(function(id){ var e=$("#"+id); if(e) e.classList.add("need"); });
+        miss.forEach(function(id){
+          var e=$("#"+id); if(e) e.classList.add("need");
+          var e2=$("#"+id+"_inp"); if(e2) e2.classList.add("need");   // "nieuw"-typveld van een keuzeveld
+        });
         var errEl=$("#dSaveErr"); if(errEl){ errEl.textContent="Vul de gemarkeerde velden in — e-mail óf telefoon volstaat."; errEl.style.display="block"; }
         var f=$("#"+miss[0]); if(f) f.focus();
         return;
@@ -2184,11 +2219,11 @@
       r.klant=klantVal; r.contact=(vn+" "+an).trim();
       r.functie=$("#d_functie").value.trim();
       r.email=emailVal; r.tel=telVal;
-      r.owner=ownerVal; r.unit=unitVal; r.merk=readCombo("d_merk");
+      r.owner=ownerVal; r.unit=unitVal; r.merk=readPick("d_merk");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
       // ---- Extra velden · Atleten ----
-      r.atleet=isAthleteUnit(unitVal) ? (readCombo("d_atleet")||null) : null;
-      r.sport=readCombo("d_sport");
+      r.atleet=isAthleteUnit(unitVal) ? (readPick("d_atleet")||null) : null;
+      r.sport=readPick("d_sport");
       r.soort_deal=$("#d_soort")?$("#d_soort").value:"";
       r.startdatum=($("#d_start")&&$("#d_start").value)||null;
       r.einddatum=($("#d_eind")&&$("#d_eind").value)||null;
@@ -2236,9 +2271,6 @@
     if(v==="kanban"||v==="tabel"){ try{ localStorage.setItem("dugoutPipeView", v); }catch(e){} }
     var tabView=(v==="tabel")?"kanban":v;   // Tabel valt onder het Pipeline-tabblad
     document.querySelectorAll(".tab[data-view]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===tabView);});
-    var moreActive=(v==="permerk"||v==="opmerkingen");
-    var mt=$("#moreTab"); if(mt) mt.setAttribute("aria-selected", moreActive?"true":"false");
-    document.querySelectorAll(".more-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===v); });
     var vb=$("#vwBord"), vt=$("#vwTabel");
     if(v==="aandacht"){
       var am=aandachtViewPref();
@@ -2273,22 +2305,6 @@
     if(v==="kanban") v=pipeViewPref();   // Pipeline-tab opent in je laatst gekozen weergave
     switchView(v);
   });});
-  // "Meer"-menu (Per unit / Opmerkingen)
-  (function(){
-    var mt=$("#moreTab"), mm=$("#moreMenu"); if(!mt||!mm) return;
-    function close(){ mm.hidden=true; mt.setAttribute("aria-expanded","false"); }
-    mt.addEventListener("click",function(e){
-      e.stopPropagation(); mm.hidden=!mm.hidden; mt.setAttribute("aria-expanded",String(!mm.hidden));
-      // mobiel: tabbalk scrollt horizontaal en zou het menu afknippen -> fixed positioneren
-      if(!mm.hidden && window.matchMedia && window.matchMedia("(max-width:640px)").matches){
-        var r=mt.getBoundingClientRect();
-        mm.style.position="fixed"; mm.style.top=(r.bottom+6)+"px"; mm.style.right=Math.max(8,(window.innerWidth-r.right))+"px";
-      } else { mm.style.position=""; mm.style.top=""; mm.style.right=""; }
-    });
-    document.addEventListener("click",function(e){ if(!mm.hidden && !mm.contains(e.target) && e.target!==mt) close(); });
-    document.addEventListener("keydown",function(e){ if(e.key==="Escape") close(); });
-    mm.querySelectorAll(".more-item").forEach(function(b){ b.addEventListener("click",function(){ close(); switchView(b.dataset.view); }); });
-  })();
   // weergave-schakelaar Bord/Tabel — werkt per tabblad (Pipeline én Aandacht nodig)
   if($("#vwBord")) $("#vwBord").addEventListener("click",function(){
     if(curView==="aandacht"){ setAandachtView("bord"); } else { switchView("kanban"); }
@@ -2354,14 +2370,14 @@
     var needReason = faseIndex(r.fase) >= 1; // vanaf 'Oriënterend gesprek' (fase 2) verplicht
     showModal(
       "<div class='modal-ico del'>🗑️</div>"+
-      "<h3>Saleskans archiveren</h3>"+
-      "<p><b>"+esc(r.klant)+"</b> verhuist naar <b>Onbenutte saleskansen</b> in het archief."+
+      "<h3>Saleskans sluiten</h3>"+
+      "<p><b>"+esc(r.klant)+"</b> verhuist naar <b>Onbenutte saleskansen</b> in het archief (terugzetten kan altijd)."+
         (needReason?" Geef verplicht aan <b>waarom deze niet is afgesloten</b>.":" Je mag eventueel een reden meegeven.")+"</p>"+
       "<textarea id='m_note' placeholder='Waarom is dit niet afgesloten?'>"+esc(r.verwijder_reden||"")+"</textarea>"+
       "<div class='modal-err' id='m_err'>Vul eerst een reden in.</div>"+
       "<div class='modal-foot'>"+
         "<button class='btn-ghost' id='m_cancel'>Annuleren</button>"+
-        "<button class='btn-danger' id='m_ok'>Archiveren</button>"+
+        "<button class='btn-danger' id='m_ok'>Sluiten</button>"+
       "</div>");
     $("#m_cancel").onclick=closeModal;
     $("#m_ok").onclick=function(){
@@ -2687,7 +2703,7 @@
           "<input id='tk_titel' value='"+esc(t.titel)+"' placeholder='Bijv. Partnership Feyenoord opent vanaf Q4'></div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Merk / bedrijf</label>"+
-            comboField("tk_merk", wieList(""), t.merk, "Typ of kies een merk/bedrijf…")+"</div>"+
+            pickField("tk_merk", wieList(""), t.merk, "Nog geen merk")+"</div>"+
           "<div class='fld'><label>Unit</label>"+
             "<select id='tk_unit'><option value=''"+(t.unit?"":" selected")+">Nog geen unit</option>"+
             (t.unit&&UNITS.indexOf(t.unit)<0?"<option selected>"+esc(t.unit)+"</option>":"")+
@@ -2720,6 +2736,8 @@
         "<button class='btn-primary' id='tkSave'>"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
       "</div>";
     drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false"); scrim.classList.add("open");
+
+    wirePick("tk_merk");
 
     // ----- links-editor -----
     function renderLinkRows(){
@@ -2785,7 +2803,7 @@
       if(!titel){ $("#tk_titel").classList.add("need"); var e2=$("#tkSaveErr"); e2.textContent="Vul in elk geval een titel in."; e2.style.display="block"; $("#tk_titel").focus(); return; }
       if(dAtts.some(function(a){return a._uploading;})){ var e3=$("#tkSaveErr"); e3.textContent="Nog even wachten — een bijlage is nog aan het uploaden."; e3.style.display="block"; return; }
       t.titel=titel;
-      t.merk=readCombo("tk_merk");
+      t.merk=readPick("tk_merk");
       t.unit=($("#tk_unit")&&$("#tk_unit").value)||"";
       t.verwacht_vanaf=$("#tk_vanaf").value.trim();
       t.omschrijving=$("#tk_oms").value.trim();
