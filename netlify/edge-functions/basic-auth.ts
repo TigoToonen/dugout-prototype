@@ -78,6 +78,14 @@ function loginPage(fout: boolean): Response {
   ${fout ? '<div class="err">Onjuiste gebruikersnaam of wachtwoord.</div>' : ""}
   <button type="submit">Naar de Dugout</button>
 </form>
+<script>
+  // Supabase invite-/herstel-links dragen hun token in de #hash (bijv.
+  // #access_token=...&type=invite). Een gewone form-POST naar "/" gooit die
+  // hash weg, waardoor de uitnodiging na de poort niet meer werkt. Door de
+  // hash aan de form-action te plakken blijft hij (ook door de 303-redirect
+  // heen) in de adresbalk staan en kan de app hem gewoon verwerken.
+  if (location.hash) document.querySelector("form").action = "/" + location.hash;
+</script>
 </body>
 </html>`;
   return new Response(html, {

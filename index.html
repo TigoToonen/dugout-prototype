@@ -1019,7 +1019,7 @@
      email:"w.jansen@houseofathletes.nl", tel:"+31 6 27 44 90 11", owner:"Geoffrey", unit:"Athletes", merk:"", waarde:38000,
      atleet:"Botic van de Zandschulp", sport:"Tennis", soort_deal:"Sponsorovereenkomst", hoa_type:"Atletenmanagement", startdatum:"2025-01-01", einddatum:"2027-12-31", reminder_datum:"2027-09-30",
      fase:"1e salescontact", type:"E-mail", actie:"Saleskans",
-     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief", owner:"",
+     laatste:"2026-07-06", bijgewerkt:"2026-07-06", status:"actief",
      opm:"Indian Maharaja (tennis) interesse in Botic van de Zandschulp. Intro gestuurd."},
 
     // ---- Onbenutte saleskansen (afgevallen) ----
@@ -1092,9 +1092,9 @@
   function loadDeals(cb){
     if(!USING_SUPABASE){ cb(null); return; }
     sb.from("deals").select("*").order("id").then(function(res){
-      if(res.error){ console.error("Laden faalde:",res.error); cb(null); return; }
+      if(res.error){ console.error("Laden faalde:",res.error); cb({loadError:res.error}); return; }
       cb(res.data||[]);
-    });
+    }).catch(function(e){ console.error("Laden faalde:",e); cb({loadError:e}); });
   }
   function toast(msg, kind){
     var t=el("div","toast "+(kind||"ok"),msg); document.body.appendChild(t);
@@ -1156,6 +1156,9 @@
         if(res.data) r.id=res.data.id;
         r._saved=normRow(r); delete r._pendingInsert;
         toast("Opgeslagen ✓","ok");
+        // hertekenen: de kaart staat in de DOM nog met het tijdelijke id en
+        // zou anders niet meer aanklikbaar zijn tot de volgende render
+        flashIds.add(r.id); scheduleRerender();
       });
     } else {
       // bestaande kaart -> schrijf ALLEEN de daadwerkelijk gewijzigde velden weg (voorkomt overschrijven van
@@ -1516,8 +1519,8 @@
           r[kind]=sel.value;
           sel.className="pill "+actieColor(sel.value);
           touch(r); saveDeal(r);
-          // update bijgewerkt cell with flash
-          var updCell=tr.children[8];
+          // update bijgewerkt cell with flash (kolom 9 = "Laatst bijgewerkt")
+          var updCell=tr.children[9];
           updCell.innerHTML="<div class='upd flash'><span class='cdate'>"+fmt(r.bijgewerkt)+"</span><span class='rel'>"+rel(r.bijgewerkt)+"</span></div>";
           renderStats();
           renderKanban();
@@ -1659,6 +1662,13 @@
   // centrale fase-wijziging (vanuit kanban-drag én tabel-dropdown)
   function requestFaseChange(r, faseV){
     if(!r || r.fase===faseV) return;
+    if(faseV==="Afgevallen"){
+      // "Afgevallen" is geen pipeline-kolom: dat loopt via de archief-flow
+      // (verplichte reden -> Onbenutte saleskansen). Anders blijft de kaart
+      // "actief" maar onzichtbaar op het bord hangen.
+      openDeleteFlow(r);
+      return;
+    }
     if(faseV===WON_FASE){
       // laatste fase bereikt -> vastleggen + winst-flow
       r.fase=faseV; r.laatste=iso(TODAY); touch(r); saveDeal(r); refreshAll();
@@ -2163,6 +2173,10 @@
         miss.forEach(function(id){ var e=$("#"+id); if(e) e.classList.add("need"); });
         var errEl=$("#dSaveErr"); if(errEl){ errEl.textContent="Vul de gemarkeerde velden in — e-mail óf telefoon volstaat."; errEl.style.display="block"; }
         var f=$("#"+miss[0]); if(f) f.focus();
+        return;
+      }
+      if(dBijlagen.some(function(a){return a._uploading;})){
+        var upEl=$("#dSaveErr"); if(upEl){ upEl.textContent="Nog even wachten — een bijlage is nog aan het uploaden."; upEl.style.display="block"; }
         return;
       }
       var okEl=$("#dSaveErr"); if(okEl) okEl.style.display="none";
@@ -2793,8 +2807,15 @@
   }
   function bootApp(){
     loadDeals(function(rows){
-      if(rows && rows.length){
-        data.length=0;
+      if(USING_SUPABASE){
+        // Ingelogd = ALTIJD de echte database tonen. Bij een laadfout NOOIT
+        // stil terugvallen op de ingebouwde demo-data: dat oogt als echte
+        // data en bewerkingen zouden naar willekeurige database-id's schrijven.
+        if(!rows || rows.loadError){
+          if(rows && isAuthErr(rows.loadError)){ sessionLost(); return; }
+          showConnError(); return;
+        }
+        data.length=0;   // ook bij een lege database: leeg bord, geen demo-data
         rows.forEach(function(r){ r.bijlagen=r.bijlagen||[]; r._saved=normRow(r); data.push(r); });
       }
       autoArchive();
@@ -2874,6 +2895,24 @@
       "<button class='btn-primary auth-btn' onclick='location.reload()'>Opnieuw laden</button></div>";
     authScrim.classList.add("show");
   }
+  // Koppelt alle knoppen van het inlogscherm. Apart, zodat élk pad dat
+  // showLogin() aanroept (ook de verlopen-invite-route) een wérkend formulier heeft.
+  function wireLogin(){
+    if($("#authForgot")) $("#authForgot").onclick=function(){
+      var email=($("#authEmail")&&$("#authEmail").value||"").trim(), e3=$("#authErr");
+      if(!email){ if(e3){ e3.textContent="Vul eerst je e-mailadres in (bovenste veld) en klik dan nogmaals op 'Wachtwoord vergeten?'."; e3.style.display="block"; } return; }
+      sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin}).then(function(res){
+        if(res.error){ if(e3){ e3.textContent="Versturen mislukte: "+(res.error.message||"probeer het later opnieuw"); e3.style.display="block"; } return; }
+        if(e3) e3.style.display="none";
+        toast("Herstel-link verstuurd naar "+email+" — check ook je spam.","ok");
+      });
+    };
+    if($("#authBtn")) $("#authBtn").onclick=doLogin;
+    if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
+    if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
+    if($("#logoutBtn")) $("#logoutBtn").onclick=doLogout;
+  }
+
   function start(){
     // Demo-modus (?demo=1): draait volledig op de lokale testdata, zonder login
     // en zonder Supabase. Voor lokaal testen/ontwikkelen; slaat NIETS op.
@@ -2891,12 +2930,11 @@
       var _tries=0, _iv2=setInterval(function(){
         sb.auth.getSession().then(function(res){
           if(res&&res.data&&res.data.session){ clearInterval(_iv2); showSetPassword(); }
-          else if(++_tries>20){ clearInterval(_iv2); showLogin();
+          else if(++_tries>20){ clearInterval(_iv2); showLogin(); wireLogin();   // formulier moet ook hier gewoon werken
             var e1=$("#authErr"); if(e1){ e1.textContent="Deze link is verlopen of al gebruikt. Vraag een nieuwe uitnodiging of klik op 'Wachtwoord vergeten?'."; e1.style.display="block"; }
           }
         });
       },250);
-      if($("#authForgot")) $("#authForgot").onclick=function(){};
       return;
     }
     if(mailError){
@@ -2904,19 +2942,7 @@
       showLogin();
       var e2=$("#authErr"); if(e2){ e2.textContent="Deze link is verlopen of al gebruikt. Vraag een nieuwe uitnodiging of klik op 'Wachtwoord vergeten?'."; e2.style.display="block"; }
     }
-    if($("#authForgot")) $("#authForgot").onclick=function(){
-      var email=($("#authEmail")&&$("#authEmail").value||"").trim(), e3=$("#authErr");
-      if(!email){ if(e3){ e3.textContent="Vul eerst je e-mailadres in (bovenste veld) en klik dan nogmaals op 'Wachtwoord vergeten?'."; e3.style.display="block"; } return; }
-      sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin}).then(function(res){
-        if(res.error){ if(e3){ e3.textContent="Versturen mislukte: "+(res.error.message||"probeer het later opnieuw"); e3.style.display="block"; } return; }
-        if(e3) e3.style.display="none";
-        toast("Herstel-link verstuurd naar "+email+" — check ook je spam.","ok");
-      });
-    };
-    if($("#authBtn")) $("#authBtn").onclick=doLogin;
-    if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
-    if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
-    if($("#logoutBtn")) $("#logoutBtn").onclick=doLogout;
+    wireLogin();
     // Opstart mag NOOIT eeuwig laten laden. We valideren de sessie echt
     // (getUser controleert het token bij de server). Is het token weg,
     // verlopen of kapot -> uitloggen (wist het rotte token) en login tonen.
