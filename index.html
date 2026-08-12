@@ -830,7 +830,8 @@
   var TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()); // echte datum van vandaag
 
   var UNITS = ["Athletes","BAT","HoS Algemeen","HYROX","Schaatsen","SPEX","TEN","ZAR"];
-  var OWNERS = ["Bart Gabriels","Bjorn Bakker","Dille Rikkert","Ederik Tiessen","Joep Wouters van den Oudenweijer","Koen Hermes","Max van der Ven","Michelle Geldhof","Ruud Koedijk","Ruud van Doornik","Samuel Ardies","Tom Schouten","Tom Taminiau"];
+  // Voornamen, behalve waar Tigo expliciet de achternaam wil (dubbele voornamen + Koen)
+  var OWNERS = ["Bart","Bjorn","Dille","Ederik","Joep","Koen Hermens","Max","Michelle","Ruud Koedijk","Ruud van Doornik","Samuel","Tom Schouten","Tom Taminiau"];
   var FASES = [
     {v:"1e salescontact",                c:"c-grey",   pct:10},
     {v:"Oriënterend gesprek",            c:"c-blue",   pct:25},
@@ -1099,7 +1100,28 @@
     requestAnimationFrame(function(){ t.classList.add("show"); });
     setTimeout(function(){ t.classList.remove("show"); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },250); }, kind==="err"?6000:2000);
   }
-  var SAVE_ERR="⚠ Opslaan mislukt — NIET bewaard. Controleer je internet en probeer opnieuw.";
+  var SAVE_ERR="⚠ Opslaan mislukt — NIET bewaard. Probeer het opnieuw.";
+
+  // ---- sessiebewaking: een verlopen login mag NOOIT stil misgaan ----
+  // (verlopen token = lezen levert stiekem niets op en schrijven wordt geweigerd;
+  //  dat zag eruit als "kaarten verdwijnen". Nu: nette melding + terug naar login.)
+  var _authDead=false;
+  function sessionLost(){
+    if(_authDead) return; _authDead=true;
+    toast("Je sessie is verlopen — je wordt teruggebracht naar het inlogscherm.","err");
+    setTimeout(function(){ try{ sb.auth.signOut(); }catch(e){} location.reload(); }, 2600);
+  }
+  function isAuthErr(e){
+    if(!e) return false;
+    var c=String(e.code||""), m=String(e.message||"").toLowerCase();
+    return c==="401"||c==="403"||c==="PGRST301"||c==="42501"||m.indexOf("jwt")>=0||m.indexOf("token")>=0||m.indexOf("row-level security")>=0;
+  }
+  function verifySession(){
+    if(!USING_SUPABASE||!sb) return;
+    sb.auth.getSession().then(function(res){
+      if(!(res&&res.data&&res.data.session)) sessionLost();
+    }).catch(function(){});
+  }
 
   // ---------- realtime: gedeelde staat & helpers ----------
   var openDealId=null, isDragging=false, deferredRerender=false, rerenderTimer=null;
@@ -1128,7 +1150,8 @@
       delete r._new;
       r._pendingInsert=true;
       sb.from("deals").insert(toRow(r)).select().single().then(function(res){
-        if(res.error){ delete r._pendingInsert; console.error("Insert faalde:",res.error); toast(SAVE_ERR,"err"); return; }
+        if(res.error){ delete r._pendingInsert; console.error("Insert faalde:",res.error);
+          if(isAuthErr(res.error)){ sessionLost(); return; } toast(SAVE_ERR,"err"); return; }
         if(res.data) r.id=res.data.id;
         r._saved=normRow(r); delete r._pendingInsert;
         toast("Opgeslagen ✓","ok");
@@ -1144,7 +1167,8 @@
       if(!Object.keys(patch).length) return;         // niets veranderd -> niets schrijven
       var before=r._saved; r._saved=cur;              // optimistisch: zo herkent de realtime-echo m'n eigen wijziging
       sb.from("deals").update(patch).eq("id",r.id).then(function(res){
-        if(res.error){ r._saved=before; console.error("Update faalde:",res.error); toast(SAVE_ERR,"err"); }
+        if(res.error){ r._saved=before; console.error("Update faalde:",res.error);
+          if(isAuthErr(res.error)){ sessionLost(); } else { toast(SAVE_ERR,"err"); } }
         else { toast("Opgeslagen ✓","ok"); }
       });
     }
@@ -1199,8 +1223,12 @@
   function resyncDeals(){
     if(!USING_SUPABASE || !sb) return;
     sb.from("deals").select("*").order("id").then(function(res){
-      if(res.error){ return; }
+      if(res.error){ if(isAuthErr(res.error)) sessionLost(); return; }
       var rows=res.data||[], seen={}, changed=false;
+      // VEILIGHEID: leeg antwoord terwijl wij nog data hebben = vrijwel zeker een
+      // verlopen sessie (RLS filtert dan alles weg). Bord NIET leegvegen; eerst
+      // de sessie controleren — anders "verdwijnen" alle kaarten spontaan.
+      if(!rows.length && data.length){ verifySession(); return; }
       rows.forEach(function(row){ seen[row.id]=true; if(applyRemoteRow(row)) changed=true; });
       for(var i=data.length-1;i>=0;i--){ var r=data[i];
         if(!seen[r.id] && !r._new && !r._pendingInsert && openDealId!==r.id){ data.splice(i,1); changed=true; }
@@ -1937,7 +1965,9 @@
         "<div class='dsec'>Salesgegevens</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Laatst contact gehad door</label><select id='d_owner'>"+
-            (r.owner?"":"<option value='' selected>— kies —</option>")+optionsHtml(OWNERS,r.owner)+"</select></div>"+
+            (r.owner?"":"<option value='' selected>— kies —</option>")+
+            (r.owner&&OWNERS.indexOf(r.owner)<0?"<option selected>"+esc(r.owner)+"</option>":"")+   // oude/volledige naam netjes tonen
+            optionsHtml(OWNERS,r.owner)+"</select></div>"+
           "<div class='fld'><label>Type contact</label><select id='d_type'>"+
             (r.type?"":"<option value='' selected>— kies —</option>")+optionsHtml(TYPES,r.type)+"</select></div>"+
         "</div>"+
@@ -2533,12 +2563,12 @@
     if(t._new){
       delete t._new;
       sb.from("toekomst").insert(toTkRow(t)).select().single().then(function(res){
-        if(res.error){ console.error(res.error); toast(SAVE_ERR,"err"); if(cb)cb(false); return; }
+        if(res.error){ console.error(res.error); if(isAuthErr(res.error)){ sessionLost(); } else { toast(SAVE_ERR,"err"); } if(cb)cb(false); return; }
         t.id=res.data.id; toekomst.unshift(t); renderToekomst(); toast("Opgeslagen ✓","ok"); if(cb)cb(true);
       });
     } else {
       sb.from("toekomst").update(toTkRow(t)).eq("id",t.id).then(function(res){
-        if(res.error){ console.error(res.error); toast(SAVE_ERR,"err"); if(cb)cb(false); return; }
+        if(res.error){ console.error(res.error); if(isAuthErr(res.error)){ sessionLost(); } else { toast(SAVE_ERR,"err"); } if(cb)cb(false); return; }
         renderToekomst(); toast("Opgeslagen ✓","ok"); if(cb)cb(true);
       });
     }
