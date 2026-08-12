@@ -829,7 +829,7 @@
   var _now = new Date();
   var TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()); // echte datum van vandaag
 
-  var UNITS = ["Athletes","BAT","HoS Algemeen","HYROX","JODP","Schaatsen","SPEX","TEN","ZAR"];
+  var UNITS = ["Athletes","BAT","HoS Algemeen","HYROX","Schaatsen","SPEX","TEN","ZAR"];
   var OWNERS = ["Bart Gabriels","Bjorn Bakker","Dille Rikkert","Ederik Tiessen","Joep Wouters van den Oudenweijer","Koen Hermes","Max van der Ven","Michelle Geldhof","Ruud Koedijk","Ruud van Doornik","Samuel Ardies","Tom Schouten","Tom Taminiau"];
   var FASES = [
     {v:"1e salescontact",                c:"c-grey",   pct:10},
@@ -1844,6 +1844,14 @@
     if(val && !found) html+="<option selected>"+esc(val)+"</option>"; // bestaande, niet-standaard waarde behouden
     return html;
   }
+  // ---- combinatieveld: ÉÉN invulvak met suggesties — typen filtert de lijst,
+  //      staat je invoer er niet tussen dan is dat automatisch de nieuwe waarde ----
+  function comboField(id, list, val, placeholder){
+    return "<input id='"+id+"' list='"+id+"_dl' value='"+esc(val||"")+"' placeholder='"+esc(placeholder||"Typ of kies…")+"' autocomplete='off'>"+
+      "<datalist id='"+id+"_dl'>"+list.map(function(v){return "<option value='"+esc(v)+"'></option>";}).join("")+"</datalist>";
+  }
+  function readCombo(id){ var e=$("#"+id); return e?e.value.trim():""; }
+
   function wireNewSelect(selId, inputId){
     var sel=$(selId), inp=$(inputId); if(!sel||!inp) return;
     function upd(){ var isNew=sel.value==="__new__"; inp.style.display=isNew?"":"none"; if(isNew) inp.focus(); }
@@ -1889,19 +1897,16 @@
     var bundle=(!isNew && r.klant) ? activeData().filter(function(d){return d.klant===r.klant;}) : [];
     var b=brand(r.klant);
     var fWieHtml="<div class='fld'><label id='d_klant_lbl'>"+wieLabel(r.unit)+"</label>"+
-        "<select id='d_klant' class='newsel'>"+newSelectOptions(wieList(r.unit), r.klant)+"</select>"+
-        "<input id='d_klant_new' class='newinput' placeholder='Nieuw toevoegen…' style='display:none;margin-top:8px'></div>";
+        comboField("d_klant", wieList(r.unit), r.klant, "Typ of kies een merk/bedrijf…")+"</div>";
     var fPartHtml="<div class='fld' id='d_partWrap'><label>Propositie / sport</label>"+
-        "<select id='d_merk' class='newsel'>"+newSelectOptions(merkList(), r.merk, "Geen propositie")+"</select>"+
-        "<input id='d_merk_new' class='newinput' placeholder='Nieuwe propositie…' style='display:none;margin-top:8px'></div>";
+        comboField("d_merk", merkList(), r.merk, "Typ of kies… (mag leeg blijven)")+"</div>";
     var fUnitField="<div class='fld'><label>Unit</label>"+
-        "<select id='d_unit' class='newsel'>"+newSelectOptions(unitList(), r.unit)+"</select>"+
-        "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
+        "<select id='d_unit'>"+(r.unit?"":"<option value='' selected>— kies —</option>")+
+        (r.unit&&UNITS.indexOf(r.unit)<0?"<option selected>"+esc(r.unit)+"</option>":"")+optionsHtml(UNITS,r.unit)+"</select></div>";
     var fUnitPicker="<div class='fld'><label>Unit <span class='req'>· kies dit eerst</span></label>"+
-        "<select id='d_unit' class='newsel'><option value=''"+(r.unit?"":" selected")+">Kies unit…</option>"+
+        "<select id='d_unit'><option value=''"+(r.unit?"":" selected")+">Kies unit…</option>"+
         UNITS.map(function(u){return "<option"+(u===r.unit?" selected":"")+">"+esc(u)+"</option>";}).join("")+
-        "<option value='__new__'>➕ Nieuw toevoegen…</option></select>"+
-        "<input id='d_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>";
+        "</select></div>";
     drawer.innerHTML=
       "<div class='drawer-head'>"+
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+(isNew?"+":b.ini)+"</span>"+
@@ -1957,12 +1962,10 @@
         "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
           "<div class='dsec'>Extra velden · Atleten / Influencers</div>"+
           "<div class='fld'><label id='d_atleet_lbl'>"+atleetLabel(r.unit)+"</label>"+
-            "<select id='d_atleet' class='newsel'>"+newSelectOptions(atleetList(), r.atleet||"", "Nog geen atleet gekozen")+"</select>"+
-            "<input id='d_atleet_new' class='newinput' placeholder='Nieuwe atleet…' style='display:none;margin-top:8px'></div>"+
+            comboField("d_atleet", atleetList(), r.atleet||"", "Typ of kies een atleet…")+"</div>"+
           "<div class='row2'>"+
             "<div class='fld'><label>Sport</label>"+
-              "<select id='d_sport' class='newsel'>"+newSelectOptions(distinctVals('sport',SPORTEN), r.sport, "—")+"</select>"+
-              "<input id='d_sport_new' class='newinput' placeholder='Nieuwe sport…' style='display:none;margin-top:8px'></div>"+
+              comboField("d_sport", distinctVals('sport',SPORTEN), r.sport, "Typ of kies een sport…")+"</div>"+
             "<div class='fld'><label>Soort deal</label><select id='d_soort'>"+optionsHtml([""].concat(SOORT_DEAL), r.soort_deal)+"</select></div>"+
           "</div>"+
           "<div class='row2'>"+
@@ -2006,30 +2009,22 @@
     if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
     if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
     if($("#dHardDelete")) $("#dHardDelete").onclick=function(){ openHardDeleteFlow(r); };
-    wireNewSelect("#d_klant","#d_klant_new");
-    wireNewSelect("#d_unit","#d_unit_new");
-    wireNewSelect("#d_merk","#d_merk_new");
-    wireNewSelect("#d_sport","#d_sport_new");
-    wireNewSelect("#d_atleet","#d_atleet_new");
 
     // ---- unit stuurt: atleten-blok tonen, Wie-label en Wie-keuzelijst ----
     (function(){
       var blk=$("#d_athBlock"), lbl=$("#d_klant_lbl");
-      function curUnit(){ return readNewSelect("#d_unit","#d_unit_new"); }
+      function curUnit(){ var e=$("#d_unit"); return e?e.value:""; }
       function apply(){
         var u=curUnit();
         if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
-        // geen dubbele sub-velden: bij Athletes is de atleet-keuzelijst hét tweede veld,
-        // bij andere units de propositie/sport-keuzelijst
+        // geen dubbele sub-velden: bij Athletes is het atleet-veld hét tweede veld,
+        // bij andere units het propositie/sport-veld
         var pw=$("#d_partWrap"); if(pw) pw.style.display=isAthleteUnit(u)?"none":"";
         if(lbl) lbl.textContent=wieLabel(u);
         var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
         var rest=$("#d_rest"); if(rest) rest.style.display=u?"":"none";
-        var ks=$("#d_klant"); if(ks){ var cur=readNewSelect("#d_klant","#d_klant_new");
-          ks.innerHTML=newSelectOptions(wieList(u), cur); wireNewSelect("#d_klant","#d_klant_new"); }
       }
       var us=$("#d_unit"); if(us) us.addEventListener("change",apply);
-      var un=$("#d_unit_new"); if(un) un.addEventListener("input",apply);
       apply();
     })();
 
@@ -2120,8 +2115,8 @@
 
     $("#dSave").onclick=function(){
       var origLaatste=r.laatste, origOpm=(initialOpm||"").trim();
-      var unitVal=readNewSelect("#d_unit","#d_unit_new");
-      var klantVal=readNewSelect("#d_klant","#d_klant_new");
+      var unitVal=($("#d_unit")&&$("#d_unit").value)||"";
+      var klantVal=readCombo("d_klant");
       var vn=($("#d_vn")&&$("#d_vn").value||"").trim(), an=($("#d_an")&&$("#d_an").value||"").trim();
       var emailVal=$("#d_email").value.trim(), telVal=$("#d_tel").value.trim();
       var ownerVal=$("#d_owner").value;
@@ -2144,11 +2139,11 @@
       r.klant=klantVal; r.contact=(vn+" "+an).trim();
       r.functie=$("#d_functie").value.trim();
       r.email=emailVal; r.tel=telVal;
-      r.owner=ownerVal; r.unit=unitVal; r.merk=readNewSelect("#d_merk","#d_merk_new");
+      r.owner=ownerVal; r.unit=unitVal; r.merk=readCombo("d_merk");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
       // ---- Extra velden · Atleten ----
-      r.atleet=isAthleteUnit(unitVal) ? (readNewSelect("#d_atleet","#d_atleet_new")||null) : null;
-      r.sport=readNewSelect("#d_sport","#d_sport_new");
+      r.atleet=isAthleteUnit(unitVal) ? (readCombo("d_atleet")||null) : null;
+      r.sport=readCombo("d_sport");
       r.soort_deal=$("#d_soort")?$("#d_soort").value:"";
       r.startdatum=($("#d_start")&&$("#d_start").value)||null;
       r.einddatum=($("#d_eind")&&$("#d_eind").value)||null;
@@ -2647,11 +2642,12 @@
           "<input id='tk_titel' value='"+esc(t.titel)+"' placeholder='Bijv. Partnership Feyenoord opent vanaf Q4'></div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Merk / bedrijf</label>"+
-            "<select id='tk_merk' class='newsel'>"+newSelectOptions(wieList(""), t.merk, "Nog geen merk")+"</select>"+
-            "<input id='tk_merk_new' class='newinput' placeholder='Nieuw merk…' style='display:none;margin-top:8px'></div>"+
+            comboField("tk_merk", wieList(""), t.merk, "Typ of kies een merk/bedrijf…")+"</div>"+
           "<div class='fld'><label>Unit</label>"+
-            "<select id='tk_unit' class='newsel'>"+newSelectOptions(unitList(), t.unit, "Nog geen unit")+"</select>"+
-            "<input id='tk_unit_new' class='newinput' placeholder='Nieuwe unit…' style='display:none;margin-top:8px'></div>"+
+            "<select id='tk_unit'><option value=''"+(t.unit?"":" selected")+">Nog geen unit</option>"+
+            (t.unit&&UNITS.indexOf(t.unit)<0?"<option selected>"+esc(t.unit)+"</option>":"")+
+            UNITS.map(function(u){return "<option"+(u===t.unit?" selected":"")+">"+esc(u)+"</option>";}).join("")+
+            "</select></div>"+
         "</div>"+
         "<div class='fld'><label>Verwacht vanaf</label>"+
           "<input id='tk_vanaf' value='"+esc(t.verwacht_vanaf||"")+"' placeholder='Bijv. Q4 2026, zomer 2027…'></div>"+
@@ -2679,8 +2675,6 @@
         "<button class='btn-primary' id='tkSave'>"+(isNew?"Toevoegen":"Opslaan")+"</button>"+
       "</div>";
     drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false"); scrim.classList.add("open");
-    wireNewSelect("#tk_merk","#tk_merk_new");
-    wireNewSelect("#tk_unit","#tk_unit_new");
 
     // ----- links-editor -----
     function renderLinkRows(){
@@ -2746,8 +2740,8 @@
       if(!titel){ $("#tk_titel").classList.add("need"); var e2=$("#tkSaveErr"); e2.textContent="Vul in elk geval een titel in."; e2.style.display="block"; $("#tk_titel").focus(); return; }
       if(dAtts.some(function(a){return a._uploading;})){ var e3=$("#tkSaveErr"); e3.textContent="Nog even wachten — een bijlage is nog aan het uploaden."; e3.style.display="block"; return; }
       t.titel=titel;
-      t.merk=readNewSelect("#tk_merk","#tk_merk_new");
-      t.unit=readNewSelect("#tk_unit","#tk_unit_new");
+      t.merk=readCombo("tk_merk");
+      t.unit=($("#tk_unit")&&$("#tk_unit").value)||"";
       t.verwacht_vanaf=$("#tk_vanaf").value.trim();
       t.omschrijving=$("#tk_oms").value.trim();
       t.links=dLinks.filter(function(l){return (l.url||"").trim();}).map(function(l){ var u=l.url.trim(); if(!/^https?:\/\//i.test(u)) u="https://"+u; return {label:l.label.trim(),url:u}; });
