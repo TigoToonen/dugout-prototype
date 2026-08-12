@@ -1875,6 +1875,19 @@
   function klantList(){ return distinctVals("klant", Object.keys(BRANDS)); }
   function unitList(){ return distinctVals("unit", UNITS); }
   function merkList(){ return distinctVals("merk", []); }
+  // ---- unit-gekoppelde keuzelijsten ----
+  // De koppeling wordt AFGELEID uit de bestaande rijen: een merk of propositie hoort
+  // bij een unit zodra er één saleskans met die combinatie staat. Voeg je onder HYROX
+  // een nieuw merk toe, dan hoort dat merk vanaf dat moment bij HYROX. Geen extra
+  // tabel en geen database-migratie nodig; de lijst onderhoudt zichzelf.
+  function valsForUnit(field, unit){
+    var set={};
+    data.forEach(function(r){
+      if(unit && r.unit!==unit) return;
+      if(r[field] && String(r[field]).trim()) set[r[field]]=1;
+    });
+    return Object.keys(set).sort(function(a,b){return a.localeCompare(b,"nl");});
+  }
   function newSelectOptions(list, val, emptyLabel){
     var html="";
     if(emptyLabel!==undefined) html+="<option value=''"+(!val?" selected":"")+">"+esc(emptyLabel)+"</option>"; // optioneel veld: lege keuze bovenaan
@@ -1887,24 +1900,41 @@
   // ---- keuzeveld: échte dropdown (zelfde element als Unit). Onderaan staat
   //      "➕ Nieuw toevoegen…"; die keuze wisselt de dropdown TER PLEKKE om naar
   //      één typveld, met een "↩ lijst"-knopje terug. Nooit twee vakjes tegelijk. ----
-  function pickField(id, list, val, emptyLabel){
+  // moreLabel (optioneel) = de ontsnapping onderaan: toon alsnog de volledige lijst
+  function pickOptions(list, val, emptyLabel, moreLabel){
     var opts="<option value=''"+(!val?" selected":"")+">"+esc(emptyLabel||"— kies —")+"</option>";
     var found=false;
     list.forEach(function(v){ if(v===val) found=true; opts+="<option"+(v===val?" selected":"")+">"+esc(v)+"</option>"; });
     if(val && !found) opts+="<option selected>"+esc(val)+"</option>";   // bestaande, niet-standaard waarde behouden
     opts+="<option value='__new__'>➕ Nieuw toevoegen…</option>";
+    if(moreLabel) opts+="<option value='__all__'>"+esc(moreLabel)+"</option>";
+    return opts;
+  }
+  function pickField(id, list, val, emptyLabel, moreLabel){
     return "<div class='pickwrap'>"+
-      "<select id='"+id+"'>"+opts+"</select>"+
+      "<select id='"+id+"'>"+pickOptions(list,val,emptyLabel,moreLabel)+"</select>"+
       "<div class='picknew' id='"+id+"_nw' style='display:none'>"+
         "<input id='"+id+"_inp' placeholder='Typ de nieuwe naam…' autocomplete='off'>"+
         "<button type='button' class='pickback' id='"+id+"_back' title='Terug naar de lijst'>↩ lijst</button>"+
       "</div></div>";
   }
-  function wirePick(id){
+  // Staat het veld in typmodus ("Nieuw toevoegen")? Dan nooit de lijst eronder verversen.
+  function pickBusy(id){ var nw=$("#"+id+"_nw"); return !!(nw && nw.style.display!=="none"); }
+  // Lijst ter plekke vervangen; een al ingevulde waarde blijft ALTIJD staan, ook als
+  // die niet in de nieuwe (kortere) lijst voorkomt. Nooit stil leegmaken.
+  function setPickList(id, list, emptyLabel, moreLabel){
+    var sel=$("#"+id); if(!sel || pickBusy(id)) return;
+    var cur=sel.value;
+    if(cur==="__new__"||cur==="__all__") cur="";
+    sel.innerHTML=pickOptions(list, cur, emptyLabel, moreLabel);
+    sel.value=cur||"";
+  }
+  function wirePick(id, onAll){
     var sel=$("#"+id), nw=$("#"+id+"_nw"), inp=$("#"+id+"_inp"), back=$("#"+id+"_back");
     if(!sel||!nw) return;
     sel.addEventListener("change",function(){
       if(sel.value==="__new__"){ sel.style.display="none"; nw.style.display="flex"; if(inp) inp.focus(); }
+      else if(sel.value==="__all__"){ sel.value=""; if(onAll) onAll(); }
     });
     if(back) back.addEventListener("click",function(){
       if(inp) inp.value="";
@@ -2080,12 +2110,28 @@
     if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
     if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
     if($("#dHardDelete")) $("#dHardDelete").onclick=function(){ openHardDeleteFlow(r); };
-    wirePick("d_klant"); wirePick("d_merk"); wirePick("d_atleet"); wirePick("d_sport");
+    // ---- unit stuurt de keuzelijsten: toon alleen merken/proposities die al bij
+    //      deze unit horen. Onderaan blijft "➕ Nieuw toevoegen…" staan, plus een
+    //      ontsnapping "🔎 Toon alle …" zodat een merk uit een andere unit nooit
+    //      opnieuw ingetypt hoeft te worden (dat gaf juist de tikfout-dubbelingen). ----
+    var showAll={d_klant:false, d_merk:false};
+    function curUnit(){ var e=$("#d_unit"); return e?e.value:""; }
+    function refreshUnitLists(){
+      var u=curUnit();
+      var fullK=wieList(u), lstK=(showAll.d_klant||!u)?fullK:valsForUnit("klant",u);
+      setPickList("d_klant", lstK, "— kies —",
+        (!showAll.d_klant && u && lstK.length<fullK.length) ? "🔎 Toon alle merken ("+fullK.length+")" : null);
+      var fullM=merkList(), lstM=(showAll.d_merk||!u)?fullM:valsForUnit("merk",u);
+      setPickList("d_merk", lstM, "Geen propositie",
+        (!showAll.d_merk && u && lstM.length<fullM.length) ? "🔎 Toon alle proposities ("+fullM.length+")" : null);
+    }
+    wirePick("d_klant", function(){ showAll.d_klant=true; refreshUnitLists(); var e=$("#d_klant"); if(e) e.focus(); });
+    wirePick("d_merk",  function(){ showAll.d_merk=true;  refreshUnitLists(); var e=$("#d_merk");  if(e) e.focus(); });
+    wirePick("d_atleet"); wirePick("d_sport");
 
     // ---- unit stuurt: atleten-blok tonen, Wie-label en Wie-keuzelijst ----
     (function(){
       var blk=$("#d_athBlock"), lbl=$("#d_klant_lbl");
-      function curUnit(){ var e=$("#d_unit"); return e?e.value:""; }
       function apply(){
         var u=curUnit();
         if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
@@ -2094,6 +2140,7 @@
         var pw=$("#d_partWrap"); if(pw) pw.style.display=isAthleteUnit(u)?"none":"";
         if(lbl) lbl.textContent=wieLabel(u);
         var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
+        refreshUnitLists();   // merk- en propositielijst inkorten tot deze unit
       }
       // change én input: mobiele pickers sturen niet altijd 'change'
       var us=$("#d_unit"); if(us){ us.addEventListener("change",apply); us.addEventListener("input",apply); }
