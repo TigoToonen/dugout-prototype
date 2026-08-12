@@ -820,6 +820,7 @@
     <input id="authPw" class="auth-input" type="password" autocomplete="current-password" placeholder="••••••••">
     <div class="auth-err" id="authErr"></div>
     <button id="authBtn" class="btn-primary auth-btn">Inloggen</button>
+    <button id="authForgot" class="fb-clear" style="width:100%;margin-top:14px;text-align:center">Wachtwoord vergeten?</button>
   </div>
 </div>
 
@@ -2829,6 +2830,40 @@
   }
   function doLogout(){ if(USING_SUPABASE && sb) sb.auth.signOut().then(function(){ location.reload(); }); }
 
+  // ---------- uitnodiging / wachtwoord-herstel: gebruiker kiest ZELF een wachtwoord ----------
+  // (Tigo stuurt vanuit Supabase een invite- of herstel-mail; de link daarin opent
+  //  de app met een token in de URL en dit scherm laat de gebruiker een wachtwoord kiezen.)
+  function showSetPassword(){
+    if(!authScrim) return;
+    authScrim.innerHTML =
+      "<div class='auth-card'>"+
+        "<img class='mark auth-mark' src='HOS_Profielfoto-LINKEDIN_400x400.png' alt='House of Sports'>"+
+        "<h1 class='auth-title'>Kies je wachtwoord</h1>"+
+        "<p class='auth-sub'>Welkom bij de Commerciële Dugout! Stel één keer je eigen wachtwoord in; daarna log je daarmee in.</p>"+
+        "<label class='auth-lbl' for='npw1'>Nieuw wachtwoord (minimaal 8 tekens)</label>"+
+        "<input id='npw1' class='auth-input' type='password' autocomplete='new-password'>"+
+        "<label class='auth-lbl' for='npw2'>Herhaal je wachtwoord</label>"+
+        "<input id='npw2' class='auth-input' type='password' autocomplete='new-password'>"+
+        "<div class='auth-err' id='npwErr'></div>"+
+        "<button id='npwBtn' class='btn-primary auth-btn'>Wachtwoord opslaan</button>"+
+      "</div>";
+    authScrim.classList.add("show");
+    var err=$("#npwErr");
+    $("#npwBtn").onclick=function(){
+      var p1=$("#npw1").value, p2=$("#npw2").value;
+      err.style.display="none";
+      if(p1.length<8){ err.textContent="Gebruik minimaal 8 tekens."; err.style.display="block"; return; }
+      if(p1!==p2){ err.textContent="De twee wachtwoorden zijn niet gelijk."; err.style.display="block"; return; }
+      var btn=$("#npwBtn"); btn.disabled=true; btn.textContent="Bezig…";
+      sb.auth.updateUser({password:p1}).then(function(res){
+        btn.disabled=false; btn.textContent="Wachtwoord opslaan";
+        if(res.error){ err.textContent="Opslaan mislukte: "+(res.error.message||"probeer het opnieuw"); err.style.display="block"; return; }
+        try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+        location.reload();   // schone start met geldige sessie -> direct de app in
+      });
+    };
+  }
+
   function supaConfigured(){ return SUPA.url.indexOf("http")===0 && SUPA.anon.length>20; }
   function showConnError(){
     if(!authScrim) return;
@@ -2848,6 +2883,36 @@
       if(supaConfigured()){ showConnError(); return; }     // db is ingesteld maar CDN/init faalde -> harde fout i.p.v. stil testdata
       showApp(); bootApp(); return;                         // echt offline/testmodus (lokale preview, SUPA leeg)
     }
+    // Kwam de gebruiker binnen via een invite-/herstel-link uit de mail?
+    // (supabase-js verwerkt de token uit de URL zelf; wachten tot de sessie er staat)
+    var mailType=(location.hash.match(/[#&]type=(invite|recovery|signup|magiclink)/)||[])[1];
+    var mailError=/[#&]error(_code)?=/.test(location.hash);
+    if(mailType && !mailError){
+      var _tries=0, _iv2=setInterval(function(){
+        sb.auth.getSession().then(function(res){
+          if(res&&res.data&&res.data.session){ clearInterval(_iv2); showSetPassword(); }
+          else if(++_tries>20){ clearInterval(_iv2); showLogin();
+            var e1=$("#authErr"); if(e1){ e1.textContent="Deze link is verlopen of al gebruikt. Vraag een nieuwe uitnodiging of klik op 'Wachtwoord vergeten?'."; e1.style.display="block"; }
+          }
+        });
+      },250);
+      if($("#authForgot")) $("#authForgot").onclick=function(){};
+      return;
+    }
+    if(mailError){
+      try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+      showLogin();
+      var e2=$("#authErr"); if(e2){ e2.textContent="Deze link is verlopen of al gebruikt. Vraag een nieuwe uitnodiging of klik op 'Wachtwoord vergeten?'."; e2.style.display="block"; }
+    }
+    if($("#authForgot")) $("#authForgot").onclick=function(){
+      var email=($("#authEmail")&&$("#authEmail").value||"").trim(), e3=$("#authErr");
+      if(!email){ if(e3){ e3.textContent="Vul eerst je e-mailadres in (bovenste veld) en klik dan nogmaals op 'Wachtwoord vergeten?'."; e3.style.display="block"; } return; }
+      sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin}).then(function(res){
+        if(res.error){ if(e3){ e3.textContent="Versturen mislukte: "+(res.error.message||"probeer het later opnieuw"); e3.style.display="block"; } return; }
+        if(e3) e3.style.display="none";
+        toast("Herstel-link verstuurd naar "+email+" — check ook je spam.","ok");
+      });
+    };
     if($("#authBtn")) $("#authBtn").onclick=doLogin;
     if($("#authPw")) $("#authPw").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     if($("#authEmail")) $("#authEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#authPw").focus(); });
