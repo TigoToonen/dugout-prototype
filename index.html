@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
@@ -1858,6 +1858,20 @@
 
   // ---------- drawer ----------
   var drawer=$("#drawer"), scrim=$("#scrim");
+  // Naast het paneel klikken (of Escape) gooide een nog niet opgeslagen NIEUWE
+  // saleskans meteen weg. Daarom onthouden we hoe het paneel er bij openen uitzag;
+  // is er intussen iets ingevuld, dan volgt eerst een bevestiging.
+  var drawerIsNew=false, drawerSnapshot=null;
+  function drawerFingerprint(){
+    var out=[];
+    drawer.querySelectorAll("input,select,textarea").forEach(function(el){
+      out.push((el.type==="checkbox"||el.type==="radio") ? (el.checked?"1":"0") : (el.value||""));
+    });
+    out.push("att:"+drawer.querySelectorAll(".attach-row").length);
+    // let op: elementen scheiden met een teken dat nooit in een waarde staat
+    return out.join("|~|");
+  }
+  function drawerDirty(){ return drawerSnapshot!==null && drawerFingerprint()!==drawerSnapshot; }
   function optionsHtml(list,val){return list.map(function(o){var v=o.v||o;return "<option"+(v===val?" selected":"")+">"+esc(v)+"</option>";}).join("");}
   function faseOptions(val){
     var list=PIPELINE_FASES.slice();
@@ -2394,8 +2408,30 @@
       closeDrawer(); refreshAll();
       if(zussen.length) openContactSyncFlow(r, zussen);
     };
+
+    // vertrekpunt vastleggen: hiermee weten we straks of er echt iets is ingevuld
+    drawerIsNew=isNew; drawerSnapshot=drawerFingerprint();
+  }
+  // Klik naast het paneel / Escape: bij een nieuwe, nog niet opgeslagen saleskans
+  // waar al iets is ingevuld eerst vragen of je die echt wilt annuleren.
+  function requestCloseDrawer(){
+    if(!tkEditorOpen && drawerIsNew && drawerDirty()){ openCancelNewFlow(); return; }
+    closeDrawer();
+  }
+  function openCancelNewFlow(){
+    showModal(
+      "<div class='modal-ico del'>✏️</div>"+
+      "<h3>Weet je zeker dat je deze saleskans wilt annuleren?</h3>"+
+      "<p>Deze nieuwe saleskans is nog niet opgeslagen. Alles wat je hebt ingevuld gaat dan verloren.</p>"+
+      "<div class='modal-foot'>"+
+        "<button class='btn-ghost' id='m_keep'>Nee, verder invullen</button>"+
+        "<button class='btn-danger' id='m_ok'>Ja, annuleren</button>"+
+      "</div>");
+    $("#m_keep").onclick=closeModal;
+    $("#m_ok").onclick=function(){ closeModal(); closeDrawer(); };
   }
   function closeDrawer(){
+    drawerIsNew=false; drawerSnapshot=null;
     if(tkEditorOpen){ closeToekomstDrawer(); return; }   // toekomst-paneel gebruikt hetzelfde paneel-element
     drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); scrim.classList.remove("open");
     // optimistische verplaatsing afronden: na opslaan staat de nieuwe fase al in de data,
@@ -2410,8 +2446,13 @@
       scheduleRerender();
     }
   }
-  scrim.addEventListener("click",closeDrawer);
-  document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDrawer();});
+  scrim.addEventListener("click",requestCloseDrawer);
+  document.addEventListener("keydown",function(e){
+    if(e.key!=="Escape") return;
+    // staat er een bevestiging open? Die vangt Escape af — anders sloop je er langs
+    if(modalScrim && modalScrim.classList.contains("open")){ closeModal(); return; }
+    requestCloseDrawer();
+  });
 
   // ---------- view switch ----------
   // Bord/Tabel zijn twee weergaven van hetzelfde Pipeline-tabblad; de keuze wordt onthouden.
@@ -2864,6 +2905,7 @@
     var isNew=!t;
     if(isNew){ t={_new:true,titel:"",merk:"",unit:"",verwacht_vanaf:"",omschrijving:"",links:[],bijlagen:[],status:"open"}; }
     tkEditorOpen=true;
+    drawerIsNew=false; drawerSnapshot=null;   // toekomst-paneel heeft zijn eigen sluitgedrag
     var b=brand(t.merk||"?");
     var dLinks=(t.links||[]).map(function(l){return {label:l.label||"",url:l.url||""};});
     var dAtts=(t.bijlagen||[]).slice();
