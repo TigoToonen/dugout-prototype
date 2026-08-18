@@ -43,6 +43,7 @@ async function makeToken(user: string, pass: string): Promise<string> {
 
 function loginPage(fout: boolean): Response {
   const html = `<!doctype html>
+<!-- deploy-check 5ccc1f7 -->
 <html lang="nl">
 <head>
 <meta charset="utf-8">
