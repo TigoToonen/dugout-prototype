@@ -2150,7 +2150,7 @@
     drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false");
     scrim.classList.add("open");
 
-    $("#dClose").onclick=closeDrawer; $("#dCancel").onclick=closeDrawer;
+    $("#dClose").onclick=requestCloseDrawer; $("#dCancel").onclick=requestCloseDrawer;
     if($("#dDelete")) $("#dDelete").onclick=function(){ openDeleteFlow(r); };
     if($("#dRestore")) $("#dRestore").onclick=function(){ restoreDeal(r); };
     if($("#dHardDelete")) $("#dHardDelete").onclick=function(){ openHardDeleteFlow(r); };
@@ -2415,16 +2415,18 @@
   // Klik naast het paneel / Escape: bij een nieuwe, nog niet opgeslagen saleskans
   // waar al iets is ingevuld eerst vragen of je die echt wilt annuleren.
   function requestCloseDrawer(){
-    if(!tkEditorOpen && drawerIsNew && drawerDirty()){ openCancelNewFlow(); return; }
+    if(!tkEditorOpen && drawerDirty()){ openCancelNewFlow(); return; }
     closeDrawer();
   }
   function openCancelNewFlow(){
+    var nieuw=drawerIsNew;
     showModal(
       "<div class='modal-ico del'>✏️</div>"+
-      "<h3>Weet je zeker dat je deze saleskans wilt annuleren?</h3>"+
-      "<p>Deze nieuwe saleskans is nog niet opgeslagen. Alles wat je hebt ingevuld gaat dan verloren.</p>"+
+      "<h3>"+(nieuw?"Weet je zeker dat je deze saleskans wilt annuleren?":"Wijzigingen weggooien?")+"</h3>"+
+      "<p>"+(nieuw?"Deze nieuwe saleskans is nog niet opgeslagen. Alles wat je hebt ingevuld gaat dan verloren."
+                 :"Je hebt hier iets gewijzigd zonder op te slaan. Die wijzigingen gaan dan verloren.")+"</p>"+
       "<div class='modal-foot'>"+
-        "<button class='btn-ghost' id='m_keep'>Nee, verder invullen</button>"+
+        "<button class='btn-ghost' id='m_keep'>"+(nieuw?"Nee, verder invullen":"Nee, terug")+"</button>"+
         "<button class='btn-danger' id='m_ok'>Ja, annuleren</button>"+
       "</div>");
     $("#m_keep").onclick=closeModal;
