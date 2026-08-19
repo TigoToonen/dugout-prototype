@@ -621,6 +621,16 @@
     *{transition:none!important;animation:none!important}
   }
 
+  /* ---- Tabblad SportsSpeakers / SportSpreker ---- */
+  .tab[hidden]{display:none!important}
+  .tab-spsp{margin-left:auto}
+  @media (max-width:900px){ .tab-spsp{margin-left:0} }
+  .scope-note{display:block;margin:10px 0 2px;padding:9px 12px;
+    border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;
+    background:var(--surface);font-size:13px;color:var(--text-muted);line-height:1.45}
+  .scope-note b{color:var(--text)}
+  .scope-note[hidden]{display:none}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sortable.min.js"></script>
@@ -653,7 +663,14 @@
       <button class="tab" role="tab" aria-selected="false" data-view="archief">Archief<span class="cnt" id="archCount"></span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="permerk">Per unit</button>
       <button class="tab" role="tab" aria-selected="false" data-view="opmerkingen">Opmerkingen</button>
+      <button class="tab tab-spsp" role="tab" aria-selected="false" data-view="spsp">SportsSpeakers / SportSpreker<span class="cnt" id="spspCount"></span></button>
     </nav>
+
+    <div class="scope-note" id="scopeNote" hidden>
+      🎤 Je werkt nu in <b>SportsSpeakers / SportSpreker</b> — een eigen pipeline met eigen fases en eigen velden.
+      Deze aanvragen staan los van de commerciële saleskansen; die vind je onder <b>Pipeline</b>.
+      Vanuit hier tonen ook <b>Aandacht nodig</b>, <b>Archief</b> en <b>Opmerkingen</b> alléén sprekersaanvragen.
+    </div>
 
     <!-- SHARED stats + toolbar (kanban + tabel) -->
     <div class="stats" id="stats"></div>
@@ -677,7 +694,7 @@
       </div>
       <button class="btn-primary" id="addBtn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Nieuwe saleskans
+        <span id="addBtnTxt">Nieuwe saleskans</span>
       </button>
     </div>
 
@@ -707,8 +724,8 @@
                 <th>Merk</th>
                 <th>Contactpersoon</th>
                 <th>Laatst contact gehad door</th>
-                <th>Unit</th>
-                <th>Propositie / atleet / sport</th>
+                <th id="thUnit">Unit</th>
+                <th id="thProp">Propositie / atleet / sport</th>
                 <th>Fase</th>
                 <th class="sortable" id="sortContact">Laatste contact <span class="arrow" id="arrContact"></span></th>
                 <th>Actie</th>
@@ -854,6 +871,56 @@
   var REMINDER_OPTS = [12,6,3];
   var ATLETEN = ["Agata Campana","Amber Kraak","Angel Daleman","Anna Boersma","Anna van Wersch","Bart Kortleve","Beau Snellink","Benthe Kerkhoff","Bert Bolle","Botic van de Zandschulp","Chloé Hoogendoorn","Dylan Groenewegen","Eline Jansen","Elmar Reinders","Emilie Dahmen","Epke Zonderland","Femke Kok","Harm Visser","Ida Dam Fialla","Ireen Wüst","Jeffrey Hoogland","Jenning de Boo","Jochem Kerkhaert","Joep Wennemars","Johan Dorussen","Jorian ten Cate","Julian Prins","Karolien Florijn","Laura Dijkema","Lars Woelders","Lena Putters","Lieke Nooijen","Lonneke Uneken","Maike van der Duin","Marijke Groenewoud","Marrit Steenbergen","Mats Bendijk","Meike Uiterwijk Winkel","Merijn Scheperkamp","Milan de Ceuster","Naomi van As","Niek Kimmann","Niels Wennemars","N'ketia Seedo","Noa Diorgina Man","Noï Moes","Otto van Zanden","Pieter van den Hoogenband","Pien Dicke","Ranomi Kromowidjojo","Roos Muller","Rosalie van Vliet","Sven Kramer","Suzanne Schulting","Tess Lieder – Wester","Thijs Wiersma","Tiago Gomes","Tim Marsman","Wessel Mouris","Youp de Kroon"];
   var PIPELINE_FASES = FASES.slice(0,5); // kolommen in de kanban (excl. Afgevallen)
+
+  // ============================================================
+  //  TABBLAD "SportsSpeakers / SportSpreker"
+  //  Zelfde Dugout, zelfde tabel — maar een eigen pipeline met eigen
+  //  fases en eigen velden. Elke kaart draagt een kolom "pipeline":
+  //  'commercie' (alles wat er al stond) of 'spsp' (sprekersaanvragen).
+  //  De twee zien elkaar niet: activeData()/archived() filteren op SCOPE.
+  // ============================================================
+  var FASES_COMMERCIE = FASES;
+  var FASES_SPSP = [
+    {v:"Aanvraag ontvangen",            c:"c-grey",   pct:10},
+    {v:"Voorstel verstuurd",            c:"c-blue",   pct:25},
+    {v:"Reminder verstuurd",            c:"c-indigo", pct:35},
+    {v:"Spreker opgevraagd",            c:"c-amber",  pct:55},
+    {v:"Spreker beschikbaar",           c:"c-amber",  pct:75},
+    {v:"Opdrachtbevestiging verstuurd", c:"c-green",  pct:90},
+    {v:"Opdracht bevestigd",            c:"c-green",  pct:100},
+    {v:"Afgevallen",                    c:"c-red",    pct:0}
+  ];
+  var SPSP_LABELS = ["SportsSpeakers (NL)","SportSpreker (BE)"];
+  var PIPELINES = {
+    commercie: {fases:FASES_COMMERCIE, kolommen:5, won:"Contractueel/formeel vastgelegd",
+                nieuwBtn:"Nieuwe saleskans", vaDagen:14},
+    // won:null -> geen winst-/AFAS-flow en geen auto-archivering. Een bevestigde
+    // opdracht blijft gewoon op het bord staan tot iemand 'm zelf afsluit.
+    spsp:      {fases:FASES_SPSP,      kolommen:7, won:null,
+                nieuwBtn:"Nieuwe aanvraag",  vaDagen:7}
+  };
+  var SCOPE = "commercie";
+  function scopeOf(r){ return (r && r.pipeline==="spsp") ? "spsp" : "commercie"; }
+  function wonFaseFor(r){ return PIPELINES[scopeOf(r)].won; }
+  function vaStandaard(){ return PIPELINES[SCOPE].vaDagen; }
+  // Wisselt alle pipeline-afhankelijke instellingen om. Alles wat FASES,
+  // PIPELINE_FASES, WON_FASE of FILTERS leest, leest daarna vanzelf het juiste.
+  function applyScope(s){
+    if(s) SCOPE=s;
+    var p=PIPELINES[SCOPE];
+    FASES=p.fases;
+    PIPELINE_FASES=p.fases.slice(0,p.kolommen);
+    WON_FASE=p.won;
+    FILTERS=(SCOPE==="spsp")?FILTERS_SPSP:FILTERS_COMMERCIE;
+    FILTER_LBL=(SCOPE==="spsp")?FILTER_LBL_SPSP:FILTER_LBL_COMMERCIE;
+    var btn=$("#addBtnTxt"); if(btn) btn.textContent=p.nieuwBtn;
+    var thU=$("#thUnit");    if(thU) thU.textContent=(SCOPE==="spsp")?"Label":"Unit";
+    var thP=$("#thProp");    if(thP) thP.textContent=(SCOPE==="spsp")?"Gevraagde spreker(s)":"Propositie / atleet / sport";
+    var app=$("#appRoot");   if(app) app.setAttribute("data-scope",SCOPE);
+    var q=$("#q"); if(q) q.placeholder=(SCOPE==="spsp")
+      ? "Zoek op klant, spreker, thema of contactpersoon…"
+      : "Zoek op merk/bedrijf, propositie, atleet of contact…";
+  }
   var ACTIES = [
     {v:"Saleskans",             c:"c-green"},
     {v:"Ongoing",               c:"c-blue"},
@@ -1076,7 +1143,9 @@
     "waarde","fase","type","actie","laatste","bijgewerkt","opm","bijlagen",
     "status","won_at","archived_at","afsluit_notitie","verwijder_reden","volgende_actie",
     // ---- Athletes / Dug Out ----
-    "atleet","sport","soort_deal","hoa_type","startdatum","einddatum","reminder_maanden","reminder_datum"];
+    "atleet","sport","soort_deal","hoa_type","startdatum","einddatum","reminder_maanden","reminder_datum",
+    // ---- SportsSpeakers / SportSpreker ----
+    "pipeline","label","spreker","ev_datum","ev_tijd","locatie","aantal","thema"];
 
   function toRow(r){
     var o={}; DEAL_COLS.forEach(function(k){ if(r[k]!==undefined) o[k]=r[k]; });
@@ -1292,8 +1361,11 @@
     // Vangnet zonder ingeplande datum: >14 dagen stil of actie "Terugbellen"
     return daysAgo(r.laatste)>ATTENTIE_DAGEN || r.actie==="Terugbellen";
   }
-  function activeData(){ return data.filter(function(r){return (r.status||"actief")==="actief";}); }
-  function archived(kind){ return data.filter(function(r){return r.status===kind;}); }
+  // Alles wat je op het scherm ziet hoort bij één pipeline: de bestaande
+  // Commerciële Dugout óf het tabblad SportsSpeakers / SportSpreker.
+  function inScope(r){ return scopeOf(r)===SCOPE; }
+  function activeData(){ return data.filter(function(r){return (r.status||"actief")==="actief" && inScope(r);}); }
+  function archived(kind){ return data.filter(function(r){return r.status===kind && inScope(r);}); }
   function faseIndex(v){ for(var i=0;i<FASES.length;i++) if(FASES[i].v===v) return i; return 0; }
   // ---- Athletes / Dug Out helpers ----
   function fasePct(v){ for(var i=0;i<FASES.length;i++) if(FASES[i].v===v) return (FASES[i].pct||0); return 0; }
@@ -1334,6 +1406,11 @@
   // ---- sub-regel onder het merk: atleet/influencer (bij die units) en/of partnership ----
   function dealSubParts(r){
     var parts=[];
+    if(scopeOf(r)==="spsp"){
+      if(r.spreker && String(r.spreker).trim()) parts.push({lbl:"Gevraagde spreker(s)", v:String(r.spreker)});
+      if(r.thema   && String(r.thema).trim())   parts.push({lbl:"Thema en doel",        v:String(r.thema)});
+      return parts;
+    }
     if(isAthleteUnit(r.unit) && r.atleet && String(r.atleet).trim()) parts.push({lbl:atleetLabel(r.unit), v:String(r.atleet)});
     if(r.merk && String(r.merk).trim() && r.merk!==r.klant) parts.push({lbl:"Propositie", v:String(r.merk)});
     return parts;
@@ -1375,17 +1452,27 @@
   var sortKey="laatste", sortDir=1; // 1 = oplopend (oudste eerst)
 
   // ---------- filters (Unit · Contactpersoon HoS · Merk/Atleet/Spreker · Partnership) ----------
-  var FILTERS=[
+  var FILTERS_COMMERCIE=[
     {id:"fUnit",   field:"unit",  ph:"Alle units"},
     {id:"fOwner",  field:"owner", ph:"Contactpersoon (HoS)"},
     {id:"fWie",    field:"klant", ph:"Merk / bedrijf"},
     {id:"fPartner",field:"merk",  ph:"Propositie / atleet / sport"}
   ];
+  // Zelfde vier dropdowns, andere inhoud zodra je in het SPSP-tabblad zit
+  var FILTERS_SPSP=[
+    {id:"fUnit",   field:"label",   ph:"Alle labels"},
+    {id:"fOwner",  field:"owner",   ph:"Contactpersoon (HoS)"},
+    {id:"fWie",    field:"klant",   ph:"Klant / bedrijf"},
+    {id:"fPartner",field:"spreker", ph:"Gevraagde spreker"}
+  ];
+  var FILTERS=FILTERS_COMMERCIE;
   function filterVals(){ var o={}; FILTERS.forEach(function(f){ var el=$("#"+f.id); o[f.id]=el?el.value:""; }); return o; }
   function matchesFilters(r){
     var s=filterVals(), q=$("#q").value.trim().toLowerCase();
     for(var i=0;i<FILTERS.length;i++){ var f=FILTERS[i]; if(s[f.id] && r[f.field]!==s[f.id]) return false; }
-    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie+" "+
+      (r.spreker||"")+" "+(r.thema||"")+" "+(r.locatie||"")+" "+(r.label||"")).toLowerCase();
+      if(hay.indexOf(q)<0) return false; }
     return true;
   }
   // cascaderend: elke dropdown toont alleen waarden die passen bij de andere gekozen filters
@@ -1406,7 +1493,9 @@
   rebuildFilters();
 
   // ---------- filterbalk (actieve filters + resultaattelling) ----------
-  var FILTER_LBL={fUnit:"Unit",fOwner:"Contactpersoon",fWie:"Merk/bedrijf",fPartner:"Propositie"};
+  var FILTER_LBL_COMMERCIE={fUnit:"Unit",fOwner:"Contactpersoon",fWie:"Merk/bedrijf",fPartner:"Propositie"};
+  var FILTER_LBL_SPSP={fUnit:"Label",fOwner:"Contactpersoon",fWie:"Klant",fPartner:"Spreker"};
+  var FILTER_LBL=FILTER_LBL_COMMERCIE;
   function renderFilterBar(){
     var bar=$("#filterBar"); if(!bar) return;
     var s=filterVals(), q=$("#q")?$("#q").value.trim():"", chips=[];
@@ -1451,7 +1540,14 @@
       if(c.view){ d.style.cursor="pointer"; d.title="Bekijk alle aandacht-kansen"; d.addEventListener("click",function(){ switchView(c.view); }); }
       s.appendChild(d);
     });
-    $("#tabCount").textContent="("+totActief+")";
+    // tellers op de tabbladen: elk zijn eigen pipeline, los van welke je nu bekijkt
+    var cntC=0, cntS=0;
+    data.forEach(function(r){
+      if((r.status||"actief")!=="actief") return;
+      if(scopeOf(r)==="spsp") cntS++; else cntC++;
+    });
+    $("#tabCount").textContent="("+cntC+")";
+    if($("#spspCount")) $("#spspCount").textContent="("+cntS+")";
   }
 
   // ---------- render table ----------
@@ -1492,7 +1588,7 @@
         "<td><div class='stack'><span class='contact-name'>"+esc(r.contact)+"</span>"+
           "<span class='contact-fn'>"+esc(r.functie)+"</span></div></td>"+
         "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner||"—")+"</span></td>"+
-        "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
+        "<td><span class='unit-pill'>"+esc(scopeOf(r)==="spsp" ? (r.label||"—") : r.unit)+"</span></td>"+
         "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
         "<td>"+selectPill("fase",r.fase)+"</td>"+
         "<td><div class='contact-line'><span class='tico' title='"+esc(r.type)+"'>"+typeIcon(r.type)+"</span>"+
@@ -1711,7 +1807,7 @@
       var tr=el("tr","row-red"); tr.setAttribute("data-id",r.id);
       tr.innerHTML=
         "<td><div class='klant-cell'><span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span><span class='klant-name'>"+esc(r.klant)+"</span></div></td>"+
-        "<td><span class='unit-pill'>"+esc(r.unit)+"</span></td>"+
+        "<td><span class='unit-pill'>"+esc(scopeOf(r)==="spsp" ? (r.label||"—") : r.unit)+"</span></td>"+
         "<td><div class='mcell'>"+subChips(r)+"</div></td>"+
         "<td><span class='owner'><span class='oav'>"+ownerIni(r.owner)+"</span>"+esc(r.owner||"—")+"</span></td>"+
         "<td><div class='stack'>"+
@@ -1753,9 +1849,13 @@
             "<span class='avatar sm' style='background:"+b.bg+";color:"+b.fg+"'>"+b.ini+"</span>"+
             "<span class='kcard-klant'>"+esc(r.klant)+"</span>"+
             "<button class='kmove' type='button' aria-label='Verplaats naar andere fase' title='Verplaats naar andere fase'>⇅</button></div>"+
-          "<div class='kcard-waarde'>"+euro(r.waarde)+"</div>"+
+          // bij een sprekersaanvraag is het tarief vaak nog niet bekend — dan is de
+          // datum van het evenement het nuttigste getal bovenaan de kaart
+          "<div class='kcard-waarde'>"+((scopeOf(r)==="spsp" && !Number(r.waarde))
+              ? (r.ev_datum ? fmt(r.ev_datum) : "Datum n.t.b.")
+              : euro(r.waarde))+"</div>"+
           kcardSub(r)+
-          "<div class='kcard-unit-sub'>"+esc(r.unit)+"</div>"+
+          "<div class='kcard-unit-sub'>"+esc(scopeOf(r)==="spsp" ? (r.label||"—") : r.unit)+"</div>"+
           "<div class='kcard-foot'>"+
             "<div class='kcard-col'><div class='kcard-cap'>Contact gehad</div><div class='kcard-v'>"+esc(r.owner||"—")+"</div></div>"+
             (r.volgende_actie
@@ -1975,7 +2075,7 @@
 
   // ---- "Wie" is voortaan ALTIJD het merk (bovenaan de kaart); de atleet of het
   //      partnership staat eronder in een eigen veld ----
-  function wieLabel(unit){ return "Merk / bedrijf"; }
+  function wieLabel(unit){ return SCOPE==="spsp" ? "Klant / bedrijf" : "Merk / bedrijf"; }
   function wieList(unit){
     var set={};
     Object.keys(BRANDS).forEach(function(v){set[v]=1;});
@@ -2025,6 +2125,10 @@
       fase:PIPELINE_FASES[0].v,type:TYPES[0],actie:ACTIES[0].v,laatste:iso(TODAY),bijgewerkt:iso(TODAY),opm:"",status:"actief"};
       if(opts.prefill){ for(var pk in opts.prefill){ if(opts.prefill[pk]) r[pk]=opts.prefill[pk]; } } // bijv. vanuit Toekomst
     }
+    // Sprekersaanvraag? Dan een ander formulier: geen unit/propositie maar label,
+    // spreker, datum, locatie en thema. Bestaande kaarten herkennen we aan r.pipeline.
+    var isSpsp = (scopeOf(r)==="spsp") || (isNew && SCOPE==="spsp");
+    if(isSpsp && isNew){ r.pipeline="spsp"; r.unit=""; r.label=""; }
     openDealId=r.id;   // realtime: wijzigingen aan déze kaart parkeren zolang jij 'm open hebt
     var isArchived=!isNew && (r.status==="benut"||r.status==="onbenut");
     var requireNote=!!opts.requireNote;
@@ -2044,11 +2148,32 @@
         "<select id='d_unit'><option value=''"+(r.unit?"":" selected")+">Kies unit…</option>"+
         UNITS.map(function(u){return "<option"+(u===r.unit?" selected":"")+">"+esc(u)+"</option>";}).join("")+
         "</select></div>";
+    // ---- SportsSpeakers / SportSpreker ----
+    // d_unit blijft als verborgen veld bestaan: de rest van het formulier leest 'm uit.
+    var fLabelField="<div class='fld'><label>Label <span class='req'>· verplicht</span></label>"+
+        "<select id='d_label'><option value=''"+(r.label?"":" selected")+">Kies label…</option>"+
+        (r.label&&SPSP_LABELS.indexOf(r.label)<0?"<option selected>"+esc(r.label)+"</option>":"")+
+        SPSP_LABELS.map(function(l){return "<option"+(l===r.label?" selected":"")+">"+esc(l)+"</option>";}).join("")+
+        "</select><input type='hidden' id='d_unit' value=''></div>";
+    var fAanvraagBlok=
+        "<div class='dsec'>Aanvraag</div>"+
+        "<div class='fld'><label>Gevraagde spreker(s)</label>"+
+          "<input id='d_spreker' value='"+esc(r.spreker||"")+"' placeholder='Bijv. Richard van Hooijdonk, Sven Vanthourenhout'>"+
+          "<div class='attach-hint'>Meerdere sprekers? Scheid ze met een komma.</div></div>"+
+        "<div class='row2'>"+
+          "<div class='fld'><label>Datum evenement</label><input id='d_evdatum' type='date' value='"+(r.ev_datum||"")+"'></div>"+
+          "<div class='fld'><label>Tijdstip</label><input id='d_evtijd' value='"+esc(r.ev_tijd||"")+"' placeholder='19:00 - 20:00'></div>"+
+        "</div>"+
+        "<div class='row2'>"+
+          "<div class='fld'><label>Locatie</label><input id='d_locatie' value='"+esc(r.locatie||"")+"' placeholder='Locatie of plaats'></div>"+
+          "<div class='fld'><label>Aantal personen</label><input id='d_aantal' type='number' min='0' step='10' value='"+(r.aantal!=null?r.aantal:"")+"' placeholder='bijv. 100'></div>"+
+        "</div>"+
+        "<div class='fld'><label>Thema en doel</label><input id='d_thema' value='"+esc(r.thema||"")+"' placeholder='Bijv. leiderschap, samenwerking, actuele trends'></div>";
     drawer.innerHTML=
       "<div class='drawer-head'>"+
         "<span class='avatar' style='background:"+b.bg+";color:"+b.fg+"'>"+(isNew?"+":b.ini)+"</span>"+
-        "<div><div class='drawer-title'>"+(isNew?"Nieuwe saleskans":esc(r.klant))+"</div>"+
-        "<div class='drawer-sub'>"+(isNew?"Voeg een nieuwe saleskans toe":esc(r.contact)+" · "+esc(r.functie))+"</div></div>"+
+        "<div><div class='drawer-title'>"+(isNew?(isSpsp?"Nieuwe aanvraag":"Nieuwe saleskans"):esc(r.klant))+"</div>"+
+        "<div class='drawer-sub'>"+(isNew?(isSpsp?"Voeg een nieuwe sprekersaanvraag toe":"Voeg een nieuwe saleskans toe"):esc(r.contact)+" · "+esc(r.functie))+"</div></div>"+
         "<button class='closex' id='dClose' aria-label='Sluiten'><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M18 6 6 18M6 6l12 12'/></svg></button>"+
       "</div>"+
       "<div class='drawer-body'>"+
@@ -2058,9 +2183,11 @@
         // tot je een unit koos; kwam die keuze niet door (mobiele pickers sturen
         // soms alleen 'input', geen 'change'), dan zag je een leeg paneel met een
         // dropdown die "niets deed". Unit blijft gewoon verplicht bij opslaan.
-        (isNew
-          ? fUnitPicker+fWieHtml+fPartHtml
-          : fWieHtml+fPartHtml+fUnitField)+
+        (isSpsp
+          ? fLabelField+fWieHtml+fPartHtml
+          : (isNew
+              ? fUnitPicker+fWieHtml+fPartHtml
+              : fWieHtml+fPartHtml+fUnitField))+
 
         "<div class='dsec'>Contactgegevens</div>"+
         "<div class='fld'><label>Contactpersoon</label>"+
@@ -2078,6 +2205,8 @@
             (r.tel?"<a href='tel:"+esc(r.tel.replace(/\s/g,''))+"'>✆ "+esc(r.tel)+"</a>":"")+
           "</div>":"")+
 
+        (isSpsp?fAanvraagBlok:"")+
+
         "<div class='dsec'>Salesgegevens</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Laatst contact gehad door</label><select id='d_owner'>"+
@@ -2089,20 +2218,21 @@
         "</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Datum laatste contact</label><input id='d_laatste' type='date' value='"+showLaatste+"'></div>"+
-          "<div class='fld'><label>Dealwaarde (€)</label><input id='d_waarde' type='number' min='0' step='500' value='"+(Number(r.waarde)||0)+"' placeholder='0'></div>"+
+          "<div class='fld'><label>"+(isSpsp?"Tarief / dealwaarde (€)":"Dealwaarde (€)")+"</label><input id='d_waarde' type='number' min='0' step='500' value='"+(Number(r.waarde)||0)+"' placeholder='0'>"+
+            (isSpsp?"<div class='attach-hint'>Nog niet bekend? Laat op 0 staan — dan toont de kaart de datum van het evenement.</div>":"")+"</div>"+
         "</div>"+
         "<div class='row2'>"+
           "<div class='fld'><label>Fase</label><select id='d_fase'>"+faseOptions(showFase)+"</select></div>"+
           "<div class='fld'><label>Actie</label><select id='d_actie'>"+optionsHtml(ACTIES,r.actie)+"</select></div>"+
         "</div>"+
         "<div class='fld'><label>Datum volgende actie"+(requireNote?" <span class='req'>· verplicht</span>":"")+"</label>"+
-          "<input id='d_va' type='date' value='"+(r.volgende_actie||(isArchived?"":plusDays(14)))+"'>"+
+          "<input id='d_va' type='date' value='"+(r.volgende_actie||(isArchived?"":plusDays(vaStandaard())))+"'>"+
           "<div class='va-quick'>"+
             [["+1 wk",7],["+2 wkn",14],["+3 wkn",21],["+1 mnd",30]].map(function(q){
               return "<button type='button' class='va-btn' data-days='"+q[1]+"'>"+q[0]+"</button>";
             }).join("")+
           "</div>"+
-          "<div class='attach-hint'>Wanneer moet dit contact weer opgepakt worden? Op die datum verschijnt de kaart bij “Aandacht nodig”. Niet ingesteld = automatisch over 2 weken.</div></div>"+
+          "<div class='attach-hint'>Wanneer moet dit contact weer opgepakt worden? Op die datum verschijnt de kaart bij “Aandacht nodig”. Niet ingesteld = automatisch over "+(isSpsp?"1 week":"2 weken")+".</div></div>"+
 
         // ---- Extra velden · alleen bij unit "Atleten" ----
         "<div id='d_athBlock' style='display:"+(isAthleteUnit(r.unit)?"":"none")+"'>"+
@@ -2181,7 +2311,7 @@
         if(blk) blk.style.display=isAthleteUnit(u)?"":"none";
         // geen dubbele sub-velden: bij Athletes is het atleet-veld hét tweede veld,
         // bij andere units het propositie/sport-veld
-        var pw=$("#d_partWrap"); if(pw) pw.style.display=isAthleteUnit(u)?"none":"";
+        var pw=$("#d_partWrap"); if(pw) pw.style.display=(isSpsp||isAthleteUnit(u))?"none":"";
         if(lbl) lbl.textContent=wieLabel(u);
         var albl=$("#d_atleet_lbl"); if(albl) albl.textContent=atleetLabel(u);
         refreshUnitLists();   // merk- en propositielijst inkorten tot deze unit
@@ -2348,9 +2478,12 @@
       var emailVal=$("#d_email").value.trim(), telVal=$("#d_tel").value.trim();
       var ownerVal=$("#d_owner").value;
       // ---- verplichte velden (e-mail óf telefoon volstaat) ----
-      ["d_unit","d_klant","d_klant_inp","d_vn","d_owner","d_email","d_tel"].forEach(function(id){ var e=$("#"+id); if(e) e.classList.remove("need"); });
+      ["d_unit","d_label","d_klant","d_klant_inp","d_vn","d_owner","d_email","d_tel"].forEach(function(id){ var e=$("#"+id); if(e) e.classList.remove("need"); });
+      var labelVal=($("#d_label")&&$("#d_label").value)||"";
       var miss=[];
-      if(!unitVal) miss.push("d_unit");
+      // bij een sprekersaanvraag is het label verplicht in plaats van de unit
+      if(isSpsp){ if(!labelVal) miss.push("d_label"); }
+      else if(!unitVal) miss.push("d_unit");
       if(!klantVal) miss.push("d_klant");
       if(!vn) miss.push("d_vn");
       if(!ownerVal) miss.push("d_owner");
@@ -2375,6 +2508,17 @@
       r.email=emailVal; r.tel=telVal;
       r.owner=ownerVal; r.unit=unitVal; r.merk=readPick("d_merk");
       r.waarde=parseInt($("#d_waarde").value,10)||0;
+      // ---- Extra velden · SportsSpeakers / SportSpreker ----
+      if(isSpsp){
+        r.pipeline="spsp";
+        r.label=labelVal;
+        r.spreker=($("#d_spreker")&&$("#d_spreker").value.trim())||"";
+        r.ev_datum=($("#d_evdatum")&&$("#d_evdatum").value)||null;
+        r.ev_tijd=($("#d_evtijd")&&$("#d_evtijd").value.trim())||"";
+        r.locatie=($("#d_locatie")&&$("#d_locatie").value.trim())||"";
+        r.aantal=($("#d_aantal")&&$("#d_aantal").value!=="")?(parseInt($("#d_aantal").value,10)||null):null;
+        r.thema=($("#d_thema")&&$("#d_thema").value.trim())||"";
+      }
       // ---- Extra velden · Atleten ----
       r.atleet=isAthleteUnit(unitVal) ? (readPick("d_atleet")||null) : null;
       r.sport=readPick("d_sport");
@@ -2384,7 +2528,7 @@
       r.reminder_datum=($("#d_remdat")&&$("#d_remdat").value)||null;
       r.fase=$("#d_fase").value; r.actie=$("#d_actie").value;
       // geen datum gekozen -> standaard over 2 weken (elke kaart heeft altijd een opvolgdatum)
-      r.volgende_actie=($("#d_va")&&$("#d_va").value)||plusDays(14);
+      r.volgende_actie=($("#d_va")&&$("#d_va").value)||plusDays(vaStandaard());
       r.type=$("#d_type").value; r.laatste=$("#d_laatste").value||iso(TODAY);
       r.opm=$("#d_opm").value.trim();
       // opmerking gewijzigd + datum niet handmatig aangepast -> teller reset (contact gehad vandaag)
@@ -2461,10 +2605,21 @@
   function pipeViewPref(){ var p=null; try{ p=localStorage.getItem("dugoutPipeView"); }catch(e){} return p==="tabel"?"tabel":"kanban"; }
   var curView="kanban";
   function switchView(v){
+    // ---- in welke pipeline werk je? ----
+    // Het tabblad SportsSpeakers/SportSpreker is dezelfde bord-/tabelweergave,
+    // maar met de SPSP-fases en alleen de sprekersaanvragen.
+    if(v==="spsp"){ applyScope("spsp"); v=pipeViewPref(); }
+    else if(v==="kanban"||v==="tabel"||v==="toekomst"||v==="permerk"){ applyScope("commercie"); }
+    // "Aandacht nodig", "Archief" en "Opmerkingen" blijven in de pipeline waar je al zat
     curView=v;
     if(v==="kanban"||v==="tabel"){ try{ localStorage.setItem("dugoutPipeView", v); }catch(e){} }
     var tabView=(v==="tabel")?"kanban":v;   // Tabel valt onder het Pipeline-tabblad
+    if(SCOPE==="spsp" && tabView==="kanban") tabView="spsp";
     document.querySelectorAll(".tab[data-view]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.view===tabView);});
+    // Toekomst en Per unit horen alleen bij de commerciële pipeline
+    document.querySelectorAll('.tab[data-view="toekomst"],.tab[data-view="permerk"]').forEach(function(t){ t.hidden=(SCOPE==="spsp"); });
+    var sn=$("#scopeNote"); if(sn) sn.hidden=(SCOPE!=="spsp");
+    rebuildFilters(); renderStats();   // tellers, filters en stats horen bij de actieve pipeline
     var vb=$("#vwBord"), vt=$("#vwTabel");
     if(v==="aandacht"){
       var am=aandachtViewPref();
@@ -2657,7 +2812,9 @@
   function matchesArchFilters(r){
     var q=($("#aq")?$("#aq").value:"").trim().toLowerCase();
     for(var i=0;i<ARCH_FILTERS.length;i++){ var f=ARCH_FILTERS[i], sel=$("#"+f.id); if(sel && sel.value && r[f.field]!==sel.value) return false; }
-    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    if(q){ var hay=(r.klant+" "+r.merk+" "+(r.atleet||"")+" "+r.contact+" "+r.owner+" "+r.functie+" "+
+      (r.spreker||"")+" "+(r.thema||"")+" "+(r.locatie||"")+" "+(r.label||"")).toLowerCase();
+      if(hay.indexOf(q)<0) return false; }
     return true;
   }
   function isFilteredArch(){ if($("#aq")&&$("#aq").value.trim())return true; return ARCH_FILTERS.some(function(f){var e=$("#"+f.id);return e&&e.value;}); }
@@ -2757,7 +2914,8 @@
   // Automatisch: >7 dagen in de laatste fase -> naar Benutte saleskansen
   function autoArchive(){
     data.forEach(function(r){
-      if((r.status||"actief")==="actief" && r.fase===WON_FASE && r.won_at && daysAgo(String(r.won_at).slice(0,10))>=7){
+      var wf=wonFaseFor(r);   // per pipeline; het SPSP-tabblad kent geen winst-fase
+      if(wf && (r.status||"actief")==="actief" && r.fase===wf && r.won_at && daysAgo(String(r.won_at).slice(0,10))>=7){
         r.status="benut"; r.archived_at=iso(TODAY); saveDeal(r);
       }
     });
