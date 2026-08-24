@@ -1,3 +1,10 @@
 _preview_tmp.html
 *seed*.sql
 *.sql.bak
+
+# Werkbestanden van het inleesprogramma — lokaal, horen niet in de repo
+aanvraag-import/aanvullingen.json
+aanvraag-import/claude-taak.json
+aanvraag-import/dry-run-resultaat.json
+aanvraag-import/import-log.jsonl
+aanvraag-import/__pycache__/
