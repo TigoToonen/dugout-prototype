@@ -605,6 +605,7 @@
     .selectwrap{flex:1 1 calc(50% - 4px)}
     select.filter{width:100%}
     #addBtn{flex:1 0 100%;justify-content:center;padding:12px;font-size:15px}
+    #exportBtn{flex:1 0 100%;justify-content:center;padding:12px;font-size:15px}
 
     /* 16px invoer: iOS zoomt dan niet automatisch in bij focus */
     .search input,select.filter,.fld input,.fld textarea,.fld select,.auth-input,.modal textarea{font-size:16px}
@@ -632,6 +633,11 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important}
   }
+
+  /* ---- Exportknop (alleen zichtbaar in de sprekerspipeline) ---- */
+  #exportBtn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+  #exportBtn[hidden]{display:none}
+  #exportBtn:hover{color:var(--text);border-color:var(--text-soft)}
 
   /* ---- Pipelineschakelaar in de balk (HoS Algemeen / SportsSpeakers-SportSpreker) ---- */
   .tab[hidden]{display:none!important}
@@ -727,6 +733,11 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
+      <!-- alleen zichtbaar in de sprekerspipeline: contactpersonen als CSV voor Brevo -->
+      <button class="btn-ghost" id="exportBtn" hidden title="Download voornaam, achternaam en e-mailadres van de contactpersonen als CSV — klaar om in Brevo te laden">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Exporteer data
+      </button>
       <button class="btn-primary" id="addBtn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         <span id="addBtnTxt">Nieuwe saleskans</span>
@@ -959,6 +970,8 @@
     // het goedkeuringsfilter hoort alleen bij de sprekerspipeline
     var wk=$("#wrapKeur");
     if(wk){ wk.hidden=(SCOPE!=="spsp"); if(wk.hidden){ var fk=$("#fKeur"); if(fk) fk.value=""; } }
+    // idem voor de exportknop: alleen SportsSpeakers / SportSpreker exporteert naar Brevo
+    var xb=$("#exportBtn"); if(xb) xb.hidden=(SCOPE!=="spsp");
     var app=$("#appRoot");   if(app) app.setAttribute("data-scope",SCOPE);
     var q=$("#q"); if(q) q.placeholder=(SCOPE==="spsp")
       ? "Zoek op klant, spreker, thema of contactpersoon…"
@@ -1565,11 +1578,72 @@
 
   function kcardSub(r){
     // alleen de chip met de naam — geen label-woord ervoor (strak, zoals de Amazon-kaart)
-    var parts=dealSubParts(r);
+    // Op een sprekerskaart hoort alleen wíé er gevraagd is. Het thema/doel
+    // (“Personeelsfeest”, “Informele managementavond”) zegt op het bord te weinig
+    // om de ruimte waard te zijn — het blijft staan in de tabel en het detailscherm.
+    var parts=dealSubParts(r).filter(function(p){ return p.lbl!=="Thema en doel"; });
     return parts.map(function(p){
       return "<div class='kcard-part'><span class='chip-part' title='"+esc(p.lbl)+"'><span class='chip-dot'></span><span class='chip-txt'>"+esc(p.v)+"</span></span></div>";
     }).join("");
   }
+  // ============================================================
+  //  EXPORT VOOR BREVO · alleen SportsSpeakers / SportSpreker
+  //
+  //  Drie kolommen — voornaam, achternaam, e-mailadres — want meer heeft
+  //  Brevo niet nodig om een lijst te vullen. Bewust een CSV en geen directe
+  //  koppeling: de echte Brevo-integratie (aparte lijst per label) staat nog
+  //  op de rol; tot die tijd is dit hetzelfde bestand, handmatig geüpload.
+  //
+  //  Wat gaat mee: elke sprekersaanvraag met een e-mailadres, ook die uit
+  //  het archief — een contactpersoon blijft een contactpersoon, ook als de
+  //  aanvraag zelf niet doorging. Staat er een filter aan, dan volgt de
+  //  export dat filter (zo trek je bijv. alleen de BE-lijst).
+  // ============================================================
+  function csvCel(v){
+    v=(v==null?"":String(v));
+    return /[";\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+  }
+  function exportContacten(){
+    var gefilterd=isFiltered();
+    var rijen=data.filter(function(r){
+      if(scopeOf(r)!=="spsp") return false;
+      if(!r.email || !String(r.email).trim()) return false;   // zonder adres kan Brevo niets
+      return gefilterd ? matchesFilters(r) : true;
+    });
+    // één regel per e-mailadres — dezelfde persoon staat vaak op meerdere aanvragen
+    var gezien={}, uniek=[];
+    rijen.forEach(function(r){
+      var mail=String(r.email).trim(), sleutel=mail.toLowerCase();
+      if(gezien[sleutel]) return;
+      gezien[sleutel]=1;
+      // hetzelfde splitNaam() als het detailscherm: eerste woord = voornaam,
+      // de rest = achternaam ("Irina De Clus" wordt Irina + De Clus)
+      var n=splitNaam(r.contact);
+      uniek.push({voor:n.vn, achter:n.an, mail:mail});
+    });
+    if(!uniek.length){
+      toast(gefilterd
+        ? "Geen contactpersonen met een e-mailadres binnen dit filter."
+        : "Nog geen contactpersonen met een e-mailadres om te exporteren.","err");
+      return;
+    }
+    uniek.sort(function(a,b){
+      return String(a.achter).localeCompare(String(b.achter),"nl") ||
+             String(a.voor).localeCompare(String(b.voor),"nl");
+    });
+    var regels=["Voornaam;Achternaam;E-mailadres"].concat(uniek.map(function(c){
+      return csvCel(c.voor)+";"+csvCel(c.achter)+";"+csvCel(c.mail);
+    }));
+    // BOM erbij: anders maakt Excel van "Chloé" iets onleesbaars
+    var blob=new Blob(["\ufeff"+regels.join("\r\n")+"\r\n"],{type:"text/csv;charset=utf-8;"});
+    var naam="sprekers-contacten"+(gefilterd?"-gefilterd":"")+"-"+iso(TODAY)+".csv";
+    var url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=naam; a.style.display="none";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },0);
+    toast(uniek.length+(uniek.length===1?" contact":" contacten")+" geëxporteerd"+(gefilterd?" (binnen het filter)":"")+" — "+naam);
+  }
+
   function ownerIni(o){ o=(o==null?"":String(o)).trim(); if(!o) return "—"; var p=o.split(" "); return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase(); }
   function typeIcon(t){
     var person="<path d='M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0'/><path d='M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.7'/>";
@@ -2930,6 +3004,7 @@
     var el=$("#"+id); if(el) el.addEventListener("change",renderPipe);
   });
   $("#addBtn").addEventListener("click",function(){openDrawer(null);});
+  if($("#exportBtn")) $("#exportBtn").addEventListener("click",exportContacten);
 
   // ---------- theme ----------
   var root=document.documentElement;
