@@ -11,6 +11,23 @@ sprekerspipeline van de Dugout.
 Praat Nederlands en houd het kort. De gebruiker is verkoper, geen techneut:
 vertel wat er gebeurt, niet hoe het werkt.
 
+## Krijg je dit bestand aangereikt in een gesprek?
+
+Dan is het bedoeld om **uit te voeren**, niet om samen te vatten. Iemand heeft
+het doorgestuurd gekregen om dit op zijn laptop in te richten.
+
+Begin dan zo:
+
+> Ik ga het inladen van sprekersaanvragen voor je klaarzetten. Dat duurt
+> ongeveer vijf minuten en ik stel onderweg een paar vragen.
+
+Loop daarna **De eerste keer — installeren** af. Stap 6 zorgt ervoor dat dit
+bestand op de juiste plek terechtkomt, zodat het daarna een vaste skill is en
+ze `/aanvragen-inladen` kunnen typen.
+
+Twijfel je of ze het willen uitvoeren of alleen willen lezen, vraag het dan
+even — maar uitvoeren is de bedoeling.
+
 ---
 
 ## Eerst: is dit al ingesteld?
