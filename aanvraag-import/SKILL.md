@@ -21,11 +21,21 @@ Kijk of `~/.aanvragen-inladen.json` bestaat.
 - **Bestaat het niet** → dit is de eerste keer. Doe eerst **De eerste keer**.
 
 ```json
-{ "programma": "...", "aanvragen": "..." }
+{ "programma": "...", "aanvragen": "...", "python": "..." }
 ```
 
 `programma` is de map met `lees_aanvragen.py`.
 `aanvragen` is de map met de submappen `SportsSpeakers` en `SportSpreker`.
+`python` is het volledige pad naar Python.
+
+**Gebruik altijd dat volledige pad**, nooit kaal `python`. Op Windows verwijst
+`python` vaak naar een snelkoppeling die de Microsoft Store opent in plaats van
+Python te starten, en na een verse installatie kent een openstaand venster het
+commando nog niet. Met het volledige pad speelt dat allebei niet.
+
+Ontbreekt de sleutel `python` (installatie van vóór deze versie), gebruik dan
+`py` en vul de sleutel alsnog aan met wat
+`py -c "import sys; print(sys.executable)"` teruggeeft.
 
 ---
 
@@ -37,18 +47,90 @@ verzin niets zelf.
 
 ## 1. Staat Python erop?
 
+Het programma draait op Python. Zoek een werkende installatie, in deze volgorde:
+
 ```
-python --version
+py -c "import sys; print(sys.version_info[:2], sys.executable)"
 ```
 
-Versienummer 3.9 of hoger → doorgaan.
+Werkt dat niet:
 
-Foutmelding → **stop** en zeg:
+```
+python -c "import sys; print(sys.version_info[:2], sys.executable)"
+```
 
-> Op deze laptop staat Python nog niet, en dat heeft het programma nodig.
-> Vraag even aan Tigo hoe je dat installeert — dan pikken we het hier weer op.
+**Let op de valstrik.** Op Windows staat er standaard een snelkoppeling
+`python.exe` die de Microsoft Store opent in plaats van Python te starten. Die
+geeft geen foutmelding maar ook geen versie. Krijg je geen versienummer terug,
+of zie je iets over de Microsoft Store, behandel het dan als "niet
+geïnstalleerd" — ook al lijkt het commando te bestaan.
 
-Installeer Python niet zelf.
+**Krijg je versie 3.9 of hoger** → onthoud het volledige pad uit `sys.executable`
+en ga door naar stap 2.
+
+**Krijg je niets bruikbaars** → ga verder met stap 1b.
+
+## 1b. Python installeren
+
+Vraag eerst toestemming:
+
+> Python staat nog niet op deze laptop en het programma heeft het nodig. Zal ik
+> het installeren? Dat duurt een paar minuten en verandert verder niets aan je
+> computer.
+
+Wacht op een duidelijk ja. Zeggen ze nee, stop dan netjes en zeg dat het zonder
+Python niet kan.
+
+**Installeer zo, voor deze gebruiker alleen — dan is er geen beheerderswachtwoord nodig:**
+
+```
+winget install --exact --id Python.Python.3.12 --scope user --accept-package-agreements --accept-source-agreements
+```
+
+Werkt `winget` niet, dan is dit de tweede weg:
+
+```
+curl -o "%TEMP%\python-setup.exe" https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe
+"%TEMP%\python-setup.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_launcher=1
+```
+
+Ook `InstallAllUsers=0`: alleen voor deze gebruiker, dus geen beheerderrechten.
+
+**Zoek daarna het pad op.** Dit is de stap die je niet mag overslaan: het
+openstaande venster kent het commando `python` nog niet, want de zoekpaden zijn
+pas bij een nieuwe sessie bijgewerkt. Zoek dus het bestand zelf:
+
+```
+py -c "import sys; print(sys.executable)"
+```
+
+Werkt `py` nog niet, kijk dan rechtstreeks in de map waar een
+gebruikersinstallatie terechtkomt:
+
+```
+%LOCALAPPDATA%\Programs\Python\Python312\python.exe
+```
+
+Controleer dat het pad werkt door het volledige pad te gebruiken:
+
+```
+"<gevonden pad>" --version
+```
+
+**Onthoud dat volledige pad.** Het gaat straks in `~/.aanvragen-inladen.json`
+en wordt vanaf dan overal gebruikt. Zo werkt alles meteen, ook zonder de app
+opnieuw te starten.
+
+Lukt installeren niet — bijvoorbeeld omdat het bedrijfsbeleid het blokkeert —
+stop dan en zeg:
+
+> Het installeren van Python wordt op deze laptop geblokkeerd. Vraag even aan
+> Tigo hoe jullie dat regelen; daarna pikken we het hier weer op.
+
+Blijf niet doorproberen met andere methodes.
+
+**Op een Mac** staat Python 3 er meestal al als `python3`. Ontbreekt het, dan is
+`brew install python` de weg. Vraag ook daar eerst toestemming.
 
 ## 2. Heeft deze persoon al toegang tot de Dugout?
 
@@ -144,12 +226,14 @@ Schrijf daarna `~/.aanvragen-inladen.json`:
 ```json
 {
   "programma": "<map uit stap 4>",
-  "aanvragen": "<map uit stap 3a>"
+  "aanvragen": "<map uit stap 3a>",
+  "python": "<pad uit stap 1 of 1b>"
 }
 ```
 
 Let op: in JSON moet elke backslash in een Windows-pad verdubbeld worden.
-Controleer na het schrijven of het bestand geldig JSON is.
+Controleer na het schrijven of het bestand geldig JSON is en of de drie paden
+bestaan.
 
 ## 7. Controleren
 
@@ -158,7 +242,7 @@ Twee controles. Doe ze allebei.
 **a. Werkt het programma?**
 
 ```
-python "<programma>/lees_aanvragen.py" "<aanvragen>"
+"<python>" "<programma>/lees_aanvragen.py" "<aanvragen>"
 ```
 
 Goed is: hij noemt de twee sprekerslijsten (117 en 156 namen) en meldt dat er
@@ -167,7 +251,7 @@ geen bestanden staan.
 **b. Werkt het inloggen?**
 
 ```
-python "<programma>/dugout.py" --test
+"<python>" "<programma>/dugout.py" --test
 ```
 
 Goed is: `OK — ingelogd als …, de Dugout antwoordt.`
@@ -190,7 +274,7 @@ Vraag daarna of er nog iets onduidelijk is.
 ## 1. Lezen, nooit meteen wegschrijven
 
 ```
-python "<programma>/lees_aanvragen.py" "<aanvragen>"
+"<python>" "<programma>/lees_aanvragen.py" "<aanvragen>"
 ```
 
 Zonder `--echt` verandert er niets. Laat per aanvraag zien wat er gevonden is:
@@ -233,7 +317,7 @@ alles er goed uitziet.
 ## 4. Wegschrijven
 
 ```
-python "<programma>/lees_aanvragen.py" "<aanvragen>" --aanvullingen aanvullingen.json --echt --max <aantal>
+"<python>" "<programma>/lees_aanvragen.py" "<aanvragen>" --aanvullingen aanvullingen.json --echt --max <aantal>
 ```
 
 Zet `--max` op het aantal aanvragen dat je zojuist hebt getoond, nooit hoger.
