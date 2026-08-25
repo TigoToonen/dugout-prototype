@@ -122,6 +122,23 @@ def is_dubbel(fout):
             or "vingerafdruk" in str(details.get("message", "")).lower())
 
 
+def test_verbinding():
+    """
+    Controleert of inloggen en lezen werken, zonder iets te wijzigen.
+    Bedoeld voor het instellen: dan weet je meteen of het klopt, in plaats
+    van dat je er bij de eerste echte aanvraag achter komt.
+    """
+    token, wie = inloggen()
+    rijen = _verstuur("/rest/v1/deals?select=id&limit=1", token=token, methode="GET")
+
+    # Staan de kolommen van de import erin? Zo niet, dan wijst de installatie
+    # naar een database waar de migraties nog niet gedraaid zijn.
+    _verstuur("/rest/v1/deals?select=bron,bron_vingerafdruk,goedgekeurd_op&limit=1",
+              token=token, methode="GET")
+
+    return wie, len(rijen or [])
+
+
 def maak_kaart(kaart, token):
     """
     Zet één aanvraag als kaart in de Dugout.
@@ -137,3 +154,17 @@ def maak_kaart(kaart, token):
         raise
     rijen = antwoord or []
     return "nieuw", (rijen[0].get("id") if rijen else None)
+
+
+if __name__ == "__main__":
+    # python dugout.py --test  -> controleert de verbinding en de inlog
+    import sys
+    if "--test" in sys.argv:
+        try:
+            wie, aantal = test_verbinding()
+        except DugoutFout as fout:
+            print("MISLUKT:", fout.args[0] if fout.args else fout)
+            sys.exit(1)
+        print("OK — ingelogd als %s, de Dugout antwoordt." % wie)
+    else:
+        print(__doc__)
