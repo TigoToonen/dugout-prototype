@@ -1491,6 +1491,41 @@
   function esc(s){return (s==null?"":String(s)).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
   function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function plusDays(n){ var d=new Date(TODAY); d.setDate(d.getDate()+n); return iso(d); }
+  // ---------- automatisch contactmoment (SportsSpeakers / SportSpreker) ----------
+  // In de sprekerspipeline is elke bewerking een contactmoment: verander je iets aan
+  // een aanvraag, dan gaat "datum laatste contact" naar vandaag en schuift de volgende
+  // actie mee naar over 7 dagen (PIPELINES.spsp.vaDagen). Kolommen die de app zelf
+  // bijhoudt tellen niet mee als wijziging - anders zou opslaan zichzelf blijven aanjagen.
+  var BOEKHOUD_COLS = ["laatste","bijgewerkt","volgende_actie","status","won_at","archived_at",
+    "goedgekeurd_op","goedgekeurd_door","bron_op"];
+  function inhoudSnapshot(r){
+    var o={};
+    DEAL_COLS.forEach(function(k){
+      if(BOEKHOUD_COLS.indexOf(k)>=0) return;
+      var v=r[k];
+      // "leeg" is leeg: een veld dat nog niet bestond en er nu leeg (of 0) in staat
+      // is geen wijziging, anders zou elke opgeslagen kaart er een lijken.
+      if(v===undefined||v===null||v===""||v===0) v="";
+      else if(Array.isArray(v) && !v.length) v="";
+      o[k]=v;
+    });
+    return JSON.stringify(o);
+  }
+  // Zet de twee datums bij; opts.laatsteHandmatig / opts.vaHandmatig laten een datum
+  // die iemand zelf heeft ingevuld met rust. Alleen actieve sprekersaanvragen -
+  // archief is historie. Geeft terug of er iets is verzet.
+  function spspAutoTouch(r, opts){
+    opts=opts||{};
+    if(!r || scopeOf(r)!=="spsp") return false;
+    if((r.status||"actief")!=="actief") return false;
+    var verzet=false;
+    if(!opts.laatsteHandmatig && r.laatste!==iso(TODAY)){ r.laatste=iso(TODAY); verzet=true; }
+    if(!opts.vaHandmatig){
+      var va=plusDays(PIPELINES.spsp.vaDagen);
+      if(r.volgende_actie!==va){ r.volgende_actie=va; verzet=true; }
+    }
+    return verzet;
+  }
   function euro(n){n=Number(n)||0; return "€ "+n.toLocaleString("nl-NL");}
   function primaryMerk(s){if(!s||!s.trim())return "Onbekend"; return s.split(/[·,;|]+/)[0].trim();}
   var MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
@@ -1824,7 +1859,9 @@
           }
           r[kind]=sel.value;
           sel.className="pill "+actieColor(sel.value);
+          var spspVerzet=spspAutoTouch(r);   // sprekersaanvraag: ook dit is een contactmoment
           touch(r); saveDeal(r);
+          if(spspVerzet){ refreshAll(); return; }   // datums veranderden -> hele bord opnieuw
           // update bijgewerkt cell with flash (kolom 9 = "Laatst bijgewerkt")
           var updCell=tr.children[9];
           updCell.innerHTML="<div class='upd flash'><span class='cdate'>"+fmt(r.bijgewerkt)+"</span><span class='rel'>"+rel(r.bijgewerkt)+"</span></div>";
@@ -2346,6 +2383,9 @@
     var requireNote=!!opts.requireNote;
     var showFase=opts.pendingFase||r.fase;                 // fase-veld toont (nieuwe) fase
     var showLaatste=requireNote?iso(TODAY):r.laatste;      // datum laatste contact -> vandaag bij verplaatsen
+    // wat er straks in "datum volgende actie" staat. Wijkt de invoer hiervan af,
+    // dan heeft iemand zelf een datum gekozen en laten we die met rust.
+    var showVa=r.volgende_actie||(isArchived?"":plusDays(vaStandaard()));
     var initialOpm=(r.opm||"");
     var bundle=(!isNew && r.klant) ? activeData().filter(function(d){return d.klant===r.klant;}) : [];
     var b=brand(r.klant);
@@ -2442,7 +2482,7 @@
           "<div class='fld'><label>Actie</label><select id='d_actie'>"+optionsHtml(ACTIES,r.actie)+"</select></div>"+
         "</div>"+
         "<div class='fld'><label>Datum volgende actie"+(requireNote?" <span class='req'>· verplicht</span>":"")+"</label>"+
-          "<input id='d_va' type='date' value='"+(r.volgende_actie||(isArchived?"":plusDays(vaStandaard())))+"'>"+
+          "<input id='d_va' type='date' value='"+showVa+"'>"+
           "<div class='va-quick'>"+
             [["+1 wk",7],["+2 wkn",14],["+3 wkn",21],["+1 mnd",30]].map(function(q){
               return "<button type='button' class='va-btn' data-days='"+q[1]+"'>"+q[0]+"</button>";
@@ -2777,6 +2817,7 @@
     // velden worden net zo gecontroleerd als bij een gewone opslag.
     function bewaar(metGoedkeuring){
       var origLaatste=r.laatste, origOpm=(initialOpm||"").trim();
+      var origInhoud=inhoudSnapshot(r);   // alles wat je zelf kunt invullen, zoals het was
       // contactgegevens zoals ze vóór deze bewerking waren (voor de "ook overal?"-vraag)
       var origEmail=r.email||"", origTel=r.tel||"", origFunctie=r.functie||"", origContact=r.contact||"";
       var unitVal=($("#d_unit")&&$("#d_unit").value)||"";
@@ -2841,6 +2882,15 @@
       // opmerking gewijzigd + datum niet handmatig aangepast -> teller reset (contact gehad vandaag)
       if(r.opm!==origOpm && r.laatste===origLaatste){ r.laatste=iso(TODAY); }
       r.bijlagen=dBijlagen.filter(function(a){return !a._uploading;});
+      // Sprekerspipeline: heb je iets veranderd, dan is dat een contactmoment ->
+      // laatste contact vandaag en volgende actie over 7 dagen. Datums die je in dit
+      // venster zelf hebt aangepast blijven staan.
+      if(isSpsp && !isNew && inhoudSnapshot(r)!==origInhoud){
+        spspAutoTouch(r, {
+          laatsteHandmatig: ($("#d_laatste")&&$("#d_laatste").value||"")!==showLaatste,
+          vaHandmatig:      ($("#d_va")&&$("#d_va").value||"")!==showVa
+        });
+      }
       r.bijgewerkt=iso(TODAY);
       if(metGoedkeuring){
         r.goedgekeurd_op=new Date().toISOString();
